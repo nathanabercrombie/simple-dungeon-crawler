@@ -1,0 +1,404 @@
+# Dungeon and Room Generation
+
+## Accepted requirements
+
+- Generate the dungeon during play, one room or area at a time.
+- Entering and generating a new room consumes one exploration turn.
+- A room may contain monsters, traps, treasure, puzzles, clues, environmental features, social situations, or meaningful emptiness.
+- Free-form action resolves the generated situation; the procedure must not turn every room into a sealed combat encounter.
+- Durably resolving the room's main challenge conquers it and gives every adventurer one Skill Token.
+- The same procedure must support a GM-led group and a solo player using an oracle.
+- The tabletop procedure must work with physical dice even when the local web app automates it.
+
+## Accepted known-room travel procedure
+
+Spend one exploration turn to move through up to three connected conquered rooms. Active light sources lose one turn of duration.
+
+For each conquered room entered during this movement, roll a d6. On a 1, the room has become dangerous again. Stop movement there and introduce a context-appropriate creature, hazard, environmental change, or other immediate danger. The room remains conquered, and resolving the new danger does not grant its conquest Skill Tokens again.
+
+Movement also stops when the party reaches an unconquered room or a room that is already actively dangerous. Use the same procedure for deeper travel, backtracking, and extraction.
+
+Conquest does not erase persistent traversal features. Crossing a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle costs one additional exploration turn each time it must be traversed, reducing active light by another turn. Roll a check only if the crossing remains uncertain and failure would have a meaningful consequence.
+
+A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the recurring cost when appropriate. The three-room allowance and 1-in-6 danger chance are accepted for initial playtesting.
+
+## Accepted map model: literal floorplan
+
+Generate exact room shapes, doors, corridors, and relative placement on a square grid. The procedure must handle collisions, loops, secret spaces, stairs, and other vertical connections both by hand and in the local web app.
+
+Most room templates provide at least two onward exits in addition to the entry used to place them. All connectors become ordinary two-way passages after placement.
+
+The working sequence is:
+
+1. Choose an unexplored exit from the existing map.
+2. Generate its connector: doorway, corridor, stair, shaft, or special transition.
+3. Generate and orient the new room footprint on the grid.
+4. Resolve overlap with existing geometry through a loop, shared wall, blocked passage, secret connection, or vertical shift.
+5. Generate the room's visible and hidden exits.
+6. Generate function, state, main challenge, and opportunity.
+7. Resolve the room through free-form play and mark conquest if its main challenge is durably overcome.
+
+Collision handling is not a random subsystem. The GM adjusts placement, orientation, connector length, shared walls, or the result to preserve a sensible map. In solo play, the player makes the least disruptive good-faith adjustment or rerolls. The web app should flag overlap and expose manual placement controls rather than silently deciding.
+
+## Accepted site boundary: macro-grid sectors
+
+Place the literal floorplan inside a larger bounded grid of **sectors**. Each sector can contain at most one generated room template.
+
+- A room template retains its exact internal square-grid geometry.
+- Each sector provides an 11×11 canvas; the current templates fit within a 9×9 internal footprint.
+- The remaining one-square margin around that footprint supports connector routing.
+- An unexplored exit points toward an orthogonally adjacent sector.
+- Entering an empty adjacent sector generates and places a new room there.
+- An exit pointing toward an occupied sector can create a loop, shared passage, or blocked connection according to GM judgment.
+- An exit pointing beyond the site's boundary is blocked, becomes a site exit, or becomes a vertical connection according to the fiction.
+- Separate dungeon levels use separate macro-grids connected by stairs, shafts, lifts, or other vertical routes.
+
+The macro-grid limits the total number of rooms without requiring every sector to be occupied.
+
+### Accepted site sizes
+
+| Site size | Sector grid | Maximum rooms | Suggested Escalation |
+| --- | ---: | ---: | ---: |
+| Compact | 3×3 | 9 | E 3 |
+| Standard | 4×4 | 16 | E 2 |
+| Sprawling | 5×5 | 25 | E 1 |
+
+This pairing keeps the highest likely template indices in a similar broad range despite different site lengths. The entrance begins in a boundary sector. Objectives, stairs, and exits do not require every intervening sector to be filled.
+
+Example standard site after several rooms:
+
+```text
++----+----+----+----+
+|    | 07 | ?? |    |
++----+----+----+----+
+| EN | 01 | 04 | ?? |
++----+----+----+----+
+|    | 12 |    |    |
++----+----+----+----+
+|    | ?? |    |    |
++----+----+----+----+
+```
+
+`EN` is the entrance sector, numbers are generated templates, `??` marks an unexplored sector reached by an exit, and blank sectors have not been connected.
+
+### Benefits and costs
+
+Benefits:
+
+- finite site size despite frequent branching;
+- automatic spatial relationship between rooms;
+- loops emerge when branches meet;
+- no room-overlap problem between sectors;
+- straightforward representation in the local web app.
+
+Costs:
+
+- standardized sectors can make the overall dungeon feel regular;
+- large halls spanning several sectors need an exception;
+- exit directions must be assigned to sector edges after template rotation;
+- boundary handling and objective placement still need rules.
+
+## Proposed hybrid site objective
+
+A worked [Haunted Tomb objective](examples/haunted-tomb/objective/README.md) demonstrates one possible ending structure:
+
+- place a Heart on the far edge of the macro-grid;
+- hide several Revelation markers in other sectors;
+- integrate each Revelation into that sector's normal Opportunity;
+- let Revelations remove specific layers of the Heart's final threat;
+- permit an early direct confrontation rather than enforcing a hard lock;
+- require physical extraction to the entrance after conquering the Heart.
+
+This model is illustrative rather than accepted. Other sites could substitute keys, machine parts, witnesses, faction support, ritual acts, or discovered weaknesses for Revelations.
+
+## Accepted Quest structure
+
+Each site selects or rolls a Quest, then makes a separate escalating Quest roll for every newly generated room. See the [Quest generation prototype](quests/README.md).
+
+- Quest type defines the goal, the nature of quest elements, and what the Heart represents.
+- `d20 + (E × rooms already generated)` determines whether the room adds an omen, trace, lead, quest element, setback, or Heart.
+- Used numerical Quest results are crossed off and rerolled.
+- Low results retire as the modifier rises, pushing the site toward concrete progress and its Heart.
+- Quest results supplement rather than replace normal Challenge and Opportunity.
+- The Heart can be reached before the intended requirements are met, preserving free-form solutions at greater risk.
+
+The exact result bands are proposed for playtesting.
+
+### Accepted footprint generation: template table
+
+Room footprints come from authored templates rather than independently rolled width and length. Each template includes:
+
+- an exact square-grid footprint;
+- one or more legal entry anchors;
+- visible and possibly hidden exit sockets;
+- permitted rotations and, where appropriate, mirroring;
+- walls, blocked cells, and traversable floor;
+- authored internal terrain such as pillars, pits, balconies, galleries, ledges, bridges, pools, channels, stairs, rubble, statues, cages, machinery, or raised platforms;
+- a danger rank or other escalation tag;
+- optional tags used by challenge and opportunity tables.
+
+Internal terrain belongs directly to the footprint rather than being only descriptive text. A balcony creates high ground, a pit constrains movement, and pillars provide cover and break sight lines.
+
+### Danger Rank
+
+Every template has a **Danger Rank** using the core target-number ladder:
+
+| Danger Rank | Default target |
+| --- | ---: |
+| Easy | 9 |
+| Standard | 12 |
+| Hard | 15 |
+| Extreme | 18 |
+
+Danger Rank is the default Defense or target number for every enemy, trap, hazard, puzzle mechanism, and other opposed obstacle in that room. A specific entry can override it—for example, a slow armored brute may have lower Defense but additional HP, while an elusive creature may have higher Defense.
+
+Danger Rank does not by itself determine room contents. Separate site-themed procedures still decide whether the room contains creatures, traps, puzzles, social obstacles, treasure, and other elements.
+
+Templates prescribe geometry, internal terrain, tags, and Danger Rank only. They do not fix a challenge category or complete encounter.
+
+## Superseded escalation model: active d20 roster
+
+**Status:** Superseded by the sliding formula below.
+
+Use a master sequence of unique room templates ordered from shallower or safer to deeper or more dangerous. Maintain exactly twenty active entries:
+
+1. At the start of a site, assign master templates 1–20 to d20 faces 1–20.
+2. Roll d20 when generating a new room and place the template currently assigned to that face.
+3. Cross that template off; it cannot appear again in the current site.
+4. Replace the selected face with the next locked master template: 21 after the first room, 22 after the second, and so on.
+5. Roll the same d20 for every later room.
+
+Example: face 7 initially holds template 7. If the first roll is 7, place template 7 and assign template 21 to face 7. If the next roll is also 7, place template 21 and replace it with template 22.
+
+This is equivalent to choosing uniformly from the first twenty available unvisited templates while adding one new entry after every draw, but it requires no variable die size or repeated rerolls.
+
+### Escalation behavior
+
+- The active pool always contains twenty unique templates.
+- Early rooms remain possible until drawn, so escalation is gradual rather than a hard floor transition.
+- Newly unlocked templates can be drawn immediately, allowing occasional sudden descents into severe rooms.
+- Later master entries should trend toward more dangerous terrain, stronger challenge ranks, fewer safe exits, and more consequential opportunities.
+- A template's danger rank informs content generation; geometry alone should not require every late room to contain a monster.
+- The web app can display the active roster and replacement history, while a paper roster tracks the current entry beside each d20 face.
+
+### Master-list structure under consideration
+
+A large catalog might use broad bands such as:
+
+- 1–20: shallow rooms;
+- 21–40: deep rooms;
+- 41–60: perilous rooms;
+- 61–80: heart-of-the-dungeon rooms.
+
+The exact catalog size and danger curve remain open. Site size may end an expedition before every band is reached.
+
+## Accepted escalation model: sliding d20
+
+Generate the master-template index with:
+
+`d20 + (E × N)`
+
+Where:
+
+- **N** is the number of rooms already generated in the current site;
+- **E** is the site's Escalation value: 1, 2, or 3. It defaults to 2.
+
+Procedure:
+
+1. For the first room, N is 0, so every site begins with a plain d20 result from 1–20.
+2. Add `E × N` to each later room roll.
+3. If the resulting master template was already used in this site, reroll the d20 with the same modifier until an unused result appears.
+4. Cross off the selected template after placing it.
+5. Results below the formula's current minimum are retired even if never visited; they can no longer appear in that site.
+
+This removes both the room that was actually visited and the lowest E room numbers from future range as exploration advances. Unlike the active-roster model, very easy templates cannot linger indefinitely.
+
+### Escalation speeds
+
+| Generated room | Rooms already generated N | E 1: Slow | E 2: Standard | E 3: Fast |
+| ---: | ---: | --- | --- | --- |
+| 1 | 0 | 1–20 | 1–20 | 1–20 |
+| 5 | 4 | 5–24 | 9–28 | 13–32 |
+| 10 | 9 | 10–29 | 19–38 | 28–47 |
+| 15 | 14 | 15–34 | 29–48 | 43–62 |
+
+- **E 1** suits long sites and gradual escalation.
+- **E 2** is the default for an expedition of roughly eight to twelve generated rooms.
+- **E 3** suits short, brutal sites or an intentionally accelerating descent.
+
+Escalation is a site property rather than a universal difficulty switch. A sprawling ruin might override the default with E 1, while a collapsing or deeply hostile site might use E 3.
+
+### Practical considerations
+
+- The master list must extend at least to `20 + (E × expected rooms)`.
+- Crossed-off results within the current twenty-number window create rerolls. This is manageable in short sites and trivial in the web app, but must be tested at the physical table.
+- Faster escalation retires old used results sooner and should produce fewer rerolls.
+- Danger Rank should trend upward with master-list index, but later entries can still vary so escalation does not become perfectly predictable.
+
+## Alternatives considered
+
+### Literal floorplan — accepted
+
+Generate room shape, dimensions, doors, corridors, and relative placement on a grid or sketch map.
+
+**Strengths:** spatial tactics, satisfying cartography, secret rooms, loops, and strong *Four Against Darkness* / *2D6 Dungeon* influence.
+
+**Costs:** collision rules, more generation steps, awkward vertical spaces, and greater app complexity.
+
+### Abstract node map — not selected
+
+Each room is a node connected by paths; exact dimensions and placement stay fictional.
+
+**Strengths:** fast, handles unusual spaces, emphasizes decisions, and aligns with *Ironsworn: Delve*.
+
+**Costs:** less tactile cartography and fewer geometry-based tactics or discoveries.
+
+### Hybrid sketch map — not selected
+
+Record rooms as rough shapes or cards with exits and relative connections, but do not enforce exact dimensions or grid collision.
+
+**Strengths:** preserves doors, branches, loops, and a visible delve while remaining quick and tolerant of strange spaces.
+
+**Costs:** requires judgment when exact distance matters and satisfies neither strict mapping nor complete abstraction.
+
+## Proposed room-generation stack
+
+Once the map model is chosen, each new room can be generated in layers:
+
+1. **Connection:** how the party enters and what exits are visible.
+2. **Form:** size, shape, elevation, and dominant physical feature.
+3. **Function:** what the room was built or used for, informed by the site's theme and domain.
+4. **State:** ruined, occupied, flooded, desecrated, unstable, repurposed, and so on.
+5. **Main challenge:** creature, trap, hazard, puzzle, social obstacle, or another actionable problem.
+6. **Opportunity:** treasure, clue, resource, shortcut, faction leverage, or useful terrain.
+7. **Escalation:** how light, alert, depth, or a triggered dungeon event changes.
+
+These layers should be combined into as few physical rolls as practical. A future prototype may use several differently colored d6s rolled together, with one die assigned to topology, one to challenge, and one to opportunity or complication.
+
+## Accepted content structure: Challenge + Opportunity
+
+Room contents use two independent axes rolled together:
+
+- **d12 Challenge:** establishes the primary problem and potential conquest condition.
+- **d8 Opportunity:** establishes a clue, supply, usable feature, treasure, secret, shortcut, major discovery, or no extra reward.
+
+Independent axes allow monster plus treasure, trap plus shortcut, social obstacle plus clue, quiet room plus secret, and other combinations. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
+
+## Accepted site identity: Domain + Theme
+
+Every site has one **Domain** and one **Theme**.
+
+- **Domain** describes what the place is or was built to do. It supplies room functions, structural motifs, original inhabitants, mundane hazards, and likely valuables.
+- **Theme** describes what has happened to the place. It supplies current conditions, sensory motifs, altered inhabitants, supernatural or environmental hazards, and escalating manifestations.
+
+The two results combine throughout generation. A Mine may produce galleries, lifts, ore stores, and blasting chambers; Haunted turns those results toward spectral laborers, phantom collapses, cold lanterns, and ore that remembers the dead. Haunted should behave differently in a Temple because the Domain contributes sanctuaries, reliquaries, confessionals, and ritual spaces.
+
+Domain and Theme may be rolled for an unknown site or selected when the fiction already establishes its identity.
+
+Domain and Theme use reusable compact [module cards](modules/README.md), not bespoke tables for every possible pairing. The first modules are [Tomb](domains/tomb/README.md) and [Haunted](themes/haunted/README.md), demonstrated in a [Haunted Tomb vertical slice](examples/haunted-tomb/README.md).
+
+The literal-map master catalog now includes the [01–20 shallow pool](templates/01-20/README.md) and [21–50 deep and extreme pools](templates/21-50/README.md), with exact ASCII grids, terrain tags, exits, and Danger Ranks.
+
+### Draft Domain table (d20)
+
+| d20 | Domain | Likely room functions and structures |
+| ---: | --- | --- |
+| 1 | Tomb | burial chambers, offering halls, false crypts, memorial galleries |
+| 2 | Mine | galleries, lifts, ore stores, shafts, blasting chambers |
+| 3 | Temple | sanctuaries, reliquaries, confessionals, ritual courts |
+| 4 | Prison | cells, guardrooms, interrogation rooms, exercise yards |
+| 5 | Fortress | barracks, armories, gates, command rooms, murder passages |
+| 6 | Natural caverns | squeezes, grottos, sinkholes, underground rivers |
+| 7 | Sewer | channels, sluices, cisterns, maintenance walks, refuse pits |
+| 8 | Archive | stacks, reading rooms, sealed records, scriptoriums |
+| 9 | Laboratory | preparation rooms, specimen vaults, testing chambers, disposal pits |
+| 10 | Palace | audience halls, private suites, kitchens, galleries, servant ways |
+| 11 | Monastery | cells, cloisters, refectories, meditation rooms, gardens |
+| 12 | Foundry | furnaces, casting floors, fuel stores, cooling channels |
+| 13 | Cistern | reservoirs, pump rooms, aqueducts, filtration chambers |
+| 14 | Treasury | counting rooms, vaults, decoy stores, appraisal chambers |
+| 15 | Arena | fighting pits, beast pens, galleries, training rooms |
+| 16 | Undercity | homes, markets, shrines, workshops, alleys beneath streets |
+| 17 | Smuggler warren | caches, hidden docks, false walls, escape tunnels |
+| 18 | Giant works | immense halls, oversized machinery, servant ducts, monumental stairs |
+| 19 | Buried vessel | holds, cabins, engine or oar spaces, navigation chambers |
+| 20 | Impossible complex | folded corridors, repeated rooms, inverted halls, contradictory stairs |
+
+### Draft Theme table (d20)
+
+| d20 | Theme | Likely manifestations |
+| ---: | --- | --- |
+| 1 | Haunted | echoes, apparitions, unfinished duties, cold spots, possession |
+| 2 | Flooded | rising water, currents, drowned passages, aquatic intruders |
+| 3 | Infested | nests, eggs, burrows, consumed stores, territorial swarms |
+| 4 | Corrupted | mutation, blight, warped purpose, contagious influence |
+| 5 | Collapsing | unstable ceilings, shifting routes, dust, blocked exits |
+| 6 | Frozen | brittle surfaces, numbness, ice bridges, preserved horrors |
+| 7 | Smoldering | smoke, embers, heat, spreading fire, failing supports |
+| 8 | Overgrown | roots, spores, predatory plants, broken masonry reclaimed by life |
+| 9 | Plague-ridden | quarantine marks, contaminated supplies, fever, desperate survivors |
+| 10 | War-torn | barricades, unexploded weapons, patrols, divided territory |
+| 11 | Time-lost | temporal echoes, uneven decay, repeated moments, displaced occupants |
+| 12 | Dreaming | symbolic spaces, mutable distances, sleeping minds, emotional hazards |
+| 13 | Living | breathing walls, digestive passages, immune responses, hunger |
+| 14 | Clockwork | moving rooms, timed mechanisms, maintenance constructs, power loss |
+| 15 | Contested | rival factions, shifting borders, negotiations, sabotage |
+| 16 | Sealed | stale air, untouched rooms, pressure, things trapped too long |
+| 17 | Mirrored | reflections, doubles, false depth, redirected light and magic |
+| 18 | Blood-soaked | sacrifice, predatory hunger, stains that move, violent memory |
+| 19 | Lightless | devouring darkness, failed lamps, blind inhabitants, stolen shadows |
+| 20 | Awakening | dormant systems activating, sealed powers stirring, escalating omens |
+
+### Combination principle
+
+Do not generate one Domain result and one Theme result as disconnected decorations. Use one to transform the other:
+
+- **Flooded Prison:** submerged cell blocks, floating keys, air pockets occupied by desperate survivors.
+- **Clockwork Temple:** timed liturgies, mechanical saints, altars that rotate with the dungeon clock.
+- **Infested Archive:** books pulped into nests, larvae that mimic writing, catalog passages used as burrows.
+- **Collapsing Giant Works:** falling monumental tools, cracked load-bearing statues, tiny safe routes through immense machinery.
+
+The content procedure still needs tables that make this combination fast during play rather than demanding invention from scratch every room.
+
+## Design guardrails
+
+- Generate an actionable situation, not disconnected nouns.
+- Empty rooms still need information, atmosphere, navigation value, or a pressure change; they do not automatically award conquest tokens.
+- The main challenge must be identifiable enough to know when the room is conquered.
+- Results should reference the site's theme so rooms feel related rather than uniformly random.
+- A solo result must provide enough context to interpret without dictating a single solution.
+- Branching needs a finite-site or progress procedure so the map does not grow forever.
+
+## Open questions
+
+- Template footprints or rolled dimensions?
+- What grid scale should a square represent?
+- Does the site have a room budget, a progress track, or both?
+- How are loops, backtracking, secret passages, and vertical connections generated?
+- How often should rooms contain an immediate hostile creature?
+- **Deferred:** whether a future Dungeon Alert system modifies content rolls, adds encounters, or changes existing rooms.
+- How are theme and domain selected and combined?
+
+## Current build order
+
+1. **Define normal monster dungeon actions.** Combat lethality remains untestable until enemy attacks are resolved.
+2. **Define treatment and inventory.** Establish bandages, timing, capacity, and starting supplies.
+3. **Run a lone-adventurer combat and Wound test.** Use the first three rooms from Dry Run 001, including known-room travel during extraction.
+4. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
+5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+
+The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
+
+### Why the master list needs fifty templates
+
+The highest possible index on the final available sector is:
+
+| Site | Maximum generated rooms | E | Maximum index |
+| --- | ---: | ---: | ---: |
+| Compact 3×3 | 9 | 3 | `20 + (3 × 8) = 44` |
+| Standard 4×4 | 16 | 2 | `20 + (2 × 15) = 50` |
+| Sprawling 5×5 | 25 | 1 | `20 + (1 × 24) = 44` |
+
+Therefore templates 1–50 cover every default size and escalation pairing without wrapping, clamping, or placeholder results.
+- How are Domain and Theme selected and combined into content?
