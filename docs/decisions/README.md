@@ -1036,3 +1036,13 @@ A full crossbow deals 2 damage on a hit. A hand crossbow and buckler deals the n
 **Result:** Four adventurers entered; three extracted. One died in Room 1. Another suffered a treated Gnawed Wound and permanent Strength Scar in Room 2. Rooms 2 and 4 were lit, suppressing wandering rolls and providing safe ground. The party conquered four rooms, entered Room 5 after portable light expired, failed three checks in darkness, and retreated after one adventurer reached 0 HP.
 
 **Consequences:** Pressured reload made the hand crossbow's action cost meaningful and removed its erroneous damage dominance. One starting torch made the chosen lantern and persistent room light essential. Lantern fuel and relighting remain undefined. The full 2-damage crossbow still needs a direct comparison with great weapons. The complete fixture is recorded in [Playtest 005: The Light Failed at the Memorial](../playtests/005-corrected-five-room-party/README.md).
+
+## 2026-04-06 — Complete two-adventurer Playtest 006
+
+**Status:** Completed
+
+**Decision:** Generate two new adventurers and run them through the first five Haunted Tomb rooms and extraction using current light, darkness, opposition, Instinct, treatment, travel, and Skill Token rules.
+
+**Result:** Both adventurers extracted after conquering four rooms in fifteen exploration turns. Four bone scuttlers inflicted a Gnawed Wound that treatment converted into a permanent Strength Scar. The pair carried one starting torch and selected one additional torch; both expired before Room 5, where darkness caused two failures and retreat. No wandering enemies appeared across eight eligible rolls.
+
+**Consequences:** Two-adventurer opposition scaling produced a natural Wound without a death. Light pressure and darkness worked, while a Lightable room without a remaining flame offered no safety. A highly relevant Past resolved three major challenges and consumed most of one adventurer's Skill Tokens; the other repeatedly reached the token cap. Terrain, lanterns, group checks, special monster actions, content breadth, recovery, oracle rules, and campaign systems remain incomplete. The full fixture is recorded in [Playtest 006: Two Lights Before Darkness](../playtests/006-two-adventurers/README.md).

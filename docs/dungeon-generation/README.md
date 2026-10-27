@@ -440,6 +440,8 @@ The first extended party expedition is recorded in [Playtest 004: The Choir Chos
 
 Its corrected replay under the current crossbow and light rules is [Playtest 005: The Light Failed at the Memorial](../playtests/005-corrected-five-room-party/README.md).
 
+The first current-rules two-adventurer expedition is [Playtest 006: Two Lights Before Darkness](../playtests/006-two-adventurers/README.md).
+
 ### Why the master list needs fifty templates
 
 The highest possible index on the final available sector is:
