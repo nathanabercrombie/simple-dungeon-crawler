@@ -874,3 +874,15 @@ Conquest does not erase persistent traversal features. Crossing a pit, difficult
 **Rationale:** Known routes should be faster than first exploration without becoming free or perfectly safe. Persistent terrain makes route choice and preparation matter during extraction, while the danger roll lets a conquered site change behind the party.
 
 **Consequences:** Active light loses one turn for each travel turn and each persistent traversal cost. A room made dangerous by the travel roll remains conquered and cannot award its conquest Skill Tokens again. The GM or solo player introduces a context-appropriate new danger using the room, Domain, Theme, and current fiction. The three-room allowance and 1-in-6 chance require playtesting.
+
+## 2026-03-31 — Make normal monster attacks automatic
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** When the dungeon controls the turn, a monster that is fictionally able to attack may choose a plausible target and deal 1 damage without making an attack roll or calling for a defense check. Apply relevant protection, then return control to the adventurers.
+
+If no monster can currently reach or attack an adventurer, it must use the dungeon action to close distance, overcome cover, block an exit, improve its position, or take another fictionally supported action. A coordinated group or swarm damages only one adventurer with a normal attack.
+
+**Rationale:** The dungeon already earned one meaningful action through an adventurer's failed consequential check. Another routine roll would weaken that consequence, slow combat, and risk nested turn handoffs. Automatic damage makes positioning and preventive choices more important than reactive dice.
+
+**Consequences:** Normal monster attacks cannot critically succeed or fail. Guard, resistance, armor, position, terrain, defensive preparation, and monster traits may prevent, redirect, or modify damage when applicable. Special attacks may override the defaults but should be telegraphed. Any reaction check required by a special dungeon action resolves only that action and never grants the dungeon another action.

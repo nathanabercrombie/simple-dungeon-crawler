@@ -22,6 +22,14 @@ Conquest does not erase persistent traversal features. Crossing a pit, difficult
 
 A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the recurring cost when appropriate. The three-room allowance and 1-in-6 danger chance are accepted for initial playtesting.
 
+## Accepted normal monster attack
+
+When the dungeon controls the turn, a monster that is fictionally able to attack may choose a plausible target and deal 1 damage without an attack roll or defense check. Apply Guard, resistance, and other relevant protection, then return control to the adventurers.
+
+If no monster can currently reach or attack an adventurer, the dungeon must use its action to close distance, overcome cover, block an exit, improve the monsters' position, or take another action supported by the fiction. A coordinated group or swarm damages only one adventurer with a normal attack.
+
+Normal monster attacks cannot critically succeed or fail. Special attacks may override the defaults but should be clearly telegraphed. An adventurer reaction check called for by a special dungeon action resolves that action only and never grants the dungeon another action.
+
 ## Accepted map model: literal floorplan
 
 Generate exact room shapes, doors, corridors, and relative placement on a square grid. The procedure must handle collisions, loops, secret spaces, stairs, and other vertical connections both by hand and in the local web app.
@@ -381,12 +389,11 @@ The content procedure still needs tables that make this combination fast during 
 
 ## Current build order
 
-1. **Define normal monster dungeon actions.** Combat lethality remains untestable until enemy attacks are resolved.
-2. **Define treatment and inventory.** Establish bandages, timing, capacity, and starting supplies.
-3. **Run a lone-adventurer combat and Wound test.** Use the first three rooms from Dry Run 001, including known-room travel during extraction.
-4. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+1. **Define treatment and inventory.** Establish bandages, timing, capacity, and starting supplies.
+2. **Run a lone-adventurer combat and Wound test.** Use the first three rooms from Dry Run 001, including known-room travel during extraction.
+3. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
+4. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+5. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 

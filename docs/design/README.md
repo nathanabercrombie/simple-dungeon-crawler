@@ -372,4 +372,21 @@ This freedom does not let an adventurer act from an impossible position or solve
 - Can adventurers voluntarily yield control for a tactical benefit?
 - Do failed exploration rolls both trigger a dungeon turn and consume extra light time, or does the consequence choose one of those costs?
 
-One meaningful action is a unit of fictional impact, not necessarily one creature moving once. A coordinated group or swarm may act together as one threat. Combat design will later define how group actions are resolved.
+One meaningful action is a unit of fictional impact, not necessarily one creature moving once. A coordinated group or swarm may act together as one threat.
+
+### Normal monster attacks
+
+When the dungeon controls the turn, a monster that is fictionally able to attack may make a normal monster attack:
+
+1. Choose an engaged, exposed, or otherwise plausible target.
+2. Deal 1 damage without making an attack roll or calling for a defense check.
+3. Apply any relevant Guard, resistance, or other protection.
+4. Return control to the adventurers.
+
+The dungeon already earned its meaningful action through an adventurer's failed check. A second routine roll would dilute that consequence and could create nested turn handoffs.
+
+A monster cannot deal damage merely because the dungeon controls the turn. If it cannot currently reach or attack an adventurer, it must use its action to close distance, overcome cover, surround someone, block an exit, improve its position, or do something else supported by the fiction.
+
+A coordinated group or swarm acting as one threat damages only one adventurer with a normal monster attack. Because the attack has no roll, it cannot critically succeed or fail. Position, terrain, shields, armor, defensive preparation, and monster traits may prevent, redirect, or modify damage when their rules apply.
+
+Special monster attacks may break these defaults but should be clearly telegraphed. If a special dungeon action calls for an adventurer reaction check, that check resolves only the current action and never grants the dungeon another action. Control returns to the adventurers afterward regardless of the result.
