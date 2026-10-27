@@ -2,7 +2,9 @@
 
 These are the first twenty exact-grid footprint prototypes. They are available for the first room through a plain d20 roll. Later rolls use the accepted sliding escalation formula.
 
-Individual layouts are proposed material for testing and cutting. Their Danger Rank, geometry, and terrain are fixed by the template; contents are generated separately.
+Individual layouts are proposed material for testing and cutting. Their Danger Rank, geometry, terrain, and Lighting are fixed by the template; contents are generated separately.
+
+Lighting uses `Fixtures`, `Inherent`, or `None`. Fixtures can be lit with a flame; Inherent sources begin illuminated unless the generated state suppresses them.
 
 ## Placement rules
 
@@ -36,28 +38,28 @@ Individual layouts are proposed material for testing and cutting. Their Danger R
 
 ## Catalog summary
 
-| d20 | Name | Danger | Visible exits | Key terrain | Mirror? |
-| ---: | --- | ---: | ---: | --- | --- |
-| 1 | Square antechamber | Easy 9 | 2 | Open floor | No effect |
-| 2 | Narrow chamber | Easy 9 | 2 | Long sight line | No effect |
-| 3 | Crooked annex | Easy 9 | 2 | Blind corner | Yes |
-| 4 | Lesser pillared hall | Easy 9 | 2 | Four pillars | No effect |
-| 5 | Divided alcoves | Easy 9 | 2 | Partial walls | Yes |
-| 6 | Dead-end shrine | Easy 9 | 0 | Dais and pillar | No effect |
-| 7 | Rubble breach | Standard 12 | 2 | Central rubble | Yes |
-| 8 | Branching gallery | Standard 12 | 3 | Open intersection | Yes |
-| 9 | Pit bridge | Standard 12 | 2 | Pit and bridge | No effect |
-| 10 | Balcony chamber | Standard 12 | 2 | Raised gallery | Yes |
-| 11 | Flooded channel | Standard 12 | 2 | Water and dry path | No effect |
-| 12 | Twin cells | Standard 12 | 2 plus hidden | Divider and gate | Yes |
-| 13 | Statue court | Standard 12 | 2 | Four statues | No effect |
-| 14 | Broken crossing | Standard 12 | 2 | Interrupted pit crossing | Yes |
-| 15 | Sunken court | Standard 12 | 2 | Lower central floor | Yes |
-| 16 | Spiral descent | Standard 12 | 1 plus downward | Ring path and stair | Yes |
-| 17 | Gauntlet hall | Hard 15 | 2 | Repeated raised obstacles | No effect |
-| 18 | Hanging gallery | Hard 15 | 2 | Balcony around deep pit | No effect |
-| 19 | Collapsed great hall | Hard 15 | 3 | Rubble fields | Yes |
-| 20 | Descending sanctum | Hard 15 | 1 plus downward | Raised perimeter and central stair | No effect |
+| d20 | Name | Danger | Visible exits | Key terrain | Lighting | Mirror? |
+| ---: | --- | ---: | ---: | --- | --- | --- |
+| 1 | Square antechamber | Easy 9 | 2 | Open floor | None | No effect |
+| 2 | Narrow chamber | Easy 9 | 2 | Long sight line | None | No effect |
+| 3 | Crooked annex | Easy 9 | 2 | Blind corner | None | Yes |
+| 4 | Lesser pillared hall | Easy 9 | 2 | Four pillars | Fixtures | No effect |
+| 5 | Divided alcoves | Easy 9 | 2 | Partial walls | None | Yes |
+| 6 | Dead-end shrine | Easy 9 | 0 | Dais and pillar | Fixtures | No effect |
+| 7 | Rubble breach | Standard 12 | 2 | Central rubble | None | Yes |
+| 8 | Branching gallery | Standard 12 | 3 | Open intersection | Fixtures | Yes |
+| 9 | Pit bridge | Standard 12 | 2 | Pit and bridge | None | No effect |
+| 10 | Balcony chamber | Standard 12 | 2 | Raised gallery | Fixtures | Yes |
+| 11 | Flooded channel | Standard 12 | 2 | Water and dry path | None | No effect |
+| 12 | Twin cells | Standard 12 | 2 plus hidden | Divider and gate | None | Yes |
+| 13 | Statue court | Standard 12 | 2 | Four statues | Fixtures | No effect |
+| 14 | Broken crossing | Standard 12 | 2 | Interrupted pit crossing | None | Yes |
+| 15 | Sunken court | Standard 12 | 2 | Lower central floor | None | Yes |
+| 16 | Spiral descent | Standard 12 | 1 plus downward | Ring path and stair | None | Yes |
+| 17 | Gauntlet hall | Hard 15 | 2 | Repeated raised obstacles | None | No effect |
+| 18 | Hanging gallery | Hard 15 | 2 | Balcony around deep pit | None | No effect |
+| 19 | Collapsed great hall | Hard 15 | 3 | Rubble fields | None | Yes |
+| 20 | Descending sanctum | Hard 15 | 1 plus downward | Raised perimeter and central stair | Fixtures | No effect |
 
 ## 01 — Square antechamber
 

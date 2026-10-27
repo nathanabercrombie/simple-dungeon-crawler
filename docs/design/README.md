@@ -85,9 +85,15 @@ A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapo
 
 Without sufficient light, every adventurer check has disadvantage. Automatic monster attacks remain automatic. A specific ability, sense, or item can explicitly ignore darkness.
 
-When generating a room, roll a d6. On 1–2, the room contains existing sconces, braziers, lamps, fireplaces, or similar fixtures that can illuminate it. Mark the room **Lightable**. Lighting accessible fixtures requires a flame but consumes no exploration turn.
+Every room template has an authored **Lighting** entry based on its architecture and terrain:
 
-Once lit, the room remains lit for the expedition unless something explicitly extinguishes it. Adventurers in the room do not suffer darkness disadvantage. A lit room also prevents wandering enemies: do not make its known-room danger roll, and wandering enemies do not enter while its light persists. Original inhabitants and challenges already present in the room are unaffected.
+- **Fixtures:** the layout contains sconces, braziers, lamps, fireplaces, or similar room-wide lighting. A flame can light accessible fixtures without consuming an exploration turn.
+- **Inherent:** the layout contains an active light source such as furnaces or lava and begins illuminated unless its generated state explicitly suppresses that source.
+- **None:** the layout has no persistent room-wide light. Portable light still works normally.
+
+Fixture and Inherent lighting create **secured light**. Once lit, fixtures remain lit for the expedition unless something explicitly extinguishes them. Adventurers in secured light do not suffer darkness disadvantage. Secured light also prevents wandering enemies: do not make the room's known-room danger roll, and wandering enemies do not enter while the light persists. Original inhabitants and challenges already present in the room are unaffected.
+
+A carried or placed torch illuminates the immediate situation but does not count as secured room light and does not suppress wandering enemies.
 
 ### Travel through known rooms
 

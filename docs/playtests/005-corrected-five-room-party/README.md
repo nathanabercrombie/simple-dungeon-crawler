@@ -1,5 +1,7 @@
 # Playtest 005: The Light Failed at the Memorial
 
+> **Lighting update:** This playtest used the now-superseded independent d6 Lightable-room procedure. Current rooms use template-authored Lighting metadata. Its crossbow, darkness, combat, and resource findings remain useful, but its lit-room locations are historical results.
+
 ## Purpose
 
 Correct Playtest 004 after discovering that its hand crossbow and buckler had incorrectly received the full crossbow's 2-damage Loaded Shot. Replay the same party and rooms with:

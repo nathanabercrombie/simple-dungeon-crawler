@@ -7,6 +7,8 @@ These exact-grid prototypes complete the fifty-template master list required by 
 
 All templates fit within a 9×9 footprint, excluding the surrounding sector margin. `E` is the initial attachment point; every `X`, `U`, and `D` is another potential route. Contents remain separate.
 
+Lighting uses `Fixtures`, `Inherent`, or `None`. Fixtures can be lit with a flame; Inherent sources begin illuminated unless the generated state suppresses them.
+
 ## Additional legend
 
 Use the [opening-pool legend](../01-20/README.md) plus:
@@ -23,38 +25,38 @@ Use the [opening-pool legend](../01-20/README.md) plus:
 
 ## Catalog summary
 
-| d20+ | Name | Danger | Onward routes | Key terrain |
-| ---: | --- | ---: | ---: | --- |
-| 21 | Greater colonnade | Hard 15 | 3 | Pillars and crossfire lanes |
-| 22 | Ring of absence | Hard 15 | 3 | Circular pit and isolated center |
-| 23 | Double bridge hall | Hard 15 | 2 | Parallel pit crossings |
-| 24 | Broken balcony | Hard 15 | 3 | Raised perimeter and central divide |
-| 25 | Floodgate chamber | Hard 15 | 3 | Water, gates, and machinery |
-| 26 | Cage aisle | Hard 15 | 3 | Cells and interior gates |
-| 27 | Furnace lanes | Hard 15 | 3 | Heat sources and divided lanes |
-| 28 | Split stair hall | Hard 15 | 3 | Raised and sunken flanks |
-| 29 | Shifting cross | Hard 15 | 3 | Moving mechanisms and narrow arms |
-| 30 | Shaft rim | Hard 15 | 3 plus down | Ring pit and central descent |
-| 31 | Twin dais hall | Hard 15 | 3 | Opposed raised positions |
-| 32 | Rubble labyrinth | Hard 15 | 3 | Broken walls and difficult routes |
-| 33 | Triple chasm | Extreme 18 | 3 | Repeated narrow crossings |
-| 34 | Suspended causeways | Extreme 18 | 3 | Causeways over a broad pit |
-| 35 | Flooded amphitheater | Extreme 18 | 3 | Terraces, water, and center stage |
-| 36 | Pillar maze | Extreme 18 | 3 | Broken sight lines and constrictions |
-| 37 | Collapsing terraces | Extreme 18 | 3 | Elevation, rubble, and sunken center |
-| 38 | Mirror gallery | Extreme 18 | 3 | Reflections and deceptive lanes |
-| 39 | Gear floor | Extreme 18 | 3 | Dense moving machinery |
-| 40 | Execution pit | Extreme 18 | 3 | Balcony, pit, and central fixture |
-| 41 | Lava channels | Extreme 18 | 3 | Lethal liquid and narrow bridges |
-| 42 | Nested balconies | Extreme 18 | 5 | Multiple elevations and routes |
-| 43 | Prison wheel | Extreme 18 | 3 | Cells and rotating mechanism |
-| 44 | Ossuary spiral | Extreme 18 | 3 plus down | Ring route and central descent |
-| 45 | Broken aqueduct | Extreme 18 | 3 | Water and damaged crossing |
-| 46 | Giant mechanism | Extreme 18 | 3 plus down | Machinery, pillars, and shaft |
-| 47 | Void lattice | Extreme 18 | 5 | Intersecting bridges over void |
-| 48 | Throne labyrinth | Extreme 18 | 3 | Partial walls and central throne |
-| 49 | Shattered nexus | Extreme 18 | 3 plus up/down | Pit ring and vertical routes |
-| 50 | Heart chamber | Extreme 18 | 5 plus down | Raised ring, pillars, and objective fixture |
+| d20+ | Name | Danger | Onward routes | Key terrain | Lighting |
+| ---: | --- | ---: | ---: | --- | --- |
+| 21 | Greater colonnade | Hard 15 | 3 | Pillars and crossfire lanes | Fixtures |
+| 22 | Ring of absence | Hard 15 | 3 | Circular pit and isolated center | None |
+| 23 | Double bridge hall | Hard 15 | 2 | Parallel pit crossings | None |
+| 24 | Broken balcony | Hard 15 | 3 | Raised perimeter and central divide | Fixtures |
+| 25 | Floodgate chamber | Hard 15 | 3 | Water, gates, and machinery | None |
+| 26 | Cage aisle | Hard 15 | 3 | Cells and interior gates | Fixtures |
+| 27 | Furnace lanes | Hard 15 | 3 | Heat sources and divided lanes | Inherent |
+| 28 | Split stair hall | Hard 15 | 3 | Raised and sunken flanks | None |
+| 29 | Shifting cross | Hard 15 | 3 | Moving mechanisms and narrow arms | None |
+| 30 | Shaft rim | Hard 15 | 3 plus down | Ring pit and central descent | None |
+| 31 | Twin dais hall | Hard 15 | 3 | Opposed raised positions | Fixtures |
+| 32 | Rubble labyrinth | Hard 15 | 3 | Broken walls and difficult routes | None |
+| 33 | Triple chasm | Extreme 18 | 3 | Repeated narrow crossings | None |
+| 34 | Suspended causeways | Extreme 18 | 3 | Causeways over a broad pit | None |
+| 35 | Flooded amphitheater | Extreme 18 | 3 | Terraces, water, and center stage | None |
+| 36 | Pillar maze | Extreme 18 | 3 | Broken sight lines and constrictions | None |
+| 37 | Collapsing terraces | Extreme 18 | 3 | Elevation, rubble, and sunken center | None |
+| 38 | Mirror gallery | Extreme 18 | 3 | Reflections and deceptive lanes | Fixtures |
+| 39 | Gear floor | Extreme 18 | 3 | Dense moving machinery | None |
+| 40 | Execution pit | Extreme 18 | 3 | Balcony, pit, and central fixture | Fixtures |
+| 41 | Lava channels | Extreme 18 | 3 | Lethal liquid and narrow bridges | Inherent |
+| 42 | Nested balconies | Extreme 18 | 5 | Multiple elevations and routes | Fixtures |
+| 43 | Prison wheel | Extreme 18 | 3 | Cells and rotating mechanism | Fixtures |
+| 44 | Ossuary spiral | Extreme 18 | 3 plus down | Ring route and central descent | None |
+| 45 | Broken aqueduct | Extreme 18 | 3 | Water and damaged crossing | None |
+| 46 | Giant mechanism | Extreme 18 | 3 plus down | Machinery, pillars, and shaft | None |
+| 47 | Void lattice | Extreme 18 | 5 | Intersecting bridges over void | None |
+| 48 | Throne labyrinth | Extreme 18 | 3 | Partial walls and central throne | Fixtures |
+| 49 | Shattered nexus | Extreme 18 | 3 plus up/down | Pit ring and vertical routes | None |
+| 50 | Heart chamber | Extreme 18 | 5 plus down | Raised ring, pillars, and objective fixture | Fixtures |
 
 ## 21 — Greater colonnade
 

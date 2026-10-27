@@ -34,11 +34,15 @@ An ordinary wandering group has at least **1 total HP per active adventurer, min
 
 Escaped wanderers remain in the dungeon. Record their location and let their Instinct determine whether they pursue, occupy a room, move elsewhere, or interact with other inhabitants.
 
-### Lightable rooms
+### Template-authored lighting
 
-When generating a room, roll a d6. On 1–2, mark it **Lightable** and interpret existing sconces, braziers, lamps, fireplaces, or similar fixtures through its Domain, Theme, and terrain. Lighting accessible fixtures requires a flame but no exploration turn.
+Do not roll independently to determine whether a room is Lightable. Every room template specifies one of three Lighting states according to its architecture and terrain:
 
-A lit room remains lit for the expedition unless explicitly extinguished. It removes darkness disadvantage while the adventurers are inside and prevents wandering enemies from entering or being generated there. It does not remove the room's original inhabitants, challenge, or other hazards.
+- **Fixtures:** persistent room-wide lights can be ignited with a flame and no exploration turn;
+- **Inherent:** furnaces, lava, or another built-in source illuminate the room unless its generated state suppresses them;
+- **None:** only portable or newly introduced light is available.
+
+Fixture and Inherent lighting create **secured light**. Secured light removes darkness disadvantage inside the room and prevents wandering enemies from entering or being generated there. Portable light does not suppress wandering enemies. Domain, Theme, and room state explain the fixtures and may explicitly damage, extinguish, or disable them without changing the template's normal state.
 
 Room Supply and loot results can provide portable torches. A found torch is fresh and lasts six exploration turns unless the specific result says it is partly burned, damaged, unusual, or bundled with additional torches.
 

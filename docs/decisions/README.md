@@ -1005,7 +1005,7 @@ Without sufficient light, every adventurer check has disadvantage. Automatic mon
 
 ## 2026-04-03 — Make one third of rooms persistently lightable
 
-**Status:** Accepted for initial playtesting
+**Status:** Superseded by template-authored lighting
 
 **Decision:** Roll a d6 when generating each room. On 1–2, it contains existing light fixtures. Lighting accessible fixtures requires a flame but no exploration turn. Once lit, the room remains illuminated for the expedition unless explicitly extinguished.
 
@@ -1014,6 +1014,18 @@ A lit room removes darkness disadvantage while occupied and prevents wandering e
 **Rationale:** Persistent light creates safe landmarks and gives route choice lasting consequences. A one-third frequency makes such rooms important without allowing the whole dungeon to be illuminated routinely.
 
 **Consequences:** Known-room travel skips the wandering-enemy roll in lit rooms. Reaching lit ground can break wandering pursuit. Room generation needs one additional d6 result or an efficient way to combine the lightability roll with existing dice.
+
+## 2026-04-07 — Author lighting in room templates
+
+**Status:** Accepted
+
+**Decision:** Remove the independent room-lightability d6. Every room template instead has a Lighting entry of Fixtures, Inherent, or None based on its architecture and terrain. Fixtures require a flame but no exploration turn. Inherent sources illuminate the room unless its generated state explicitly suppresses them.
+
+Fixture and Inherent lighting create secured light, which removes darkness disadvantage and prevents wandering enemies. A carried or placed torch provides portable illumination but does not suppress wandering encounters.
+
+**Rationale:** Lighting should emerge from the room's physical identity rather than an unrelated one-third roll. Shrines, galleries, prisons, furnaces, lava channels, and ceremonial chambers support persistent light in ways flooded channels, broken crossings, rubble fields, and open chasms do not.
+
+**Consequences:** Existing templates receive authored Lighting metadata. The initial catalog contains 16 Fixture templates, 2 Inherent templates, and 32 with None, giving secured light to 18 of 50 layouts. Domain, Theme, or room state may explain, damage, extinguish, or disable the expected source. Playtests using random Lightable rolls remain historical fixtures rather than the current procedure.
 
 ## 2026-04-03 — Require pressured crossbow reload checks
 

@@ -1,5 +1,7 @@
 # Playtest 006: Two Lights Before Darkness
 
+> **Lighting update:** This playtest used the now-superseded independent d6 Lightable-room procedure. Current rooms use template-authored Lighting metadata. Its two-adventurer, Wound, Skill Token, darkness, and travel findings remain useful, but Room 5 would not now become Lightable merely from a d6 result.
+
 ## Purpose
 
 Run two newly generated adventurers through five Haunted Tomb rooms and extraction using the current rules. Identify whether the core game is playable and which procedures remain unresolved.
