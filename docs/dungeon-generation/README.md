@@ -389,12 +389,16 @@ The content procedure still needs tables that make this combination fast during 
 
 ## Current build order
 
-1. **Run a lone-adventurer combat and Wound test.** Use the first three rooms from Dry Run 001, including treatment and known-room travel during extraction.
-2. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-3. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-4. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+1. **Clarify persistent traversal timing.** Decide whether the new-room turn includes initial traversal or every crossing costs an additional turn.
+2. **Define provisional starting light.** Set starting quantity and duration after resolving traversal timing.
+3. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
+4. **Run short combat seeds.** Measure natural Wound and medkit frequency; Playtest 002 required a controlled drill.
+5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
+
+The first lone-adventurer rules test is recorded in [Playtest 002: The Reliquary Thief](../playtests/002-lone-adventurer/README.md).
 
 ### Why the master list needs fifty templates
 

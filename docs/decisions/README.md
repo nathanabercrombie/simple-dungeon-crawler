@@ -908,3 +908,13 @@ Consumables are removed after use; durable items remain until lost, broken, spen
 **Rationale:** Automatic safe treatment keeps the procedure quick, while its exploration-turn cost, finite supply, and permanent Scar preserve attrition. Requiring a check only under immediate pressure makes emergency treatment dangerous without making ordinary treatment unreliable.
 
 **Consequences:** Active light loses one turn whenever treatment is attempted. Field Surgeon and Cure Wounds remain valuable because they can bypass supply, checks, or permanent consequences according to their individual rules. The medkit's single use must be tracked despite the absence of general carrying capacity.
+
+## 2026-04-01 — Complete lone-adventurer Playtest 002
+
+**Status:** Completed
+
+**Decision:** Run one fixed-seed adventurer through the first three rooms of Dry Run 001, then perform a separate controlled Wound drill because no Wound occurred naturally. Preserve character generation, action rolls, exploration turns, temporary rulings, and findings as a reproducible fixture.
+
+**Result:** Automatic monster damage resolved cleanly after two failed actions. The adventurer conquered all three rooms and extracted, using exactly twelve light turns under the tested traversal interpretation. Seven of those turns came from persistent traversal. Two known-room danger rolls caused no new danger. The controlled drill confirmed medkit and Scar bookkeeping but did not measure natural Wound frequency.
+
+**Consequences:** Clarify whether initial room entry includes the room's first persistent traversal before balancing light. Starting light quantity and duration, reawakened-room danger generation, exact terrain effects, and natural Wound frequency remain open. The complete fixture is recorded in [Playtest 002: The Reliquary Thief](../playtests/002-lone-adventurer/README.md).
