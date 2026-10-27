@@ -57,7 +57,7 @@ Results 1–6 assign Strength −2. Results 7–12 assign Mind −2.
 | 1 | Slight | Strength | Quilted coat | **Guard Projectile** | Little protection from close heavy blows |
 | 2 | Sickly | Strength | Waxed plague coat and mask | **Resist Poison or Disease** once per fight | Mask muffles speech and alarms strangers |
 | 3 | Hollow-boned | Strength | Feather-lined cloak | Ignore damage from an ordinary Near-distance fall | Easily torn, burned, or waterlogged |
-| 4 | Starved | Strength | Pocketed scavenger leathers | Carry two additional small items without encumbrance | Food deprivation and frailty remain obvious |
+| 4 | Starved | Strength | Pocketed scavenger leathers | Conceal and protect two small carried items from an ordinary search or mishap | Food deprivation and frailty remain obvious |
 | 5 | Burn-scarred | Strength | Salamander-hide vest | **Resist Fire** | The treated hide has a pungent, recognizable odor |
 | 6 | Delicate | Strength | Duelist's reinforced coat | **Reinforced** while one hand remains free | Benefit ends while using two-handed gear |
 | 7 | Impulsive | Mind | Light brigandine | After a successful attack, reposition nearby | The character habitually overextends and pursues |
@@ -76,7 +76,7 @@ Results 1–6 assign Strength −2. Results 7–12 assign Agility −2.
 | 1 | Frail | Strength | Warded robes | **Guard Arcane** | Physically fragile cloth |
 | 2 | Withered | Strength | Gravecloth mantle | **Insulated Profane** | Gives the wearer the scent and chill of a tomb |
 | 3 | Sickly | Strength | Beaked mask and alchemical apron | **Resist Poison or Disease** once per fight | Bulky tools and unsettling appearance |
-| 4 | Book-laden | Strength | Scroll coat and reinforced satchel | Carry one spellbook without encumbrance | Vulnerable to fire, water, and theft |
+| 4 | Book-laden | Strength | Scroll coat and reinforced satchel | Keep one stowed spellbook ready to consult without occupying a hand | Vulnerable to fire, water, and theft |
 | 5 | Fasting | Strength | Pilgrim's mantle and prayer cords | **Insulated Fear** | A vow restricts food, comfort, speech, or another ordinary freedom |
 | 6 | Delicate | Strength | Glass-thread robe | **Guard Arcane:** a prevented magical hit flashes back harmlessly | Fragile and difficult to repair without occult materials |
 | 7 | Ritually encumbered | Agility | Ceremonial mail | **Reinforced** | Bells, seals, and layered vestments make stealth difficult |

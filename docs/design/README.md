@@ -223,6 +223,18 @@ For example, treating a Bleeding Wound from a sword might leave a Strength −1 
 
 Scars are not active Wounds, so a scarred adventurer does not die merely from receiving one later Wound.
 
+A **medkit** is a single-use treatment item. Spend one exploration turn and consume the medkit to convert one Wound into its Scar. No check is required when the adventurer has enough safety and time to work.
+
+Attempting treatment during immediate danger requires an appropriate check and still consumes one exploration turn. On success, consume the medkit and convert the Wound. On failure, the Wound remains and control passes to the dungeon; the medkit is not consumed unless the fiction specifically causes it to be lost or ruined. A lone adventurer may treat their own Wound.
+
+### Inventory
+
+Each adventurer begins with one additional useful item beyond the gear supplied by the rest of character creation. Choose it or roll it from a short expedition-item table. Examples include a medkit, rope, lantern, crowbar, climbing tools, flask of oil, or other similarly practical gear.
+
+There are no inventory slots, weight totals, or carrying-capacity statistics. Adventurers may take and retain useful items found during an expedition. Track consumables and remove them after use; durable items remain until they are lost, broken, spent, or abandoned.
+
+The fiction still limits what an adventurer can carry or use. An enormous object cannot be carried casually, and a bulky or awkward object may require both hands, assistance, or impose a situational disadvantage. These judgments do not create a general encumbrance subsystem.
+
 ### Why use renewable HP
 
 - Each fight can begin with a known defensive buffer, simplifying encounter balance.
@@ -236,7 +248,6 @@ Scars are not active Wounds, so a scarred adventurer does not die merely from re
 - What acute effects and resulting attribute penalties belong to each Wound type?
 - At what attribute value does accumulated Scar loss cause incapacity or death?
 - How can attribute loss and Scars recover, if at all?
-- What actions, supplies, and checks are required to treat a Wound?
 - What precise fictional boundary restores HP?
 
 ### Adventurer HP scale

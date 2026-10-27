@@ -213,11 +213,19 @@ A useful phrase:
 - The table needs a choice valve: roll once, roll twice and choose, or freely select.
 - Party generation needs duplicate-handling guidance without making repeated concepts impossible.
 
+## Additional starting item and inventory
+
+After receiving the gear supplied by character creation, each adventurer gains one additional useful item. The player may choose it or roll it from a short expedition-item table. Example items include a medkit, rope, lantern, crowbar, climbing tools, or flask of oil.
+
+There is no numerical carrying capacity, slot inventory, or encumbrance total. Adventurers can keep useful items found during play, subject to ordinary fictional limits for enormous, bulky, or awkward objects. Consumables are crossed off after use; durable items remain until lost, broken, spent, or abandoned.
+
+A medkit is single-use. Treating a Wound takes one exploration turn and consumes the medkit on success. Treatment in safety requires no check; treatment during immediate danger does. A failed dangerous treatment leaves the Wound and medkit intact unless the fiction specifically ruins the supply, and control passes to the dungeon normally.
+
 ## Current build order
 
 1. **Cut candidate catalogs:** reduce signature gear, Burden/Armor, Past, and Knack results to the desired table sizes and setting tone.
 2. **Resolve protection rules:** choose which candidate armor vocabulary survives and define stacking with parrying, shields, and other HP benefits.
-3. **Complete starting kit:** establish light, bandages or treatment supplies, rations, inventory limits, and any starting spellbook procedure.
+3. **Complete remaining starting kit:** establish light, rations, the expedition-item table, and any starting spellbook procedure.
 4. **Generate sample adventurers:** create both lone heroes and parties entirely through the tables.
 5. **Run a paper playtest:** test several rooms, fights, Wounds, treatment, and retreat before building the web generator.
 

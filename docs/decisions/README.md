@@ -886,3 +886,25 @@ If no monster can currently reach or attack an adventurer, it must use the dunge
 **Rationale:** The dungeon already earned one meaningful action through an adventurer's failed consequential check. Another routine roll would weaken that consequence, slow combat, and risk nested turn handoffs. Automatic damage makes positioning and preventive choices more important than reactive dice.
 
 **Consequences:** Normal monster attacks cannot critically succeed or fail. Guard, resistance, armor, position, terrain, defensive preparation, and monster traits may prevent, redirect, or modify damage when applicable. Special attacks may override the defaults but should be telegraphed. Any reaction check required by a special dungeon action resolves only that action and never grants the dungeon another action.
+
+## 2026-03-31 — Use one extra starting item without carrying capacity
+
+**Status:** Accepted
+
+**Decision:** Each adventurer begins with one additional useful item beyond their other character-creation gear. The player may choose it or roll it from a short expedition-item table. Adventurers can also take useful items found during play. Do not use inventory slots, weight totals, or a carrying-capacity statistic.
+
+Consumables are removed after use; durable items remain until lost, broken, spent, or abandoned. Ordinary fiction still limits enormous, bulky, or awkward objects and may require free hands, assistance, or situational disadvantage.
+
+**Rationale:** One extra item makes preparation and emergent problem solving part of every character without adding an inventory-management subsystem. Fictional limits handle exceptional objects more directly than universal capacity arithmetic.
+
+**Consequences:** Candidate armor benefits that increased carrying capacity must be revised. Found items remain useful rewards even though inventory space is not itself a pressure. A short starting-item table still needs to be written.
+
+## 2026-03-31 — Treat Wounds with single-use medkits
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** A medkit is a single-use item. Spend one exploration turn and consume it to convert one Wound into its normal Scar. Treatment in sufficient safety requires no check. Treatment during immediate danger requires an appropriate check; failure leaves the Wound and medkit intact unless the fiction specifically ruins the supply, and gives the dungeon its normal action. A lone adventurer can treat their own Wound.
+
+**Rationale:** Automatic safe treatment keeps the procedure quick, while its exploration-turn cost, finite supply, and permanent Scar preserve attrition. Requiring a check only under immediate pressure makes emergency treatment dangerous without making ordinary treatment unreliable.
+
+**Consequences:** Active light loses one turn whenever treatment is attempted. Field Surgeon and Cure Wounds remain valuable because they can bypass supply, checks, or permanent consequences according to their individual rules. The medkit's single use must be tracked despite the absence of general carrying capacity.
