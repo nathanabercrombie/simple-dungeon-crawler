@@ -40,6 +40,8 @@ When generating a room, roll a d6. On 1–2, mark it **Lightable** and interpret
 
 A lit room remains lit for the expedition unless explicitly extinguished. It removes darkness disadvantage while the adventurers are inside and prevents wandering enemies from entering or being generated there. It does not remove the room's original inhabitants, challenge, or other hazards.
 
+Room Supply and loot results can provide portable torches. A found torch is fresh and lasts six exploration turns unless the specific result says it is partly burned, damaged, unusual, or bundled with additional torches.
+
 ## Accepted normal monster attack
 
 When the dungeon controls the turn, a monster that is fictionally able to attack may choose a plausible target and deal 1 damage without an attack roll or defense check. Apply Guard, resistance, and other relevant protection, then return control to the adventurers.

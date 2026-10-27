@@ -29,7 +29,7 @@ The Challenge determines the room's primary conquest condition. Quiet aftermath 
 | ---: | --- | --- |
 | 1 | None | The room offers no additional reward beyond passage, information inherent in the challenge, and any conquest Skill Token. |
 | 2 | Clue | Information about the site's history, objective, inhabitants, route, weakness, or approaching danger. |
-| 3 | Supply | A useful consumable such as light, food, bandages, ammunition, oil, antidote ingredients, or a repair component. |
+| 3 | Supply | A useful consumable such as a fresh six-turn torch, food, bandages, ammunition, oil, antidote ingredients, or a repair component. |
 | 4 | Usable feature | Machinery, cover, a movable object, a defensible position, or another room element the adventurers can exploit now or later. |
 | 5 | Treasure | Wealth, trade goods, art, salvage, or a valuable object appropriate to Domain and Danger Rank. |
 | 6 | Secret | A hidden compartment, concealed message, optional mechanism, secret exit, or fact not revealed by ordinary entry. |

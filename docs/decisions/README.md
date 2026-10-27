@@ -1001,6 +1001,8 @@ Without sufficient light, every adventurer check has disadvantage. Automatic mon
 
 **Consequences:** Bows and two-handed signature gear require another torch-bearer, a placed light, a lit room, or darkness. Additional torches and lanterns become valuable starting-item and dungeon-supply results. One-torch expeditions require new playtesting.
 
+**Clarification:** Room Supply and loot results may contain portable torches. Unless specified otherwise, each found torch is fresh and lasts six exploration turns.
+
 ## 2026-04-03 — Make one third of rooms persistently lightable
 
 **Status:** Accepted for initial playtesting

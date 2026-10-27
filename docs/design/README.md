@@ -79,7 +79,7 @@ Entering and generating a new room always consumes one exploration turn. Lengthy
 
 ### Light and darkness
 
-Each expedition begins with **one torch** shared by the party. A torch burns for six exploration turns. Reduce its remaining duration whenever an exploration turn passes; discard it when its duration reaches 0. Additional torches must be chosen as extra items or found during play.
+Each expedition begins with **one torch** shared by the party. A torch burns for six exploration turns. Reduce its remaining duration whenever an exploration turn passes; discard it when its duration reaches 0. Additional torches can be chosen as extra items or found as Supply or loot in rooms. Unless a result specifies otherwise, each found torch is fresh and provides six turns of portable light.
 
 A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or any other equipment requiring both hands. Another adventurer may carry the torch. A lone adventurer must set it down, secure it nearby, or accept darkness to use two-handed equipment. Position and the fiction determine whether a placed torch remains useful, becomes inaccessible, or can be extinguished.
 
