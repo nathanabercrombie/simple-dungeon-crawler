@@ -32,6 +32,14 @@ If no monster can currently reach or attack an adventurer, the dungeon must use 
 
 Normal monster attacks cannot critically succeed or fail. Special attacks may override the defaults but should be clearly telegraphed. An adventurer reaction check called for by a special dungeon action resolves that action only and never grants the dungeon another action.
 
+## Hostile opposition floor
+
+For initial playtesting, a room whose main challenge is immediately hostile creatures contains at least **2 total monster HP per active adventurer**. Divide that total among Fragile 1 HP, Standard 2 HP, Tough 3 HP, or Boss-tier 5+ HP creatures according to the fiction.
+
+A Fragile creature can appear alone in the fiction but cannot be the room's entire hostile opposition. Multiple enemies still take only one coordinated dungeon action, and a normal attack damages only one adventurer. The additional HP increases the number of successful actions needed without multiplying automatic monster attacks.
+
+The floor does not automatically apply to uncertain creatures, social obstacles, hazards, or incidental inhabitants. Major threats may exceed it.
+
 ## Accepted map model: literal floorplan
 
 Generate exact room shapes, doors, corridors, and relative placement on a square grid. The procedure must handle collisions, loops, secret spaces, stairs, and other vertical connections both by hand and in the local web app.
@@ -393,13 +401,16 @@ The content procedure still needs tables that make this combination fast during 
 
 1. **Define provisional starting light.** Set starting quantity and duration using the clarified traversal timing.
 2. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-3. **Run short combat seeds.** Measure natural Wound and medkit frequency; Playtest 002 required a controlled drill.
-4. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-5. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+3. **Define monster targeting guidance.** Playtest 003 ranged from no lasting harm to a death under the same rolls depending on target selection.
+4. **Run short combat seeds.** Measure natural Wound and medkit frequency with average bonuses, multi-target abilities, and Hard defenses.
+5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 
 The first lone-adventurer rules test is recorded in [Playtest 002: The Reliquary Thief](../playtests/002-lone-adventurer/README.md).
+
+The first party-size opposition test is recorded in [Playtest 003: Scuttlers in Numbers](../playtests/003-scaled-opposition/README.md).
 
 ### Why the master list needs fifty templates
 

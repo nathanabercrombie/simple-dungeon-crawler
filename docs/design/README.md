@@ -403,3 +403,25 @@ A monster cannot deal damage merely because the dungeon controls the turn. If it
 A coordinated group or swarm acting as one threat damages only one adventurer with a normal monster attack. Because the attack has no roll, it cannot critically succeed or fail. Position, terrain, shields, armor, defensive preparation, and monster traits may prevent, redirect, or modify damage when their rules apply.
 
 Special monster attacks may break these defaults but should be clearly telegraphed. If a special dungeon action calls for an adventurer reaction check, that check resolves only the current action and never grants the dungeon another action. Control returns to the adventurers afterward regardless of the result.
+
+### Hostile opposition
+
+A room whose main challenge is immediately hostile creatures begins with at least **2 total monster HP per active adventurer**. Divide that HP among creatures as the fiction suggests.
+
+| Active adventurers | Minimum total monster HP |
+| ---: | ---: |
+| 1 | 2 |
+| 2 | 4 |
+| 3 | 6 |
+| 4 | 8 |
+
+The existing individual HP bands remain:
+
+- **Fragile:** 1 HP, but never alone as the room's entire hostile opposition;
+- **Standard:** 2 HP;
+- **Tough:** 3 HP;
+- **Boss-tier:** 5 HP or more, often accompanied by lesser creatures when needed to reach the room's opposition floor.
+
+Multiple monsters do not each receive an action. A coordinated group still takes one meaningful dungeon action and a normal attack still damages only one adventurer. Larger groups instead require more successful actions to overcome and give multi-target weapons and abilities meaningful targets.
+
+This floor applies to hostile creature challenges, not every social encounter, uncertain creature, environmental hazard, or room containing a creature. It is accepted for initial playtesting and can be exceeded by major threats or the fiction.

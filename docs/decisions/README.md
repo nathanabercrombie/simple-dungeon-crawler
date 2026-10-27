@@ -930,3 +930,25 @@ A durable improvement such as securing a rope, lowering a bridge, draining water
 **Rationale:** A new room's entry turn already represents exploring and negotiating its space. Charging another turn immediately double-counted that activity, while charging the room separately on later journeys preserves the intended light cost of crossing a persistent obstacle again.
 
 **Consequences:** The twelve-turn ledger in Playtest 002 remains an accurate record of the rule tested there but no longer represents the current rule. Starting light should be balanced against the clarified procedure before changing light duration or supply.
+
+## 2026-04-01 — Scale hostile opposition by adventurer count
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** A room whose main challenge is immediately hostile creatures begins with at least 2 total monster HP per active adventurer. Divide that HP among creatures according to the fiction. Fragile creatures retain 1 HP but cannot appear alone as the room's entire hostile opposition.
+
+Multiple monsters still take one coordinated action when the dungeon gains control, and a normal monster attack damages only one adventurer.
+
+**Rationale:** A lone 1 HP enemy requires only one successful action and becomes especially trivial for a party with more total HP, Skill Tokens, gear options, and specialists. Linear total-HP scaling preserves the opportunity for dungeon actions without multiplying attacks or maintaining a separate encounter-budget system.
+
+**Consequences:** Ordinary hostile opposition has a minimum of 2, 4, 6, or 8 total HP for parties of one through four. Multi-target weapon benefits become more valuable. Major threats can exceed the floor, while uncertain creatures, social obstacles, hazards, and incidental inhabitants do not automatically use it.
+
+## 2026-04-02 — Complete scaled-opposition Playtest 003
+
+**Status:** Completed
+
+**Decision:** Replay the first three Haunted Tomb rooms with the 2 HP lone-adventurer floor, then test four generated adventurers against eight 1 HP bone scuttlers at Standard 12.
+
+**Result:** The lone hostile room required two successful attacks instead of one, but favorable rolls caused no additional damage. The four-adventurer fight required eight successes across twelve attacks and generated four automatic monster hits. One adventurer reached 0 HP and another reached 1 HP, but no Wound occurred and all HP refreshed when the final enemy fell.
+
+**Consequences:** The HP floor prevents one-roll hostile rooms and scales required successes with party size. Under the same party rolls, distributing attacks caused no lasting harm while focusing the exposed adventurer would have caused a Wound and then death. Monster targeting guidance should be defined before raising HP or damage again. The complete fixture is recorded in [Playtest 003: Scuttlers in Numbers](../playtests/003-scaled-opposition/README.md).
