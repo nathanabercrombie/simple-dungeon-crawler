@@ -1014,3 +1014,25 @@ A lit room removes darkness disadvantage while occupied and prevents wandering e
 **Rationale:** Persistent light creates safe landmarks and gives route choice lasting consequences. A one-third frequency makes such rooms important without allowing the whole dungeon to be illuminated routinely.
 
 **Consequences:** Known-room travel skips the wandering-enemy roll in lit rooms. Reaching lit ground can break wandering pursuit. Room generation needs one additional d6 result or an efficient way to combine the lightability roll with existing dice.
+
+## 2026-04-03 — Require pressured crossbow reload checks
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** Firing a crossbow discharges it on a hit or miss. Outside immediate danger, reloading is automatic. During immediate danger, reload with an Agility check against the room's Danger Rank. Success loads the crossbow and retains adventurer control; failure leaves it unloaded and gives the dungeon one action. A prepared crossbow begins danger loaded.
+
+A full crossbow deals 2 damage on a hit. A hand crossbow and buckler deals the normal 1 damage and provides +1 maximum HP while both are readied.
+
+**Rationale:** A no-roll reload has no meaningful cost under fluid turn ownership. Requiring a successful reload and attack gives repeated 2-damage crossbow shots a risk comparable to a great weapon's disadvantaged attack while preserving range and a strong prepared opening shot.
+
+**Consequences:** Crossbow users may switch weapons or let another adventurer act while unloaded. Failed reloads create dungeon openings. Playtest 004 incorrectly gave Loaded Shot to a hand-crossbow character and is superseded for balance evidence by the corrected Playtest 005.
+
+## 2026-04-03 — Complete corrected five-room Playtest 005
+
+**Status:** Completed
+
+**Decision:** Replay Playtest 004 with proper 1-damage hand-crossbow attacks, pressured reload checks, one starting torch, d6 Lightable rooms, and darkness disadvantage while retaining the same party, site, and action seed.
+
+**Result:** Four adventurers entered; three extracted. One died in Room 1. Another suffered a treated Gnawed Wound and permanent Strength Scar in Room 2. Rooms 2 and 4 were lit, suppressing wandering rolls and providing safe ground. The party conquered four rooms, entered Room 5 after portable light expired, failed three checks in darkness, and retreated after one adventurer reached 0 HP.
+
+**Consequences:** Pressured reload made the hand crossbow's action cost meaningful and removed its erroneous damage dominance. One starting torch made the chosen lantern and persistent room light essential. Lantern fuel and relighting remain undefined. The full 2-damage crossbow still needs a direct comparison with great weapons. The complete fixture is recorded in [Playtest 005: The Light Failed at the Memorial](../playtests/005-corrected-five-room-party/README.md).

@@ -10,6 +10,16 @@ Roll **d66** by designating one d6 as tens and another as ones. The result deter
 
 Every entry has a free basic identity and one candidate Skill Token technique. Unless an entry says otherwise, a successful attack deals 1 damage.
 
+### Reload
+
+Crossbows have the **Reload** rule. Firing a crossbow discharges it whether the attack succeeds or fails.
+
+- Outside immediate danger, reload automatically when there is time.
+- During immediate danger, make an Agility check against the room's Danger Rank.
+- On success, the crossbow is loaded and it remains the adventurers' turn.
+- On failure, the crossbow remains unloaded and the dungeon takes one action.
+- A crossbow begins immediate danger loaded if the adventurer had a reasonable opportunity to prepare it.
+
 ## Strength gear
 
 | d66 | Signature gear | Free identity | Candidate technique |
@@ -35,13 +45,13 @@ Every entry has a free basic identity and one candidate Skill Token technique. U
 | 32 | Dual daggers | **Flurry:** the first attack made with them each fight has advantage; easily concealed | **Twin Strike (1):** one check against the higher Defense of two adjacent targets; deal 1 damage to each on success |
 | 33 | Whip | **Entangle:** at Reach, forgo damage to pull, trip, or reposition a suitable target | **Disarm (1):** after a successful hit, deal damage and disarm the target |
 | 34 | Rapier | **Single Combat:** gain advantage against an adjacent enemy with no adjacent allies of its own | **Feint (1):** reduce the target's Defense by one step for the next attack |
-| 35 | Crossbow | **Loaded Shot:** the first hit after loading deals 2 damage; reloading requires a separate player action | **Deadeye (1):** ignore cover and attack at Extreme range |
+| 35 | Crossbow | **Loaded Shot:** a hit deals 2 damage; firing discharges it and uses **Reload** | **Deadeye (1):** ignore cover and attack at Extreme range |
 | 36 | Sling | **Unassuming:** ranged, concealable, and ammunition is easy to improvise | **Ricochet (1):** attack a target behind ordinary cover |
 | 41 | Throwing knives | **Flexible:** attack adjacent or Near targets and conceal several knives | **Fan of Steel (1):** one check against the higher Defense of two Fragile targets; deal 1 damage to each |
 | 42 | Net and trident | **Capture:** forgo damage to restrain a suitable adjacent or Near target | **Skewer (1):** deal +1 damage to a target restrained by you |
 | 43 | Sabre | **Mobile:** after a successful attack, reposition to a nearby unoccupied place | **Passing Cut (1):** move through an enemy's reach and attack without exposing yourself to its immediate reaction |
 | 44 | Blowgun | **Silent:** Near attack that does not raise alert; ineffective against rigid armor | **Venom Dart (1):** apply one carried poison without consuming it on a failed attack |
-| 45 | Hand crossbow and buckler | **Skirmisher:** Near ranged attack and +1 maximum HP while both are readied | **Snap Shot (1):** attack while closely engaged without disadvantage |
+| 45 | Hand crossbow and buckler | **Skirmisher:** Near 1-damage attack and +1 maximum HP while both are readied; the crossbow uses **Reload** | **Snap Shot (1):** attack while closely engaged without disadvantage |
 | 46 | Garrote and climbing cord | **Ambush:** attack an unaware adjacent target with advantage; also functions as strong rope | **Silence (2):** on a successful ambush, the target cannot call out and takes 1 additional damage |
 
 ## Mind gear

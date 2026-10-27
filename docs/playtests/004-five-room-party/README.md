@@ -1,5 +1,7 @@
 # Playtest 004: The Choir Chose Its Mourner
 
+> **Correction:** This playtest incorrectly applied the full crossbow's 2-damage Loaded Shot to a hand crossbow and buckler, whose actual attack dealt 1 damage. It also treated reloading as a no-roll action. Its roll record remains useful historical evidence, but its combat outcomes and balance conclusions are invalid. See [Playtest 005](../005-corrected-five-room-party/README.md) for the corrected fixed-seed replay.
+
 ## Purpose
 
 Run the four adventurers generated for Playtest 003 through a longer five-room expedition and extraction after adding narrative monster Instincts.

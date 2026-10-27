@@ -426,10 +426,9 @@ The content procedure still needs tables that make this combination fast during 
 ## Current build order
 
 1. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-2. **Fix crossbow reload.** Give reloading a meaningful cost under fluid turn ownership.
-3. **Run short combat seeds.** Measure average bonuses, multi-target abilities, high-damage alternating-target Instincts, and one-torch expeditions.
-4. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-5. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+2. **Run short combat seeds.** Measure average bonuses, multi-target abilities, high-damage alternating-target Instincts, and one-torch expeditions.
+3. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+4. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 
@@ -438,6 +437,8 @@ The first lone-adventurer rules test is recorded in [Playtest 002: The Reliquary
 The first party-size opposition test is recorded in [Playtest 003: Scuttlers in Numbers](../playtests/003-scaled-opposition/README.md).
 
 The first extended party expedition is recorded in [Playtest 004: The Choir Chose Its Mourner](../playtests/004-five-room-party/README.md).
+
+Its corrected replay under the current crossbow and light rules is [Playtest 005: The Light Failed at the Memorial](../playtests/005-corrected-five-room-party/README.md).
 
 ### Why the master list needs fifty templates
 

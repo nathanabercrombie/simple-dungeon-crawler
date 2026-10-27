@@ -332,6 +332,16 @@ The current character-creation proposal would separate a weapon's free benefit f
 
 Spellbooks are not weapons and provide no basic attack. Wands are Mind-based ranged weapons or foci that deal the normal 1 damage and can also carry token-powered magical abilities.
 
+#### Crossbow reload
+
+Firing any crossbow discharges it on a hit or miss. Reload automatically outside immediate danger. During immediate danger, make an Agility check against the room's Danger Rank.
+
+- On success, the crossbow is loaded and it remains the adventurers' turn.
+- On failure, it remains unloaded and the dungeon takes one action.
+- A prepared crossbow begins immediate danger loaded.
+
+A full crossbow's loaded hit deals 2 damage. A hand crossbow and buckler makes a normal 1-damage attack; its benefit is combining Near range with +1 maximum HP, not Loaded Shot.
+
 #### Weapon design guardrails
 
 - A broad fictional capability such as range is a complete benefit; it does not also need a numerical bonus.
