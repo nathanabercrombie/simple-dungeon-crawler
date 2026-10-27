@@ -170,3 +170,7 @@ The pit bridge received a pressured Agility check, while the flooded channel and
 2. Define a provisional starting light supply and duration after that clarification.
 3. Define concise default effects for pits, water, rubble, balconies, and forced movement.
 4. Run several shorter combat seeds to measure natural Wound and medkit frequency.
+
+## Post-test decision
+
+The first recommendation was accepted after this playtest. Under the current rule, entering a new room includes its first necessary traversal. A conquered room with persistent traversal consumes one full turn on a later visit instead of being included in ordinary fast travel. The twelve-turn ledger above remains the historical record of the procedure actually tested.

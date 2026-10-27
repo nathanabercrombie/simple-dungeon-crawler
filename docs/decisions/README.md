@@ -918,3 +918,15 @@ Consumables are removed after use; durable items remain until lost, broken, spen
 **Result:** Automatic monster damage resolved cleanly after two failed actions. The adventurer conquered all three rooms and extracted, using exactly twelve light turns under the tested traversal interpretation. Seven of those turns came from persistent traversal. Two known-room danger rolls caused no new danger. The controlled drill confirmed medkit and Scar bookkeeping but did not measure natural Wound frequency.
 
 **Consequences:** Clarify whether initial room entry includes the room's first persistent traversal before balancing light. Starting light quantity and duration, reawakened-room danger generation, exact terrain effects, and natural Wound frequency remain open. The complete fixture is recorded in [Playtest 002: The Reliquary Thief](../playtests/002-lone-adventurer/README.md).
+
+## 2026-04-01 — Include initial traversal in new-room entry
+
+**Status:** Accepted
+
+**Decision:** The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent physical features. On a later visit, a conquered room with a persistent traversal feature cannot be included in ordinary fast travel and instead takes one full exploration turn to cross. Make the room's normal conquered-room danger roll during that turn.
+
+A durable improvement such as securing a rope, lowering a bridge, draining water, clearing rubble, or opening a shortcut removes the recurring traversal cost and permits ordinary fast travel through the room when appropriate.
+
+**Rationale:** A new room's entry turn already represents exploring and negotiating its space. Charging another turn immediately double-counted that activity, while charging the room separately on later journeys preserves the intended light cost of crossing a persistent obstacle again.
+
+**Consequences:** The twelve-turn ledger in Playtest 002 remains an accurate record of the rule tested there but no longer represents the current rule. Starting light should be balanced against the clarified procedure before changing light duration or supply.

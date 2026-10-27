@@ -18,9 +18,11 @@ For each conquered room entered during this movement, roll a d6. On a 1, the roo
 
 Movement also stops when the party reaches an unconquered room or a room that is already actively dangerous. Use the same procedure for deeper travel, backtracking, and extraction.
 
-Conquest does not erase persistent traversal features. Crossing a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle costs one additional exploration turn each time it must be traversed, reducing active light by another turn. Roll a check only if the crossing remains uncertain and failure would have a meaningful consequence.
+The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent features. Do not charge an additional turn merely because the new room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
 
-A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the recurring cost when appropriate. The three-room allowance and 1-in-6 danger chance are accepted for initial playtesting.
+Conquest does not erase those features. On a later visit, a conquered room with persistent traversal cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, reduce active light by one turn, and make its normal conquered-room danger roll. Roll a traversal check only if the crossing remains uncertain and failure would have a meaningful consequence.
+
+A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the recurring cost and allows the room to be included in ordinary fast travel when appropriate. The three-room allowance and 1-in-6 danger chance are accepted for initial playtesting.
 
 ## Accepted normal monster attack
 
@@ -389,12 +391,11 @@ The content procedure still needs tables that make this combination fast during 
 
 ## Current build order
 
-1. **Clarify persistent traversal timing.** Decide whether the new-room turn includes initial traversal or every crossing costs an additional turn.
-2. **Define provisional starting light.** Set starting quantity and duration after resolving traversal timing.
-3. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-4. **Run short combat seeds.** Measure natural Wound and medkit frequency; Playtest 002 required a controlled drill.
-5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+1. **Define provisional starting light.** Set starting quantity and duration using the clarified traversal timing.
+2. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
+3. **Run short combat seeds.** Measure natural Wound and medkit frequency; Playtest 002 required a controlled drill.
+4. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+5. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 

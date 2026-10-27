@@ -85,9 +85,11 @@ Roll a d6 each time the party enters a conquered room during this movement. On a
 
 Movement also stops upon reaching an unconquered room or a room that is already actively dangerous. The same procedure applies while advancing, backtracking, or extracting from the site.
 
-Conquest does not remove persistent physical obstacles. A pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable traversal feature costs one additional exploration turn whenever the party must cross it, reducing active light by another turn. Make a check only when the crossing remains uncertain and failure would matter.
+The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent physical features. Do not charge another turn merely because the newly entered room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
 
-A durable improvement such as securing a rope, lowering a bridge, draining water, clearing rubble, or opening a shortcut removes that feature's recurring traversal cost when the fiction supports it.
+Conquest does not remove those features. On a later visit, a conquered room with a persistent traversal feature cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, reduce active light by one turn, and make its normal conquered-room danger roll. Make a traversal check only when the crossing remains uncertain and failure would matter.
+
+A durable improvement such as securing a rope, lowering a bridge, draining water, clearing rubble, or opening a shortcut removes that feature's recurring traversal cost and allows the room to be included in ordinary fast travel when the fiction supports it.
 
 The three-room allowance and the 1-in-6 danger chance are initial playtest values.
 
