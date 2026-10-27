@@ -81,7 +81,7 @@ Entering and generating a new room always consumes one exploration turn. Lengthy
 
 Spend one exploration turn to move through up to three connected conquered rooms. Reduce the remaining duration of active light sources by one turn as normal.
 
-Roll a d6 each time the party enters a conquered room during this movement. On a 1, that room has become dangerous again: stop movement there and introduce a context-appropriate creature, hazard, environmental change, or other immediate danger. The room remains conquered, and resolving this new danger does not award its conquest Skill Tokens again.
+Roll a d6 each time the party enters a conquered room during this movement. On a 1, wandering enemies arrive in the room and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not award its conquest Skill Tokens again.
 
 Movement also stops upon reaching an unconquered room or a room that is already actively dangerous. The same procedure applies while advancing, backtracking, or extracting from the site.
 
@@ -92,6 +92,14 @@ Conquest does not remove those features. On a later visit, a conquered room with
 A durable improvement such as securing a rope, lowering a bridge, draining water, clearing rubble, or opening a shortcut removes that feature's recurring traversal cost and allows the room to be included in ordinary fast travel when the fiction supports it.
 
 The three-room allowance and the 1-in-6 danger chance are initial playtest values.
+
+### Wandering enemies
+
+Wandering enemies are real mobile occupants of the site, not the conquered room regenerating its original challenge. Each Domain, Theme, or specific site provides a short table containing creatures that can plausibly move through many room types: vermin, shambling dead, ghosts, patrols, scavengers, hunting beasts, ogres, and similar roamers.
+
+An ordinary wandering group has at least **1 total HP per active adventurer, minimum 2**. A specific entry can exceed this floor. Wanderers use their own Defense, HP, Instinct, and Wound rather than inheriting the current room's original challenge.
+
+If the adventurers escape, record where the wanderers remain. They may pursue according to their Instinct, occupy the room, move elsewhere when the fiction warrants it, or interact with other inhabitants. They do not disappear merely because the encounter ends.
 
 ### Skill Tokens
 

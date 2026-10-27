@@ -232,3 +232,7 @@ The opposition floor fell from 8 to 6 HP after the first death. This supports pa
 3. Define provisional starting light using the sixteen-turn expedition as evidence.
 4. Add Instincts to future monsters, including explicit conditions for losing or changing a locked target.
 5. Test a high-damage alternating-target monster against this party model.
+
+## Post-test decision
+
+The first recommendation was resolved after the playtest. A 1 on a known-room danger roll now introduces wandering enemies from a site-specific table. An ordinary wandering group has 1 total HP per active adventurer, minimum 2, and remains in the dungeon if escaped. The spectral double and drowned hands used above remain historical ad hoc interpretations rather than the current wandering procedure.

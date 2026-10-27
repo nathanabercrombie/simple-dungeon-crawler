@@ -974,3 +974,17 @@ Instinct never overrides position. A monster whose preferred target is unreachab
 **Result:** Four adventurers entered, three extracted, and one died after the Room 1 choir maintained its target lock through an active Wound and failed emergency treatment. The survivors conquered five rooms in sixteen exploration turns. They manipulated scuttler target locks through deliberate first contact, repositioning, and interposition. Three of eight conquered-room danger rolls generated new dangers.
 
 **Consequences:** Narrative Instincts produced both lethal commitment and exploitable behavior. Reawakened-danger strength remains undefined. A no-roll crossbow reload had no meaningful cost under fluid turns and allowed repeated 2-damage attacks. Two six-turn torches were insufficient; a six-turn lantern covered the final four turns. The complete fixture is recorded in [Playtest 004: The Choir Chose Its Mourner](../playtests/004-five-room-party/README.md).
+
+## 2026-04-03 — Make known-room danger a wandering enemy encounter
+
+**Status:** Accepted
+
+**Decision:** When known-room travel produces a 1 on its d6 danger roll, wandering enemies enter through a plausible route and stop movement. Do not regenerate the room's original challenge or substitute an arbitrary environmental danger. Roll on a short Wandering Enemy table supplied by the site's Domain, Theme, or specific design.
+
+An ordinary wandering group has at least 1 total HP per active adventurer, minimum 2. It uses its own Defense, HP, Instinct, and Wound and grants no conquest Skill Tokens. Specific entries may exceed the floor.
+
+If the adventurers escape, record where the wanderers remain. They may pursue, occupy the room, move elsewhere, or interact with other inhabitants according to their Instinct and the fiction.
+
+**Rationale:** The danger roll represents mobile dungeon inhabitants crossing the party's route rather than conquered rooms spontaneously rebuilding challenges. A restricted table keeps results plausible across many room layouts and lets recurring inhabitants create a living site.
+
+**Consequences:** Domains, Themes, or sites need compact Wandering Enemy tables featuring creatures such as vermin, shambling hordes, ghosts, patrols, and roaming brutes. The half-strength HP floor keeps these interruptions smaller than primary hostile room challenges.

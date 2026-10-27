@@ -55,6 +55,19 @@ All use the room's Danger Rank as Defense unless noted.
 | Possessed funerary statue | 3 | Uses pillars, dais, and sarcophagi as part of its body | Crush whoever touches the protected tomb or damages its architectural body | **Crushed:** impaired movement and breath; treated Scar reduces Strength |
 | Royal revenant | 5 | Commands lesser dead and demands obedience to obsolete law | Condemn the bearer of stolen regalia, the false claimant, or the highest-ranking intruder | **Death-Marked:** visions and compulsions tied to the royal line; treated Scar reduces Mind |
 
+## Haunted Tomb wandering enemies
+
+| d6 | Wanderers | Instinct |
+| ---: | --- | --- |
+| 1 | Grave rats | Swarm whoever carries food, remains, or an active bleeding Wound |
+| 2 | Bone scuttlers | Lock onto the first adventurer who harms the colony |
+| 3 | Shambling mourners | Pursue the nearest living creature without changing targets while it remains reachable |
+| 4 | Mourning shades | Isolate whoever most resembles someone they remember |
+| 5 | Risen burial patrol | Attack whoever lacks the proper funerary sign, name, or gesture |
+| 6 | Grave-ogre | Attack the loudest or most heavily burdened adventurer |
+
+An ordinary result has at least 1 total HP per active adventurer, minimum 2. The grave-ogre and other specific entries may exceed that floor.
+
 ## Four generated examples
 
 ### Pillared memorial gallery
