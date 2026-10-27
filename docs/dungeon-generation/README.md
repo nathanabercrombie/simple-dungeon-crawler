@@ -40,6 +40,14 @@ A Fragile creature can appear alone in the fiction but cannot be the room's enti
 
 The floor does not automatically apply to uncertain creatures, social obstacles, hazards, or incidental inhabitants. Major threats may exceed it.
 
+## Monster Instincts
+
+Every authored or generated monster receives an **Instinct** stating its preferred target and commitment. Follow that Instinct whenever the monster can attack; use fictional judgment and randomize only genuine ties.
+
+Useful patterns include Vengeful creatures that lock onto the first adventurer to harm them, Swarming creatures that pursue one isolated target, Bloodscent creatures that prioritize active Wounds, Skirmishers that maintain range, Guardians that attack trespassers, and Sweeping brutes that deal greater damage but must alternate targets.
+
+An Instinct never overrides position. If the preferred target is unreachable, hidden, or protected, the monster must spend its dungeon action changing that situation or select another target when its Instinct permits. Clear Instincts let adventurers predict, manipulate, and defend against monster behavior.
+
 ## Accepted map model: literal floorplan
 
 Generate exact room shapes, doors, corridors, and relative placement on a square grid. The procedure must handle collisions, loops, secret spaces, stairs, and other vertical connections both by hand and in the local web app.
@@ -401,16 +409,19 @@ The content procedure still needs tables that make this combination fast during 
 
 1. **Define provisional starting light.** Set starting quantity and duration using the clarified traversal timing.
 2. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-3. **Define monster targeting guidance.** Playtest 003 ranged from no lasting harm to a death under the same rolls depending on target selection.
-4. **Run short combat seeds.** Measure natural Wound and medkit frequency with average bonuses, multi-target abilities, and Hard defenses.
-5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+3. **Define reawakened-room danger.** Establish what a conquered-room danger roll creates and how it scales.
+4. **Fix crossbow reload.** Give reloading a meaningful cost under fluid turn ownership.
+5. **Run short combat seeds.** Measure average bonuses, multi-target abilities, and high-damage alternating-target Instincts.
+6. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+7. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 
 The first lone-adventurer rules test is recorded in [Playtest 002: The Reliquary Thief](../playtests/002-lone-adventurer/README.md).
 
 The first party-size opposition test is recorded in [Playtest 003: Scuttlers in Numbers](../playtests/003-scaled-opposition/README.md).
+
+The first extended party expedition is recorded in [Playtest 004: The Choir Chose Its Mourner](../playtests/004-five-room-party/README.md).
 
 ### Why the master list needs fifty templates
 

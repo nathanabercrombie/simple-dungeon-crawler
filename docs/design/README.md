@@ -425,3 +425,26 @@ The existing individual HP bands remain:
 Multiple monsters do not each receive an action. A coordinated group still takes one meaningful dungeon action and a normal attack still damages only one adventurer. Larger groups instead require more successful actions to overcome and give multi-target weapons and abilities meaningful targets.
 
 This floor applies to hostile creature challenges, not every social encounter, uncertain creature, environmental hazard, or room containing a creature. It is accepted for initial playtesting and can be exceeded by major threats or the fiction.
+
+### Monster Instincts
+
+Every monster entry should include an **Instinct** describing whom it attacks and how long it remains committed to that target. When the dungeon uses that monster to attack, follow its Instinct if possible. If several adventurers qualify equally, choose the most fictionally obvious target; use an oracle or random selection only for a genuine tie.
+
+An Instinct can establish:
+
+- what attracts or provokes the monster;
+- whether it locks onto one target;
+- what makes it change targets;
+- whether it closes, swarms, retreats, or maintains range.
+
+Examples include:
+
+- **Vengeful:** attack the first adventurer who harms it and pursue them until they die, escape, or become unreachable;
+- **Swarming:** surround the nearest isolated adventurer and remain on them until they fall;
+- **Bloodscent:** prefer an adventurer with an active Wound, then an exposed adventurer at 0 HP;
+- **Skirmisher:** maintain range and attack whoever is trying to close; retreat instead of attacking if closely engaged;
+- **Guardian:** attack whoever crosses the protected threshold or touches the guarded object;
+- **Mage-hunter:** attack whoever most recently used magic;
+- **Sweeping brute:** deal 2 damage with a normal attack but do not target the same adventurer on consecutive dungeon actions.
+
+Instincts are legible fictional behavior, not permission to ignore position. A monster must spend its action moving, overcoming an interposing defender, finding a hidden target, or otherwise changing the situation if its preferred target cannot currently be attacked. Adventurers can exploit an Instinct by interposing, hiding, retreating, presenting bait, or using terrain.

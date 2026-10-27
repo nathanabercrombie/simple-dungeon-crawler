@@ -952,3 +952,25 @@ Multiple monsters still take one coordinated action when the dungeon gains contr
 **Result:** The lone hostile room required two successful attacks instead of one, but favorable rolls caused no additional damage. The four-adventurer fight required eight successes across twelve attacks and generated four automatic monster hits. One adventurer reached 0 HP and another reached 1 HP, but no Wound occurred and all HP refreshed when the final enemy fell.
 
 **Consequences:** The HP floor prevents one-roll hostile rooms and scales required successes with party size. Under the same party rolls, distributing attacks caused no lasting harm while focusing the exposed adventurer would have caused a Wound and then death. Monster targeting guidance should be defined before raising HP or damage again. The complete fixture is recorded in [Playtest 003: Scuttlers in Numbers](../playtests/003-scaled-opposition/README.md).
+
+## 2026-04-02 — Give every monster a narrative Instinct
+
+**Status:** Accepted
+
+**Decision:** Every monster entry includes an Instinct describing its preferred target, whether it locks onto that target, and what causes it to change targets. Follow the Instinct when the dungeon attacks. Use fictional judgment when several targets qualify and randomize only genuine ties.
+
+Instinct never overrides position. A monster whose preferred target is unreachable, hidden, or protected must spend its action changing that situation or choose another target when its Instinct allows. Adventurers may interpose, flee, hide, present bait, or otherwise manipulate known behavior.
+
+**Rationale:** Narrative targeting produces distinct creatures and legible danger without a universal aggro algorithm. A swarm that pursues its first attacker, a predator drawn to Wounds, and a ranged skirmisher that retreats should create different tactical problems from the same HP and damage values.
+
+**Consequences:** Concentrated Instincts can create a lethal target lock, so the behavior should be telegraphed and fictionally interruptible. Exceptional creatures may deal more damage while alternating targets or obeying another limiting pattern. Existing and future threat entries need an Instinct alongside HP, behavior, and Wound.
+
+## 2026-04-03 — Complete five-room party Playtest 004
+
+**Status:** Completed
+
+**Decision:** Run the four adventurers from Playtest 003 through the first five Haunted Tomb rooms and extraction using scaled opposition, narrative Instincts, current travel rules, and fixed action seed 20260403.
+
+**Result:** Four adventurers entered, three extracted, and one died after the Room 1 choir maintained its target lock through an active Wound and failed emergency treatment. The survivors conquered five rooms in sixteen exploration turns. They manipulated scuttler target locks through deliberate first contact, repositioning, and interposition. Three of eight conquered-room danger rolls generated new dangers.
+
+**Consequences:** Narrative Instincts produced both lethal commitment and exploitable behavior. Reawakened-danger strength remains undefined. A no-roll crossbow reload had no meaningful cost under fluid turns and allowed repeated 2-damage attacks. Two six-turn torches were insufficient; a six-turn lantern covered the final four turns. The complete fixture is recorded in [Playtest 004: The Choir Chose Its Mourner](../playtests/004-five-room-party/README.md).

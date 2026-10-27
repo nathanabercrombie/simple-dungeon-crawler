@@ -145,3 +145,7 @@ Room 3's 2 HP poltergeist was conquered through its physical anchor. Raising opp
 2. Define target-selection guidance from monster behavior and fictional exposure.
 3. Decide whether reaching 0 HP should create any pressure that survives the immediate fight, or whether only Wounds should persist.
 4. Run several seeds with average bonuses, multi-target abilities, and Hard defenses before changing HP or damage again.
+
+## Post-test decision
+
+Monster targeting was subsequently defined through creature-specific narrative Instincts. Bone scuttlers now swarm the first adventurer who harms their colony and remain committed until that target dies, escapes, or becomes unreachable. The distributed targeting used in this stress room remains the historical procedure tested, not the current scuttler behavior.

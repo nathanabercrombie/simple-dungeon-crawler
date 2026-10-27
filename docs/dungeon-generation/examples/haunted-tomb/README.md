@@ -46,14 +46,14 @@ These are examples of interpretation, not fixed outcomes.
 
 All use the room's Danger Rank as Defense unless noted.
 
-| Threat | HP | Behavior | Wound |
-| --- | ---: | --- | --- |
-| Bone scuttlers | 1 | Swarm through niches and carry small objects into bone piles | **Gnawed:** ongoing bleeding or embedded fragments; treated Scar reduces Strength |
-| Mourning shade | 1 | Passes through barriers and isolates whoever resembles a remembered person | **Soul-Chilled:** cannot benefit from ordinary warmth; treated Scar reduces Mind |
-| Risen guard | 2 | Holds a threshold and follows the wording of an ancient oath | **Run Through:** severe bleeding; treated Scar reduces Strength |
-| Wailing choir | 2 | Acts as one group and attacks through sound and remembered grief | **Disoriented:** speech and concentration fracture; treated Scar reduces Mind |
-| Possessed funerary statue | 3 | Uses pillars, dais, and sarcophagi as part of its body | **Crushed:** impaired movement and breath; treated Scar reduces Strength |
-| Royal revenant | 5 | Commands lesser dead and demands obedience to obsolete law | **Death-Marked:** visions and compulsions tied to the royal line; treated Scar reduces Mind |
+| Threat | HP | Behavior | Instinct | Wound |
+| --- | ---: | --- | --- | --- |
+| Bone scuttler | 1 | Swarms through niches and carries small objects into bone piles | Swarm the first adventurer who harms the colony; remain on that target until it dies, escapes, or becomes unreachable | **Gnawed:** ongoing bleeding or embedded fragments; treated Scar reduces Strength |
+| Mourning shade | 1 | Passes through barriers and isolates whoever resembles a remembered person | Choose the adventurer who most resembles someone from its memory; pass through obstacles to isolate them | **Soul-Chilled:** cannot benefit from ordinary warmth; treated Scar reduces Mind |
+| Risen guard | 2 | Holds a threshold and follows the wording of an ancient oath | Attack whoever violates the guarded threshold or oath; stop when its exact duty no longer permits pursuit | **Run Through:** severe bleeding; treated Scar reduces Strength |
+| Wailing choir | 2 | Acts as one group and attacks through sound and remembered grief | Fixate on whoever interrupts, contradicts, or attempts to lead its rite | **Disoriented:** speech and concentration fracture; treated Scar reduces Mind |
+| Possessed funerary statue | 3 | Uses pillars, dais, and sarcophagi as part of its body | Crush whoever touches the protected tomb or damages its architectural body | **Crushed:** impaired movement and breath; treated Scar reduces Strength |
+| Royal revenant | 5 | Commands lesser dead and demands obedience to obsolete law | Condemn the bearer of stolen regalia, the false claimant, or the highest-ranking intruder | **Death-Marked:** visions and compulsions tied to the royal line; treated Scar reduces Mind |
 
 ## Four generated examples
 
