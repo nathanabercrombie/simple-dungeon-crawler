@@ -77,6 +77,18 @@ Rooms create situations rather than self-contained board-game encounters. A room
 
 Entering and generating a new room always consumes one exploration turn. Lengthy activities consume additional turns, including thorough searches, rests, involved trap work, and other actions whose fictional duration warrants it. Exact costs will be defined alongside those procedures.
 
+### Light and darkness
+
+Each expedition begins with **one torch** shared by the party. A torch burns for six exploration turns. Reduce its remaining duration whenever an exploration turn passes; discard it when its duration reaches 0. Additional torches must be chosen as extra items or found during play.
+
+A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or any other equipment requiring both hands. Another adventurer may carry the torch. A lone adventurer must set it down, secure it nearby, or accept darkness to use two-handed equipment. Position and the fiction determine whether a placed torch remains useful, becomes inaccessible, or can be extinguished.
+
+Without sufficient light, every adventurer check has disadvantage. Automatic monster attacks remain automatic. A specific ability, sense, or item can explicitly ignore darkness.
+
+When generating a room, roll a d6. On 1–2, the room contains existing sconces, braziers, lamps, fireplaces, or similar fixtures that can illuminate it. Mark the room **Lightable**. Lighting accessible fixtures requires a flame but consumes no exploration turn.
+
+Once lit, the room remains lit for the expedition unless something explicitly extinguishes it. Adventurers in the room do not suffer darkness disadvantage. A lit room also prevents wandering enemies: do not make its known-room danger roll, and wandering enemies do not enter while its light persists. Original inhabitants and challenges already present in the room are unaffected.
+
 ### Travel through known rooms
 
 Spend one exploration turn to move through up to three connected conquered rooms. Reduce the remaining duration of active light sources by one turn as normal.
@@ -100,6 +112,8 @@ Wandering enemies are real mobile occupants of the site, not the conquered room 
 An ordinary wandering group has at least **1 total HP per active adventurer, minimum 2**. A specific entry can exceed this floor. Wanderers use their own Defense, HP, Instinct, and Wound rather than inheriting the current room's original challenge.
 
 If the adventurers escape, record where the wanderers remain. They may pursue according to their Instinct, occupy the room, move elsewhere when the fiction warrants it, or interact with other inhabitants. They do not disappear merely because the encounter ends.
+
+Wandering enemies do not enter a lit room. Reaching persistent room light therefore provides a safe boundary from pursuit unless a specific non-wandering threat is already present there.
 
 ### Skill Tokens
 

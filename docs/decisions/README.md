@@ -988,3 +988,27 @@ If the adventurers escape, record where the wanderers remain. They may pursue, o
 **Rationale:** The danger roll represents mobile dungeon inhabitants crossing the party's route rather than conquered rooms spontaneously rebuilding challenges. A restricted table keeps results plausible across many room layouts and lets recurring inhabitants create a living site.
 
 **Consequences:** Domains, Themes, or sites need compact Wandering Enemy tables featuring creatures such as vermin, shambling hordes, ghosts, patrols, and roaming brutes. The half-strength HP floor keeps these interruptions smaller than primary hostile room challenges.
+
+## 2026-04-03 — Begin with one six-turn torch
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** Each expedition begins with one shared torch lasting six exploration turns. A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or other equipment requiring both hands. Additional light must be selected as extra items or found during play.
+
+Without sufficient light, every adventurer check has disadvantage. Automatic monster attacks remain automatic. A lone adventurer can place or secure the torch to free both hands when the fiction permits, accepting the risk that its position may become inconvenient or threatened.
+
+**Rationale:** One torch creates immediate preparation and torch-bearer decisions while darkness remains playable rather than ending the expedition. Occupying a hand makes light interact with equipment and party composition instead of functioning only as a countdown.
+
+**Consequences:** Bows and two-handed signature gear require another torch-bearer, a placed light, a lit room, or darkness. Additional torches and lanterns become valuable starting-item and dungeon-supply results. One-torch expeditions require new playtesting.
+
+## 2026-04-03 — Make one third of rooms persistently lightable
+
+**Status:** Accepted for initial playtesting
+
+**Decision:** Roll a d6 when generating each room. On 1–2, it contains existing light fixtures. Lighting accessible fixtures requires a flame but no exploration turn. Once lit, the room remains illuminated for the expedition unless explicitly extinguished.
+
+A lit room removes darkness disadvantage while occupied and prevents wandering enemies from entering or being generated there. It does not remove original inhabitants, challenges, or hazards already present.
+
+**Rationale:** Persistent light creates safe landmarks and gives route choice lasting consequences. A one-third frequency makes such rooms important without allowing the whole dungeon to be illuminated routinely.
+
+**Consequences:** Known-room travel skips the wandering-enemy roll in lit rooms. Reaching lit ground can break wandering pursuit. Room generation needs one additional d6 result or an efficient way to combine the lightability roll with existing dice.

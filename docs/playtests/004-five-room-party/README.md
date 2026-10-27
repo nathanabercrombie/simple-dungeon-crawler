@@ -236,3 +236,5 @@ The opposition floor fell from 8 to 6 HP after the first death. This supports pa
 ## Post-test decision
 
 The first recommendation was resolved after the playtest. A 1 on a known-room danger roll now introduces wandering enemies from a site-specific table. An ordinary wandering group has 1 total HP per active adventurer, minimum 2, and remains in the dungeon if escaped. The spectral double and drowned hands used above remain historical ad hoc interpretations rather than the current wandering procedure.
+
+Starting light was also changed after this playtest. Expeditions now begin with one six-turn torch, and approximately one third of generated rooms can be persistently lit to prevent wandering enemies. The two-torch baseline used above remains a historical test fixture.

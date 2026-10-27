@@ -221,11 +221,15 @@ There is no numerical carrying capacity, slot inventory, or encumbrance total. A
 
 A medkit is single-use. Treating a Wound takes one exploration turn and consumes the medkit on success. Treatment in safety requires no check; treatment during immediate danger does. A failed dangerous treatment leaves the Wound and medkit intact unless the fiction specifically ruins the supply, and control passes to the dungeon normally.
 
+The party begins each expedition with one shared torch lasting six exploration turns. The torch is expedition equipment rather than an adventurer's additional item. Additional torches, lanterns, or oil can be selected as additional items or found during play.
+
+The burning torch occupies one hand. Its bearer cannot use a bow or other two-handed equipment until another adventurer takes the torch or it is placed somewhere that continues to illuminate the situation.
+
 ## Current build order
 
 1. **Cut candidate catalogs:** reduce signature gear, Burden/Armor, Past, and Knack results to the desired table sizes and setting tone.
 2. **Resolve protection rules:** choose which candidate armor vocabulary survives and define stacking with parrying, shields, and other HP benefits.
-3. **Complete remaining starting kit:** establish light, rations, the expedition-item table, and any starting spellbook procedure.
+3. **Complete remaining starting kit:** establish rations, the expedition-item table, and any starting spellbook procedure.
 4. **Generate sample adventurers:** create both lone heroes and parties entirely through the tables.
 5. **Run a paper playtest:** test several rooms, fights, Wounds, treatment, and retreat before building the web generator.
 

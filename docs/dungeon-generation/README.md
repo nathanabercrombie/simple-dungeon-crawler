@@ -16,6 +16,8 @@ Spend one exploration turn to move through up to three connected conquered rooms
 
 For each conquered room entered during this movement, roll a d6. On a 1, wandering enemies arrive and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not grant its conquest Skill Tokens again.
 
+Do not make this danger roll for a room whose persistent fixtures are currently lit. Wandering enemies do not enter a lit room.
+
 Movement also stops when the party reaches an unconquered room or a room that is already actively dangerous. Use the same procedure for deeper travel, backtracking, and extraction.
 
 The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent features. Do not charge an additional turn merely because the new room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
@@ -31,6 +33,12 @@ Wandering Enemy tables contain a small subset of mobile creatures appropriate to
 An ordinary wandering group has at least **1 total HP per active adventurer, minimum 2**, and uses its own Defense, HP, Instinct, and Wound. Specific entries such as an ogre or elite patrol may exceed that floor. Wanderers grant no conquest Skill Tokens.
 
 Escaped wanderers remain in the dungeon. Record their location and let their Instinct determine whether they pursue, occupy a room, move elsewhere, or interact with other inhabitants.
+
+### Lightable rooms
+
+When generating a room, roll a d6. On 1–2, mark it **Lightable** and interpret existing sconces, braziers, lamps, fireplaces, or similar fixtures through its Domain, Theme, and terrain. Lighting accessible fixtures requires a flame but no exploration turn.
+
+A lit room remains lit for the expedition unless explicitly extinguished. It removes darkness disadvantage while the adventurers are inside and prevents wandering enemies from entering or being generated there. It does not remove the room's original inhabitants, challenge, or other hazards.
 
 ## Accepted normal monster attack
 
@@ -415,12 +423,11 @@ The content procedure still needs tables that make this combination fast during 
 
 ## Current build order
 
-1. **Define provisional starting light.** Set starting quantity and duration using the clarified traversal timing.
-2. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
-3. **Fix crossbow reload.** Give reloading a meaningful cost under fluid turn ownership.
-4. **Run short combat seeds.** Measure average bonuses, multi-target abilities, and high-damage alternating-target Instincts.
-5. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
-6. **Build the first local generator.** Automate only procedures that survived tabletop testing.
+1. **Define concise terrain effects.** Establish defaults for pits, water, balconies, rubble, bridges, and forced movement.
+2. **Fix crossbow reload.** Give reloading a meaningful cost under fluid turn ownership.
+3. **Run short combat seeds.** Measure average bonuses, multi-target abilities, high-damage alternating-target Instincts, and one-torch expeditions.
+4. **Reduce candidate tables.** Cut weapons, armor, Knacks, Domains, Themes, and room footprints based on actual use.
+5. **Build the first local generator.** Automate only procedures that survived tabletop testing.
 
 The first complete generation test is recorded in [Dry Run 001: The King Who Was Buried Twice](../playtests/001-haunted-tomb/README.md).
 
