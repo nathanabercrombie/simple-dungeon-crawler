@@ -18,6 +18,64 @@
   const roomById = id => state.rooms.find(room => room.id === id);
   const activeRoom = () => roomById(state.activeRoomId);
   const templateFor = room => DATA.rooms[room.templateIndex - 1];
+  const CARDINALS = [
+    { name:'North', dx:0, dy:-1, arrow:'↑' }, { name:'East', dx:1, dy:0, arrow:'→' },
+    { name:'South', dx:0, dy:1, arrow:'↓' }, { name:'West', dx:-1, dy:0, arrow:'←' }
+  ];
+
+  function templateRoutes(template) {
+    const rows = template.map.split('\n');
+    const width = Math.max(...rows.map(row => row.length));
+    const routes = [];
+    rows.forEach((row, y) => [...row].forEach((glyph, x) => {
+      if (!['E','X','D','U'].includes(glyph)) return;
+      let direction = null;
+      if (glyph === 'E' || glyph === 'X') {
+        const distances = [
+          { dx:0, dy:-1, distance:y }, { dx:1, dy:0, distance:width - 1 - x },
+          { dx:0, dy:1, distance:rows.length - 1 - y }, { dx:-1, dy:0, distance:x }
+        ];
+        direction = distances.sort((a,b) => a.distance - b.distance)[0];
+      }
+      routes.push({ x, y, glyph, key:`${glyph}:${x}:${y}`, direction });
+    }));
+    return routes;
+  }
+
+  function rotateDirection(direction, rotation) {
+    if (!direction) return null;
+    let { dx, dy } = direction;
+    for (let turns = 0; turns < ((rotation || 0) / 90) % 4; turns++) [dx,dy] = [-dy,dx];
+    return { dx, dy };
+  }
+
+  function cardinalForVector(dx, dy) {
+    return CARDINALS.find(direction => direction.dx === dx && direction.dy === dy);
+  }
+
+  function rotationToward(dx, dy) {
+    return dy === 1 ? 0 : dx === -1 ? 90 : dy === -1 ? 180 : dx === 1 ? 270 : 0;
+  }
+
+  function availableExitRoutes(room) {
+    const assigned = new Set(Object.values(room.routeAssignments || {}));
+    return templateRoutes(templateFor(room)).filter(route => route.glyph !== 'E' && !assigned.has(route.key));
+  }
+
+  function emptyAdjacentSectors(room) {
+    return CARDINALS.filter(({dx,dy}) => {
+      const x = room.x + dx, y = room.y + dy;
+      return x >= 0 && x < state.size && y >= 0 && y < state.size && !state.rooms.some(candidate => candidate.x === x && candidate.y === y);
+    });
+  }
+
+  function routeLabel(room, route) {
+    if (route.glyph === 'D') return 'Descending stair';
+    if (route.glyph === 'U') return 'Ascending stair';
+    const direction = rotateDirection(route.direction, room.rotation);
+    const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
+    return `${cardinal?.name || 'Outer'} doorway`;
+  }
 
   function hashSeed(seed) {
     let h = 2166136261 >>> 0;
@@ -202,6 +260,25 @@
     };
   }
 
+  function ensureRouteGeometry() {
+    const ordered = [...state.rooms].sort((a,b) => a.number - b.number);
+    for (const room of ordered) {
+      room.routeAssignments ||= {};
+      const parent = room.connections.map(roomById).filter(candidate => candidate.number < room.number).sort((a,b) => b.number - a.number)[0];
+      if (!Number.isInteger(room.rotation)) room.rotation = parent ? rotationToward(parent.x-room.x, parent.y-room.y) : 0;
+      if (!parent) continue;
+      const entry = templateRoutes(templateFor(room)).find(route => route.glyph === 'E');
+      if (!room.routeAssignments[parent.id] && entry) room.routeAssignments[parent.id] = entry.key;
+      parent.routeAssignments ||= {};
+      if (!parent.routeAssignments[room.id]) {
+        const assigned = new Set(Object.values(parent.routeAssignments));
+        const route = templateRoutes(templateFor(parent)).find(candidate => candidate.glyph !== 'E' && !assigned.has(candidate.key));
+        if (route) parent.routeAssignments[room.id] = route.key;
+      }
+    }
+    for (const room of ordered) room.remainingExits = availableExitRoutes(room).length;
+  }
+
   function ensureStateShape() {
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
@@ -246,6 +323,7 @@
         if (room.quest.claimed) legacyClaimsRemaining -= 1;
       }
     }
+    ensureRouteGeometry();
     state.quest.elementsFound = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed).length;
   }
 
@@ -394,9 +472,11 @@
     render();
   }
 
-  function generateRoom(x, y, fromId) {
+  function generateRoom(x, y, fromId, fromRouteKey = null) {
     const index = templateRoll();
     const template = DATA.rooms[index - 1];
+    const parent = fromId ? roomById(fromId) : null;
+    const rotation = parent ? rotationToward(parent.x-x, parent.y-y) : 0;
     const challengeRoll = die(12);
     const opportunityRoll = die(8);
     const quest = questRoll();
@@ -407,8 +487,12 @@
       opportunityRoll, opportunity: DATA.opportunities[opportunityRoll - 1],
       quest, status: challengeRoll === 1 ? 'quiet' : 'dangerous', securedLight: template.lighting === 'Inherent',
       notes: '', connections: fromId ? [fromId] : [], remainingExits: template.exits,
-      enemies: [], opportunityClaimed: false
+      rotation, routeAssignments: {}, enemies: [], opportunityClaimed: false
     };
+    if (parent) {
+      const entry = templateRoutes(template).find(route => route.glyph === 'E');
+      if (entry) room.routeAssignments[parent.id] = entry.key;
+    }
     if (challengeRoll >= 7) room.enemies.push(makeEnemy(template, challengeRoll === 12));
     if (quest.name === 'Heart') {
       if (state.quest.heartFound) {
@@ -418,10 +502,11 @@
     }
     room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
-    if (fromId) {
-      const from = roomById(fromId);
-      from.connections.push(room.id);
-      from.remainingExits = Math.max(0, from.remainingExits - 1);
+    if (parent) {
+      const route = fromRouteKey || availableExitRoutes(parent)[0]?.key;
+      parent.connections.push(room.id);
+      if (route) parent.routeAssignments[room.id] = route;
+      parent.remainingExits = availableExitRoutes(parent).length;
     }
     state.activeRoomId = room.id;
     advanceTurns(1, false);
@@ -440,16 +525,6 @@
       }
     }
     if (announce && count) log(`${count} exploration turn${count === 1 ? '' : 's'} passed.`);
-  }
-
-  function availableDirections(room) {
-    const vectors = [
-      ['North',0,-1,'↑'],['East',1,0,'→'],['South',0,1,'↓'],['West',-1,0,'←']
-    ];
-    return vectors.filter(([,dx,dy]) => {
-      const x = room.x + dx, y = room.y + dy;
-      return x >= 0 && x < state.size && y >= 0 && y < state.size && !state.rooms.some(r => r.x === x && r.y === y);
-    });
   }
 
   function findPath(startId, targetId) {
@@ -805,14 +880,6 @@
     return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
   }
 
-  function templateRoutes(template) {
-    const routes = [];
-    template.map.split('\n').forEach((row, y) => [...row].forEach((glyph, x) => {
-      if (['E','X','D','U'].includes(glyph)) routes.push({ x, y, glyph });
-    }));
-    return routes;
-  }
-
   function renderMap() {
     const cells = [];
     const connectionVectors = [['n',0,-1],['e',1,0],['s',0,1],['w',-1,0]];
@@ -822,27 +889,16 @@
         if (!room) cells.push('<div class="map-cell"></div>');
         else {
           const template = templateFor(room);
-          const parent = room.connections.map(roomById).filter(candidate => candidate.number < room.number).sort((a,b) => b.number - a.number)[0];
-          let rotation = 0;
-          if (parent) {
-            const dx = parent.x - room.x, dy = parent.y - room.y;
-            rotation = dy === 1 ? 0 : dx === -1 ? 90 : dy === -1 ? 180 : dx === 1 ? 270 : 0;
-          }
           const routes = templateRoutes(template);
-          const entryRoute = routes.find(route => route.glyph === 'E');
-          const exitRoutes = routes.filter(route => route.glyph !== 'E');
-          const children = room.connections.map(roomById).filter(candidate => candidate.number > room.number).sort((a,b) => a.number - b.number);
-          const corridorAssignments = [];
-          if (parent && entryRoute) corridorAssignments.push({ route:entryRoute, dx:parent.x-room.x, dy:parent.y-room.y });
-          children.forEach((child, index) => {
-            const route = exitRoutes[index];
-            if (route) corridorAssignments.push({ route, dx:child.x-room.x, dy:child.y-room.y });
-          });
+          const corridorAssignments = room.connections.map(roomById).map(neighbor => ({
+            route:routes.find(route => route.key === room.routeAssignments?.[neighbor.id]),
+            dx:neighbor.x-room.x, dy:neighbor.y-room.y
+          })).filter(assignment => assignment.route);
           const links = connectionVectors.map(([direction,dx,dy]) => {
             const neighbor = state.rooms.find(item => item.x === x + dx && item.y === y + dy);
             return neighbor && room.connections.includes(neighbor.id) ? `<i class="room-link link-${direction}"></i>` : '';
           }).join('');
-          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, { overview:true, rotation, corridorAssignments })}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
+          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, { overview:true, rotation:room.rotation || 0, corridorAssignments })}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
         }
       }
     }
@@ -937,7 +993,7 @@
       <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Room</small><strong>${room.number}/${state.size*state.size}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoom()}${renderEncounter()}${renderParty()}</div>
-      <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${room.remainingExits <= 0 || state.rooms.length >= state.size*state.size ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
+      <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${availableExitRoutes(room).length <= 0 || state.rooms.length >= state.size*state.size ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
     persist();
@@ -966,8 +1022,28 @@
     root.classList.remove('hidden');
     if (modal.type === 'explore') {
       const room = activeRoom();
-      const dirs = availableDirections(room);
-      root.innerHTML = modalShell('Choose the next sector', `${room.remainingExits} unexplored exit${room.remainingExits === 1 ? '' : 's'} remain in this room. Entering consumes one exploration turn.`, dirs.length ? `<div class="direction-grid">${dirs.map(([name,dx,dy,arrow]) => `<button class="btn direction-card" data-action="choose-direction" data-x="${room.x+dx}" data-y="${room.y+dy}"><strong>${arrow} ${name}</strong></button>`).join('')}</div>` : '<div class="empty-state">No empty adjacent sector remains. Use another room or record a vertical/secret route in the notes.</div>');
+      const exits = availableExitRoutes(room);
+      const sectors = emptyAdjacentSectors(room);
+      if (!modal.routeKey) {
+        const body = !sectors.length
+          ? '<div class="empty-state">No empty adjacent sector remains. Use another room or record a vertical or secret route in the notes.</div>'
+          : exits.length ? `<div class="direction-grid">${exits.map(route => {
+              const direction = rotateDirection(route.direction, room.rotation);
+              const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
+              return `<button class="btn direction-card" data-action="choose-exit" data-route="${esc(route.key)}"><strong>${cardinal?.arrow || (route.glyph === 'D' ? '↓' : '↑')} ${esc(routeLabel(room, route))}</strong><small>${route.glyph === 'X' ? 'Visible doorway' : route.glyph === 'D' ? 'Route descends' : 'Route ascends'}</small></button>`;
+            }).join('')}</div>` : '<div class="empty-state">Every generated exit from this room has already been assigned.</div>';
+        root.innerHTML = modalShell('Choose an exit', `${exits.length} uncharted exit${exits.length === 1 ? '' : 's'} remain in this rotated room. Choose the physical route first.`, body);
+      } else {
+        const route = exits.find(candidate => candidate.key === modal.routeKey);
+        if (!route) { delete modal.routeKey; return renderModal(); }
+        const preferred = rotateDirection(route.direction, room.rotation);
+        const ordered = [...sectors].sort((a,b) => Number(b.dx === preferred?.dx && b.dy === preferred?.dy) - Number(a.dx === preferred?.dx && a.dy === preferred?.dy));
+        const body = ordered.length ? `<div class="direction-grid">${ordered.map(direction => {
+          const straight = direction.dx === preferred?.dx && direction.dy === preferred?.dy;
+          return `<button class="btn direction-card" data-action="choose-direction" data-route="${esc(route.key)}" data-x="${room.x+direction.dx}" data-y="${room.y+direction.dy}"><strong>${direction.arrow} ${direction.name} sector</strong><small>${straight ? 'Straight through this exit' : 'Corridor bends through the rock'}</small></button>`;
+        }).join('')}</div>` : '<div class="empty-state">No empty adjacent sector remains.</div>';
+        root.innerHTML = `<section class="modal"><div class="modal-head"><h2>Place the next room</h2><p>${esc(routeLabel(room, route))} is fixed by the rotated floorplan. Choose where its corridor reaches the site grid.</p></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-quiet" data-action="back-to-exits">Back</button><button class="btn btn-quiet" data-action="close-modal">Cancel</button></div></section>`;
+      }
     } else if (modal.type === 'roll') {
       const room = activeRoom(), template = templateFor(room);
       root.innerHTML = `<form class="modal" id="roll-form"><div class="modal-head"><h2>Make a check</h2><p>Darkness and an active Wound each impose disadvantage; advantage and disadvantage cancel.</p></div><div class="modal-body"><div class="form-grid">
@@ -1035,7 +1111,9 @@
     else if (action === 'settings') openModal('settings');
     else if (action === 'close-modal') closeModal();
     else if (action === 'explore') openModal('explore');
-    else if (action === 'choose-direction') { generateRoom(Number(target.dataset.x),Number(target.dataset.y),state.activeRoomId); closeModal(); render(); }
+    else if (action === 'choose-exit') { modal.routeKey = target.dataset.route; renderModal(); }
+    else if (action === 'back-to-exits') { delete modal.routeKey; renderModal(); }
+    else if (action === 'choose-direction') { generateRoom(Number(target.dataset.x),Number(target.dataset.y),state.activeRoomId,target.dataset.route); closeModal(); render(); }
     else if (action === 'travel') travelTo(target.dataset.id);
     else if (action === 'conquer') conquerRoom();
     else if (action === 'light-fixtures') lightFixtures();

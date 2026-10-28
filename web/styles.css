@@ -299,6 +299,8 @@ input, select, textarea {
 textarea { line-height: 1.45; }
 .direction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
 .direction-card { padding: 18px; text-align: left; }
+.direction-card strong { display:block; }
+.direction-card small { display:block; margin-top:5px; color:var(--muted); font-size:9px; line-height:1.35; }
 .roll-result { margin: 16px 0; padding: 18px; border: 1px solid var(--line); text-align: center; background: #151610; }
 .roll-result strong { display: block; font: 600 42px var(--serif); color: var(--gold); }
 .roll-result span { color: var(--muted); font-size: 11px; }
