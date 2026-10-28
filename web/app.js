@@ -669,7 +669,7 @@
       if (orientation === 'vertical') return `<g class="map-bridge bridge-vertical"><path class="map-feature feature-heavy" d="M${x+7},${y+2}V${y+size-2} M${x+size-7},${y+2}V${y+size-2}"/><path class="map-feature bridge-planks" d="M${x+5},${y+5}H${x+size-5} M${x+5},${y+11}H${x+size-5} M${x+5},${y+17}H${x+size-5} M${x+5},${y+23}H${x+size-5} M${x+5},${y+29}H${x+size-5}"/></g>`;
       return `<g class="map-bridge bridge-horizontal"><path class="map-feature feature-heavy" d="M${x+2},${y+7}H${x+size-2} M${x+2},${y+size-7}H${x+size-2}"/><path class="map-feature bridge-planks" d="M${x+5},${y+5}V${y+size-5} M${x+11},${y+5}V${y+size-5} M${x+17},${y+5}V${y+size-5} M${x+23},${y+5}V${y+size-5} M${x+29},${y+5}V${y+size-5}"/></g>`;
     }
-    if (glyph === 'B') return `<path class="map-feature" d="M${x+4},${y+8}H${x+size-4} M${x+4},${y+13}H${x+size-4}"/><path class="map-feature feature-fine" d="M${x+7},${y+8}v5 M${x+13},${y+8}v5 M${x+19},${y+8}v5 M${x+25},${y+8}v5"/>`;
+    if (glyph === 'B') return '';
     if (glyph === '^' || glyph === 'v') {
       const flip = glyph === '^' ? 1 : -1;
       return `<path class="map-feature" d="M${x+6},${cy+flip*7}H${x+size-6} M${x+9},${cy+flip*2}H${x+size-9} M${x+12},${cy-flip*3}H${x+size-12}"/>`;
@@ -686,7 +686,8 @@
     return '';
   }
 
-  function renderFloorplanSvg(template, instanceId, overview = false, rotation = 0) {
+  function renderFloorplanSvg(template, instanceId, options = {}) {
+    const { overview = false, rotation = 0, corridorAssignments = [] } = options;
     const rows = template.map.split('\n');
     const width = Math.max(...rows.map(row => row.length));
     const height = rows.length;
@@ -714,9 +715,10 @@
       }
     }
     const isFloorAt = (x, y) => isRawFloor(glyphAt(x, y)) || doorConnectors.has(`${x},${y}`);
-    const floors = [], pits = [], pitOutlines = [], walls = [], features = [];
+    const floors = [], pits = [], pitOutlines = [], balconies = [], balconyOutlines = [], walls = [], features = [];
     const used = new Map();
     const isPitAt = (x, y) => ['P','='].includes(glyphAt(x, y));
+    const isBalconyAt = (x, y) => glyphAt(x, y) === 'B';
     const directions = [
       {dx:0,dy:-1,line:(x,y)=>[x,y,x+size,y]}, {dx:1,dy:0,line:(x,y)=>[x+size,y,x+size,y+size]},
       {dx:0,dy:1,line:(x,y)=>[x,y+size,x+size,y+size]}, {dx:-1,dy:0,line:(x,y)=>[x,y,x,y+size]}
@@ -724,6 +726,7 @@
     const safeId = `${instanceId}-${template.index}`.replace(/[^a-zA-Z0-9_-]/g, '-');
     const rockHatchId = `rock-hatch-${safeId}`;
     const pitHatchId = `pit-hatch-${safeId}`;
+    const balconyHatchId = `balcony-hatch-${safeId}`;
     for (let row = 0; row < height; row++) {
       for (let col = 0; col < width; col++) {
         const glyph = glyphAt(col, row);
@@ -735,6 +738,13 @@
             if (isPitAt(col + direction.dx, row + direction.dy)) continue;
             const [x1,y1,x2,y2] = direction.line(x,y);
             pitOutlines.push(`<line class="map-pit-outline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+          }
+        } else if (isBalconyAt(col, row)) {
+          balconies.push(`<rect class="map-balcony-fill" x="${x}" y="${y}" width="${size}" height="${size}" fill="url(#${balconyHatchId})"/>`);
+          for (const direction of directions) {
+            if (isBalconyAt(col + direction.dx, row + direction.dy)) continue;
+            const [x1,y1,x2,y2] = direction.line(x,y);
+            balconyOutlines.push(`<line class="map-balcony-outline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
           }
         } else floors.push(`<rect class="map-floor-square" x="${x}" y="${y}" width="${size}" height="${size}"/>`);
         for (const direction of directions) {
@@ -763,7 +773,25 @@
     const transform = overview
       ? `translate(${canvasSize/2} ${canvasSize/2}) rotate(${rotation}) translate(${-contentWidth/2} ${-contentHeight/2})`
       : '';
-    return `<svg class="visual-map${overview ? ' overview-floorplan' : ''}" viewBox="0 0 ${viewWidth} ${viewHeight}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${rockHatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern><pattern id="${pitHatchId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${rockHatchId})"/><g${transform ? ` transform="${transform}"` : ''}>${floors.join('')}${pits.join('')}${pitOutlines.join('')}${walls.join('')}${features.join('')}</g></svg>`;
+    const radians = rotation * Math.PI / 180;
+    const rotateRoute = route => {
+      const rawX = (route.x + .5) * size - contentWidth / 2;
+      const rawY = (route.y + .5) * size - contentHeight / 2;
+      return {
+        x: canvasSize / 2 + rawX * Math.cos(radians) - rawY * Math.sin(radians),
+        y: canvasSize / 2 + rawX * Math.sin(radians) + rawY * Math.cos(radians)
+      };
+    };
+    const overviewCorridors = overview ? corridorAssignments.map(({ route, dx, dy }) => {
+      const start = rotateRoute(route);
+      const end = { x: dx < 0 ? 0 : dx > 0 ? canvasSize : canvasSize / 2, y: dy < 0 ? 0 : dy > 0 ? canvasSize : canvasSize / 2 };
+      const middle = dx ? (start.x + end.x) / 2 : (start.y + end.y) / 2;
+      const path = dx
+        ? `M${start.x},${start.y} H${middle} V${end.y} H${end.x}`
+        : `M${start.x},${start.y} V${middle} H${end.x} V${end.y}`;
+      return `<path class="overview-corridor corridor-shadow" d="${path}"/><path class="overview-corridor corridor-floor" d="${path}"/>`;
+    }).join('') : '';
+    return `<svg class="visual-map${overview ? ' overview-floorplan' : ''}" viewBox="0 0 ${viewWidth} ${viewHeight}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${rockHatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern><pattern id="${pitHatchId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern><pattern id="${balconyHatchId}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" class="map-balcony-ground"/><path d="M0,2H10 M0,8H10" class="map-balcony-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${rockHatchId})"/>${overviewCorridors}<g${transform ? ` transform="${transform}"` : ''}>${floors.join('')}${pits.join('')}${balconies.join('')}${pitOutlines.join('')}${balconyOutlines.join('')}${walls.join('')}${features.join('')}</g></svg>`;
   }
 
   function renderFloorplan(template, roomId) {
@@ -775,6 +803,14 @@
       }
     }
     return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
+  }
+
+  function templateRoutes(template) {
+    const routes = [];
+    template.map.split('\n').forEach((row, y) => [...row].forEach((glyph, x) => {
+      if (['E','X','D','U'].includes(glyph)) routes.push({ x, y, glyph });
+    }));
+    return routes;
   }
 
   function renderMap() {
@@ -792,11 +828,21 @@
             const dx = parent.x - room.x, dy = parent.y - room.y;
             rotation = dy === 1 ? 0 : dx === -1 ? 90 : dy === -1 ? 180 : dx === 1 ? 270 : 0;
           }
+          const routes = templateRoutes(template);
+          const entryRoute = routes.find(route => route.glyph === 'E');
+          const exitRoutes = routes.filter(route => route.glyph !== 'E');
+          const children = room.connections.map(roomById).filter(candidate => candidate.number > room.number).sort((a,b) => a.number - b.number);
+          const corridorAssignments = [];
+          if (parent && entryRoute) corridorAssignments.push({ route:entryRoute, dx:parent.x-room.x, dy:parent.y-room.y });
+          children.forEach((child, index) => {
+            const route = exitRoutes[index];
+            if (route) corridorAssignments.push({ route, dx:child.x-room.x, dy:child.y-room.y });
+          });
           const links = connectionVectors.map(([direction,dx,dy]) => {
             const neighbor = state.rooms.find(item => item.x === x + dx && item.y === y + dy);
             return neighbor && room.connections.includes(neighbor.id) ? `<i class="room-link link-${direction}"></i>` : '';
           }).join('');
-          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, true, rotation)}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
+          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, { overview:true, rotation, corridorAssignments })}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
         }
       }
     }
