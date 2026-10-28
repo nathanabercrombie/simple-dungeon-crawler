@@ -334,18 +334,18 @@ window.GAME_DATA = (() => {
   ];
 
   const gear = [
-    ['Arming sword','Strength','Parry: +1 maximum HP while readied.'],
-    ['Greatsword','Strength','Brutal: 2 damage, but attack with disadvantage.'],
-    ['Maul','Strength','Shattering: 2 damage to Brittle creatures.'],
-    ['Spear','Strength','Reach: attack across an ally or obstacle.'],
-    ['Longbow','Agility','Ranged; cannot fire while closely engaged.'],
-    ['Dual daggers','Agility','First attack each fight has advantage.'],
-    ['Crossbow','Agility','2 damage; firing discharges it and pressured reload is an Agility check.'],
-    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed.'],
-    ['Wand','Mind','Ranged 1-damage Arcane Bolt.'],
-    ['Hexing focus','Mind','Near 1-damage attack expressed as a curse.'],
-    ['Sacred relic','Mind','Near attack; 2 damage to Profane spirits and undead.'],
-    ['Spirit bell','Mind','Near sonic attack affecting incorporeal creatures.']
+    ['Arming sword','Strength','Parry: +1 maximum HP while readied.',1],
+    ['Greatsword','Strength','Brutal: 2 damage, but attack with disadvantage.',2],
+    ['Maul','Strength','Shattering: 2 damage to Brittle creatures.',2],
+    ['Spear','Strength','Reach: attack across an ally or obstacle.',2],
+    ['Longbow','Agility','Ranged; cannot fire while closely engaged.',2],
+    ['Dual daggers','Agility','First attack each fight has advantage.',2],
+    ['Crossbow','Agility','2 damage; firing discharges it and pressured reload is an Agility check.',2],
+    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed.',1],
+    ['Wand','Mind','Ranged 1-damage Arcane Bolt.',1],
+    ['Hexing focus','Mind','Near 1-damage attack expressed as a curse.',1],
+    ['Sacred relic','Mind','Near attack; 2 damage to Profane spirits and undead.',1],
+    ['Spirit bell','Mind','Near sonic attack affecting incorporeal creatures.',1]
   ];
   const pasts = ['Former grave robber','Caravan guard from the salt road','Assistant to a plague surgeon','Condemned mine laborer','Runaway monastery novice','Poacher in the royal forest','Scavenger from a broken siege','Escapee from a hidden cult','Village undertaker','Smuggler through forgotten tunnels','Retainer to a witch hunter','Disgraced duelist','Guide to the city sewers','Standard-bearer from a lost battle','Apprentice to an apothecary','Thief from a temple reliquary','Ferryman on a haunted river','Keeper of dangerous beasts','Assistant to an obsessive mapmaker','Sole survivor of a failed expedition'];
   const knacks = ['Never Lost Below','Trap Whisperer','Appraiser’s Eye','Field Surgeon','Second Wind','Scrounger','Lie Reader','Parley Under Steel','Slip the Noose','Gone in a Blink','Weak-Point Eye','Improvised Calamity','Read the Omen','Echoes of the Place','Threshold Premonition','Name the Weakness'];

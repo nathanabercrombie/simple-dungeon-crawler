@@ -225,6 +225,8 @@ The party begins each expedition with one shared torch lasting six exploration t
 
 The burning torch occupies one hand. Its bearer cannot use a bow or other two-handed equipment until another adventurer takes the torch or it is placed somewhere that continues to illuminate the situation.
 
+When generating a party, the first adventurer is the default torch bearer and therefore generates signature gear from the one-handed entries only. The same constraint applies to a lone adventurer. Other party members use the full gear table. Passing the torch later does not change anyone's equipment, but its new bearer cannot use two-handed gear while holding it.
+
 ## Current build order
 
 1. **Cut candidate catalogs:** reduce signature gear, Burden/Armor, Past, and Knack results to the desired table sizes and setting tone.

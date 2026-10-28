@@ -205,6 +205,9 @@
   function ensureStateShape() {
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
+    for (const hero of state.party) {
+      if (!hero.gearHands) hero.gearHands = DATA.gear.find(entry => entry[0] === hero.gear)?.[3] || null;
+    }
     const legacyFound = Math.max(0, Number(state.quest.elementsFound) || 0);
     const alreadyClaimed = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed === true).length;
     let legacyClaimsRemaining = Math.max(0, legacyFound - alreadyClaimed);
@@ -250,8 +253,9 @@
     toastTimer = setTimeout(() => node.classList.remove('show'), 2200);
   }
 
-  function createCharacter(name) {
-    const [gear, primary, gearRule] = pick(DATA.gear);
+  function createCharacter(name, { mustCarryTorch = false } = {}) {
+    const gearPool = mustCarryTorch ? DATA.gear.filter(entry => entry[3] === 1) : DATA.gear;
+    const [gear, primary, gearRule, gearHands] = pick(gearPool);
     const attrs = ['Strength','Agility','Mind'];
     const weak = pick(attrs.filter(attr => attr !== primary));
     const values = { Strength: 0, Agility: 0, Mind: 0 };
@@ -261,7 +265,7 @@
     const item = pick(DATA.items);
     return {
       id: uid('hero'), name, attributes: values, hp: maxHp, maxHp,
-      tokens: 1, gear, gearRule, past: pick(DATA.pasts), pastAttribute: pick(attrs),
+      tokens: 1, gear, gearRule, gearHands, past: pick(DATA.pasts), pastAttribute: pick(attrs),
       knack: pick(DATA.knacks), items: [item], wound: '', scar: '', dead: false
     };
   }
@@ -280,7 +284,7 @@
     state.quest = { ...quest, elementsFound: 0, heartFound: false, completed: false };
     const names = form.names.filter(Boolean);
     for (let i = 0; i < Number(form.partySize); i++) {
-      const character = createCharacter(names[i] || DATA.names[i]);
+      const character = createCharacter(names[i] || DATA.names[i], { mustCarryTorch: i === 0 });
       state.party.push(character);
       if (character.items.includes('Fresh torch')) state.light.reserve += 1;
     }
@@ -684,7 +688,7 @@
     const bearingTorch = state.light.remaining > 0 && state.light.holderId === hero.id;
     return `<article class="adventurer-card ${hero.dead ? 'dead' : ''}"><div class="adventurer-head"><div><h3>${esc(hero.name)}${hero.dead ? ' — dead' : ''}</h3><p>${esc(hero.past)} · ${esc(hero.knack)}${bearingTorch ? ' · 🔥 Torch bearer' : ''}</p></div><div class="tracker"><button data-action="hero-hp" data-id="${hero.id}" data-delta="-1">−</button><strong>♥ ${hero.hp}/${hero.maxHp}</strong><button data-action="hero-hp" data-id="${hero.id}" data-delta="1">+</button></div></div>
       <div class="character-row">${Object.entries(hero.attributes).map(([name,value]) => `<div class="stat"><small>${name}</small><strong>${signed(value)}</strong></div>`).join('')}</div>
-      <div class="gear-line"><strong>${esc(hero.gear)}:</strong> ${esc(hero.gearRule)}</div>${bearingTorch ? '<div class="gear-line"><strong>Torch:</strong> occupies one hand; bows and two-handed equipment are unavailable.</div>' : ''}<div class="gear-line"><strong>Past:</strong> ${esc(hero.past)} (${esc(hero.pastAttribute)}; +2 when invoked for 1 token)</div>
+      <div class="gear-line"><strong>${esc(hero.gear)} · ${hero.gearHands || '?'} hand${hero.gearHands === 1 ? '' : 's'}:</strong> ${esc(hero.gearRule)}</div>${bearingTorch ? '<div class="gear-line"><strong>Torch:</strong> occupies one hand; bows and two-handed equipment are unavailable.</div>' : ''}<div class="gear-line"><strong>Past:</strong> ${esc(hero.past)} (${esc(hero.pastAttribute)}; +2 when invoked for 1 token)</div>
       ${hero.wound ? `<div class="gear-line"><strong>Wound:</strong> ${esc(hero.wound)}</div>` : ''}${hero.scar ? `<div class="gear-line"><strong>Scar:</strong> ${esc(hero.scar)}</div>` : ''}
       <div class="inventory">${hero.items.map((item,index) => `<button class="item-chip" data-action="remove-item" data-id="${hero.id}" data-index="${index}" title="Click to consume or remove">${esc(item)}</button>`).join('')}<button class="item-chip" data-action="add-item" data-id="${hero.id}">+ item</button></div>
       <div class="card-actions"><div class="tracker"><button data-action="hero-token" data-id="${hero.id}" data-delta="-1">−</button><strong>◆ ${hero.tokens}/3</strong><button data-action="hero-token" data-id="${hero.id}" data-delta="1">+</button></div>${hero.wound ? `<button class="btn btn-small" data-action="treat" data-id="${hero.id}">Treat Wound</button>` : ''}</div></article>`;
