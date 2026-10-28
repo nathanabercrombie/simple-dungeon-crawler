@@ -243,6 +243,7 @@
     const challenge = canonicalVariant(room, 'challengeVariant', DATA.sceneChallenges[room.challengeRoll]);
     const opportunity = canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]);
     const [atmosphereName, atmosphereProse] = canonicalVariant(room, 'atmosphereVariant', DATA.hauntedAtmospheres);
+    const questScene = buildQuestScene(room);
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
     const occupantIntroduction = occupantProse(liveEnemies);
@@ -252,6 +253,7 @@
     const readAloudParts = [
       { source:`Room roll ${String(template.index).padStart(2,'0')} · ${template.name} · ${template.originalUse}`, text:template.readAloud },
       { source:`Rolled haunting · ${atmosphereName}`, text:atmosphereProse },
+      room.quest.name === 'Omen' ? { source:`Quest omen · ${questScene.title}`, text:questScene.prose } : null,
       occupantIntroduction ? { source:'Generated occupants', text:occupantIntroduction } : null,
       { source:`Visible challenge · ${challenge.title}`, text:visiblePresence }
     ].filter(part => part?.text);
@@ -261,7 +263,7 @@
       description: `${template.readAloud} ${atmosphereProse}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
-      quest: buildQuestScene(room)
+      quest: questScene
     };
   }
 
