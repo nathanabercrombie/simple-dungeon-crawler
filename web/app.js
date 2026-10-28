@@ -660,12 +660,15 @@
     'L':['lava','Lava','≋'], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦']
   };
 
-  function mapSymbol(glyph, x, y, size) {
+  function mapSymbol(glyph, x, y, size, orientation = 'horizontal') {
     const cx = x + size / 2, cy = y + size / 2, q = size / 4;
     if (glyph === 'O') return `<circle class="map-feature feature-heavy" cx="${cx}" cy="${cy}" r="${q * .72}"/><circle class="map-feature" cx="${cx}" cy="${cy}" r="${q * .35}"/>`;
     if (glyph === 'S') return `<path class="map-feature" d="M${cx-q},${cy+q}h${q*2} M${cx-q*.7},${cy+q}v${-q*.55}h${q*1.4}v${q*.55} M${cx},${cy-q*.9}v${q*1.35} M${cx-q*.45},${cy-q*.35}h${q*.9}"/><circle class="map-feature" cx="${cx}" cy="${cy-q*1.15}" r="${q*.22}"/>`;
-    if (glyph === 'P') return `<rect class="map-feature feature-pit" x="${x+4}" y="${y+4}" width="${size-8}" height="${size-8}"/><path class="map-feature feature-fine" d="M${x+5},${y+13}l8,-8 M${x+5},${y+23}l18,-18 M${x+9},${y+27}l18,-18 M${x+19},${y+27}l8,-8"/>`;
-    if (glyph === '=') return `<path class="map-feature feature-heavy" d="M${x+4},${y+7}H${x+size-4} M${x+4},${y+size-7}H${x+size-4}"/><path class="map-feature feature-fine" d="M${x+8},${y+7}v${size-14} M${x+14},${y+7}v${size-14} M${x+20},${y+7}v${size-14} M${x+26},${y+7}v${size-14}"/>`;
+    if (glyph === 'P') return '';
+    if (glyph === '=') {
+      if (orientation === 'vertical') return `<g class="map-bridge bridge-vertical"><path class="map-feature feature-heavy" d="M${x+7},${y+2}V${y+size-2} M${x+size-7},${y+2}V${y+size-2}"/><path class="map-feature bridge-planks" d="M${x+5},${y+5}H${x+size-5} M${x+5},${y+11}H${x+size-5} M${x+5},${y+17}H${x+size-5} M${x+5},${y+23}H${x+size-5} M${x+5},${y+29}H${x+size-5}"/></g>`;
+      return `<g class="map-bridge bridge-horizontal"><path class="map-feature feature-heavy" d="M${x+2},${y+7}H${x+size-2} M${x+2},${y+size-7}H${x+size-2}"/><path class="map-feature bridge-planks" d="M${x+5},${y+5}V${y+size-5} M${x+11},${y+5}V${y+size-5} M${x+17},${y+5}V${y+size-5} M${x+23},${y+5}V${y+size-5} M${x+29},${y+5}V${y+size-5}"/></g>`;
+    }
     if (glyph === 'B') return `<path class="map-feature" d="M${x+4},${y+8}H${x+size-4} M${x+4},${y+13}H${x+size-4}"/><path class="map-feature feature-fine" d="M${x+7},${y+8}v5 M${x+13},${y+8}v5 M${x+19},${y+8}v5 M${x+25},${y+8}v5"/>`;
     if (glyph === '^' || glyph === 'v') {
       const flip = glyph === '^' ? 1 : -1;
@@ -683,7 +686,7 @@
     return '';
   }
 
-  function renderFloorplan(template) {
+  function renderFloorplanSvg(template, instanceId, overview = false, rotation = 0) {
     const rows = template.map.split('\n');
     const width = Math.max(...rows.map(row => row.length));
     const height = rows.length;
@@ -711,18 +714,29 @@
       }
     }
     const isFloorAt = (x, y) => isRawFloor(glyphAt(x, y)) || doorConnectors.has(`${x},${y}`);
-    const floors = [], walls = [], features = [];
+    const floors = [], pits = [], pitOutlines = [], walls = [], features = [];
     const used = new Map();
+    const isPitAt = (x, y) => ['P','='].includes(glyphAt(x, y));
     const directions = [
       {dx:0,dy:-1,line:(x,y)=>[x,y,x+size,y]}, {dx:1,dy:0,line:(x,y)=>[x+size,y,x+size,y+size]},
       {dx:0,dy:1,line:(x,y)=>[x,y+size,x+size,y+size]}, {dx:-1,dy:0,line:(x,y)=>[x,y,x,y+size]}
     ];
+    const safeId = `${instanceId}-${template.index}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const rockHatchId = `rock-hatch-${safeId}`;
+    const pitHatchId = `pit-hatch-${safeId}`;
     for (let row = 0; row < height; row++) {
       for (let col = 0; col < width; col++) {
         const glyph = glyphAt(col, row);
         if (!isFloorAt(col, row)) continue;
         const x = col * size, y = row * size;
-        floors.push(`<rect class="map-floor-square" x="${x}" y="${y}" width="${size}" height="${size}"/>`);
+        if (isPitAt(col, row)) {
+          pits.push(`<rect class="map-pit-fill" x="${x}" y="${y}" width="${size}" height="${size}" fill="url(#${pitHatchId})"/>`);
+          for (const direction of directions) {
+            if (isPitAt(col + direction.dx, row + direction.dy)) continue;
+            const [x1,y1,x2,y2] = direction.line(x,y);
+            pitOutlines.push(`<line class="map-pit-outline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+          }
+        } else floors.push(`<rect class="map-floor-square" x="${x}" y="${y}" width="${size}" height="${size}"/>`);
         for (const direction of directions) {
           if (isFloorAt(col + direction.dx, row + direction.dy)) continue;
           const [x1,y1,x2,y2] = direction.line(x,y);
@@ -732,23 +746,57 @@
         if (TILE_INFO[glyph] && glyph !== '.') {
           const [kind,label,icon] = TILE_INFO[glyph];
           used.set(kind, { label, icon });
-          features.push(mapSymbol(glyph, x, y, size));
+          let orientation = 'horizontal';
+          if (glyph === '=') {
+            const vertical = glyphAt(col, row - 1) === '=' || glyphAt(col, row + 1) === '=';
+            const horizontal = glyphAt(col - 1, row) === '=' || glyphAt(col + 1, row) === '=';
+            orientation = vertical && !horizontal ? 'vertical' : 'horizontal';
+          }
+          features.push(mapSymbol(glyph, x, y, size, orientation));
         }
       }
     }
-    const hatchId = `map-hatch-${template.index}`;
-    return `<div class="visual-map-wrap"><svg class="visual-map" viewBox="0 0 ${width*size} ${height*size}" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${hatchId}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="map-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${hatchId})"/>${floors.join('')}${walls.join('')}${features.join('')}</svg><div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
+    const contentWidth = width * size, contentHeight = height * size;
+    const canvasSize = Math.max(contentWidth, contentHeight);
+    const viewWidth = overview ? canvasSize : contentWidth;
+    const viewHeight = overview ? canvasSize : contentHeight;
+    const transform = overview
+      ? `translate(${canvasSize/2} ${canvasSize/2}) rotate(${rotation}) translate(${-contentWidth/2} ${-contentHeight/2})`
+      : '';
+    return `<svg class="visual-map${overview ? ' overview-floorplan' : ''}" viewBox="0 0 ${viewWidth} ${viewHeight}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${rockHatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern><pattern id="${pitHatchId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${rockHatchId})"/><g${transform ? ` transform="${transform}"` : ''}>${floors.join('')}${pits.join('')}${pitOutlines.join('')}${walls.join('')}${features.join('')}</g></svg>`;
+  }
+
+  function renderFloorplan(template, roomId) {
+    const used = new Map();
+    for (const glyph of template.map) {
+      if (TILE_INFO[glyph] && glyph !== '.') {
+        const [kind,label,icon] = TILE_INFO[glyph];
+        used.set(kind, { label, icon });
+      }
+    }
+    return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
   }
 
   function renderMap() {
     const cells = [];
+    const connectionVectors = [['n',0,-1],['e',1,0],['s',0,1],['w',-1,0]];
     for (let y = 0; y < state.size; y++) {
       for (let x = 0; x < state.size; x++) {
         const room = state.rooms.find(item => item.x === x && item.y === y);
         if (!room) cells.push('<div class="map-cell"></div>');
         else {
           const template = templateFor(room);
-          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Travel to ${esc(template.name)}"><span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
+          const parent = room.connections.map(roomById).filter(candidate => candidate.number < room.number).sort((a,b) => b.number - a.number)[0];
+          let rotation = 0;
+          if (parent) {
+            const dx = parent.x - room.x, dy = parent.y - room.y;
+            rotation = dy === 1 ? 0 : dx === -1 ? 90 : dy === -1 ? 180 : dx === 1 ? 270 : 0;
+          }
+          const links = connectionVectors.map(([direction,dx,dy]) => {
+            const neighbor = state.rooms.find(item => item.x === x + dx && item.y === y + dy);
+            return neighbor && room.connections.includes(neighbor.id) ? `<i class="room-link link-${direction}"></i>` : '';
+          }).join('');
+          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, true, rotation)}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
         }
       }
     }
@@ -777,7 +825,7 @@
           ${darkness ? '<span class="tag danger-hard">Darkness: disadvantage</span>' : ''}
           ${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}
         </div>
-        <div class="room-body">${renderFloorplan(template)}<div class="room-copy">
+        <div class="room-body">${renderFloorplan(template, room.id)}<div class="room-copy">
           <div class="facilitator-heading"><div class="eyebrow">Facilitator information</div>${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p><p><strong>Haunting:</strong> ${esc(scene.atmosphereName)}.</p></div>
           <div class="scene-block"><div class="eyebrow">Challenge · d12 ${room.challengeRoll}</div><h3 class="scene-title">${esc(scene.challenge.title)}</h3><p>${esc(scene.challenge.presence)}</p>
           ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
