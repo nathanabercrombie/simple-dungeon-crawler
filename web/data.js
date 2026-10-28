@@ -334,27 +334,58 @@ window.GAME_DATA = (() => {
   ];
 
   const gear = [
-    ['Arming sword','Strength','Parry: +1 maximum HP while readied.',1],
-    ['Greatsword','Strength','Brutal: 2 damage, but attack with disadvantage.',2],
-    ['Maul','Strength','Shattering: 2 damage to Brittle creatures.',2],
-    ['Spear','Strength','Reach: attack across an ally or obstacle.',2],
-    ['Longbow','Agility','Ranged; cannot fire while closely engaged.',2],
-    ['Dual daggers','Agility','First attack each fight has advantage.',2],
-    ['Crossbow','Agility','2 damage; firing discharges it and pressured reload is an Agility check.',2],
-    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed.',1],
-    ['Wand','Mind','Ranged 1-damage Arcane Bolt.',1],
-    ['Hexing focus','Mind','Near 1-damage attack expressed as a curse.',1],
-    ['Sacred relic','Mind','Near attack; 2 damage to Profane spirits and undead.',1],
-    ['Spirit bell','Mind','Near sonic attack affecting incorporeal creatures.',1]
+    ['Arming sword','Strength','Parry: +1 maximum HP while readied.',1,'Lunge','Attack a target at Near range.',1],
+    ['Greatsword','Strength','Brutal: 2 damage, but attack with disadvantage.',2,'Whirlwind','Make one attack against the highest Defense among adjacent enemies; on success, deal 1 damage to every adjacent enemy.',2],
+    ['Maul','Strength','Shattering: 2 damage to Brittle creatures.',2,'Concuss','After a successful hit, the next attack against that target has advantage.',1],
+    ['Spear','Strength','Reach: attack across an ally or obstacle.',2,'Brace','Deal 1 damage to an enemy that closes with you before it completes its action.',1],
+    ['Longbow','Agility','Ranged; cannot fire while closely engaged.',2,'Pinning Shot','After a hit, the target cannot reposition during its next dungeon action.',1],
+    ['Dual daggers','Agility','The first attack each fight has advantage.',2,'Twin Strike','Make one check against the higher Defense of two adjacent targets; deal 1 damage to each on success.',1],
+    ['Crossbow','Agility','A loaded hit deals 2 damage; firing discharges it and pressured reload is an Agility check.',2,'Deadeye','Ignore cover and attack at Extreme range.',1],
+    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed.',1,'Fan of Steel','Make one check against the higher Defense of two Fragile targets; deal 1 damage to each on success.',1],
+    ['Wand','Mind','Make a ranged 1-damage Arcane Bolt attack.',1,'Cure Wounds','Remove one active Wound without creating a Scar and restore the target to full HP.',3],
+    ['Hexing focus','Mind','Make a Near 1-damage attack expressed as a curse.',1,'Ill Omen','After a hit, give the target disadvantage on its next check or reduce its next automatic effect.',1],
+    ['Sacred relic','Mind','Make a Near attack; deal 2 damage to Profane spirits and undead.',1,'Banish','Force an eligible supernatural creature to flee or become unable to approach.',2],
+    ['Spirit bell','Mind','Make a Near sonic attack that affects incorporeal creatures.',1,'Discord','After a hit, reduce the target’s Defense by one step until it acts.',1]
+  ];
+  const armor = [
+    { primary:'Strength', weak:'Agility', burden:'Ironbound', name:'Black-iron plate', rule:'Reinforced: +1 maximum HP while worn. Loud, conspicuous, and slow to remove.', reinforced:true },
+    { primary:'Strength', weak:'Agility', burden:'Chain-laden', name:'Mail, coif, and heavy boots', rule:'Guard: once per fight, prevent the first Physical damage. Noisy during stealth and dangerous in deep water.' },
+    { primary:'Strength', weak:'Mind', burden:'Haunted', name:'Charm-stitched leather', rule:'Insulated Profane: a Profane Wound keeps its disadvantage but loses its additional acute effect. The charms whisper near spirits.' },
+    { primary:'Strength', weak:'Mind', burden:'Glory-bound', name:'Bright half-plate', rule:'Reinforced: +1 maximum HP while worn. Intelligent enemies readily identify and challenge you.', reinforced:true },
+    { primary:'Agility', weak:'Strength', burden:'Slight', name:'Quilted coat', rule:'Guard Projectile: once per fight, prevent 1 damage from a projectile. It offers little protection from heavy close blows.' },
+    { primary:'Agility', weak:'Strength', burden:'Sickly', name:'Waxed plague coat and mask', rule:'Resist Poison or Disease: ignore the first qualifying hit each fight. The mask muffles speech and alarms strangers.' },
+    { primary:'Agility', weak:'Mind', burden:'Impulsive', name:'Light brigandine', rule:'After a successful attack, you may reposition nearby. You habitually overextend and pursue.' },
+    { primary:'Agility', weak:'Mind', burden:'Haunted', name:'Funerary wraps beneath leather', rule:'Resist Profane: ignore the first Profane hit each fight. The dead sometimes recognize the wrapping.' },
+    { primary:'Mind', weak:'Strength', burden:'Frail', name:'Warded robes', rule:'Guard Arcane: once per fight, prevent 1 Arcane damage. The cloth provides little mundane protection.' },
+    { primary:'Mind', weak:'Strength', burden:'Withered', name:'Gravecloth mantle', rule:'Insulated Profane: a Profane Wound loses its additional acute effect. The mantle carries the chill and scent of a tomb.' },
+    { primary:'Mind', weak:'Agility', burden:'Ritually encumbered', name:'Ceremonial mail', rule:'Reinforced: +1 maximum HP while worn. Bells, seals, and layered vestments make stealth difficult.', reinforced:true },
+    { primary:'Mind', weak:'Agility', burden:'Nearsighted', name:'Rune-carved plate', rule:'Reinforced: +1 maximum HP while worn. Fine work and distant mundane details are difficult to perceive.', reinforced:true }
   ];
   const pasts = ['Former grave robber','Caravan guard from the salt road','Assistant to a plague surgeon','Condemned mine laborer','Runaway monastery novice','Poacher in the royal forest','Scavenger from a broken siege','Escapee from a hidden cult','Village undertaker','Smuggler through forgotten tunnels','Retainer to a witch hunter','Disgraced duelist','Guide to the city sewers','Standard-bearer from a lost battle','Apprentice to an apothecary','Thief from a temple reliquary','Ferryman on a haunted river','Keeper of dangerous beasts','Assistant to an obsessive mapmaker','Sole survivor of a failed expedition'];
-  const knacks = ['Never Lost Below','Trap Whisperer','Appraiser’s Eye','Field Surgeon','Second Wind','Scrounger','Lie Reader','Parley Under Steel','Slip the Noose','Gone in a Blink','Weak-Point Eye','Improvised Calamity','Read the Omen','Echoes of the Place','Threshold Premonition','Name the Weakness'];
+  const knacks = [
+    { name:'Never Lost Below', cost:2, effect:'Learn the direction of the nearest known exit or previously visited room without rolling.' },
+    { name:'Trap Whisperer', cost:2, effect:'Learn the trigger and one safe method of bypassing a detected mundane trap.' },
+    { name:'Appraiser’s Eye', cost:2, effect:'Ask two questions about an object: its purpose, value, maker, age, danger, or whether it is cursed. Receive truthful answers.' },
+    { name:'Field Surgeon', cost:2, effect:'Treat one active Wound without a check or treatment supply. It becomes its normal Scar.' },
+    { name:'Second Wind', cost:2, effect:'During a fight, restore yourself to full HP. This does not remove a Wound.' },
+    { name:'Scrounger', cost:2, effect:'In a plausible location, find one ordinary consumable such as a ration, bandage, flask of oil, torch, or ammunition.' },
+    { name:'Lie Reader', cost:2, effect:'Learn whether a speaker believes one statement they just made. This does not reveal objective truth.' },
+    { name:'Parley Under Steel', cost:2, effect:'Halt immediate violence from intelligent creatures long enough to exchange one short offer, demand, or warning.' },
+    { name:'Slip the Noose', cost:2, effect:'Escape one mundane grapple, restraint, or enclosed hold and reposition nearby.' },
+    { name:'Gone in a Blink', cost:2, effect:'If plausible concealment or an exit is nearby, break line of sight and become hidden from ordinary senses.' },
+    { name:'Weak-Point Eye', cost:2, effect:'After observing a creature or barrier, the next successful damaging attack against it deals +1 damage.' },
+    { name:'Improvised Calamity', cost:2, effect:'Use a suitable room feature to deal 1 damage to every creature in a small affected area.' },
+    { name:'Read the Omen', cost:2, effect:'Ask the oracle one yes/no question twice and choose which result becomes true.' },
+    { name:'Echoes of the Place', cost:2, effect:'Learn what significant event most recently happened in the current room through a truthful sensory impression.' },
+    { name:'Threshold Premonition', cost:2, effect:'Before entering a new room, learn the category of its primary challenge. Entering still costs its normal turn.' },
+    { name:'Name the Weakness', cost:2, effect:'Learn one actionable vulnerability, prohibition, appetite, or fear belonging to a creature you can observe.' }
+  ];
   const items = ['Medkit','Rope','Fresh torch','Crowbar','Climbing tools','Flask of oil','Lantern','Bandages','Chalk and spikes','Small mirror'];
   const names = ['Mara','Corvin','Iona','Bram','Sable','Orin','Vey','Hester','Tarn','Elian','Nera','Garrick'];
 
   return {
     rooms, challenges, opportunities, sceneChallenges, sceneOpportunities,
     hauntedAtmospheres, quests, questBands, monsters,
-    gear, pasts, knacks, items, names
+    gear, armor, pasts, knacks, items, names
   };
 })();

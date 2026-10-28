@@ -206,7 +206,32 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const hero of state.party) {
-      if (!hero.gearHands) hero.gearHands = DATA.gear.find(entry => entry[0] === hero.gear)?.[3] || null;
+      const gear = DATA.gear.find(entry => entry[0] === hero.gear);
+      if (!hero.gearHands) hero.gearHands = gear?.[3] || null;
+      if (!hero.gearTechnique && gear) {
+        hero.gearTechnique = gear[4];
+        hero.gearTechniqueRule = gear[5];
+        hero.gearTechniqueCost = gear[6];
+      }
+      if (!hero.armorName) {
+        const armor = stableArmorFor(hero);
+        hero.burden = armor.burden;
+        hero.armorName = armor.name;
+        hero.armorRule = armor.rule;
+        const expectedMaxHp = 2 + (hero.gear === 'Arming sword' ? 1 : 0) + (armor.reinforced ? 1 : 0);
+        if (hero.maxHp < expectedMaxHp) {
+          const gainedHp = expectedMaxHp - hero.maxHp;
+          hero.maxHp = expectedMaxHp;
+          if (hero.hp > 0) hero.hp += gainedHp;
+        }
+      }
+      if (!hero.knackRule) {
+        const knack = DATA.knacks.find(entry => entry.name === hero.knack);
+        if (knack) {
+          hero.knackCost = knack.cost;
+          hero.knackRule = knack.effect;
+        }
+      }
     }
     const legacyFound = Math.max(0, Number(state.quest.elementsFound) || 0);
     const alreadyClaimed = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed === true).length;
@@ -253,20 +278,41 @@
     toastTimer = setTimeout(() => node.classList.remove('show'), 2200);
   }
 
+  function armorPool(primary, weak) {
+    return DATA.armor.filter(entry => entry.primary === primary && entry.weak === weak);
+  }
+
+  function stableArmorFor(hero) {
+    const primary = Object.entries(hero.attributes).find(([,value]) => value === 3)?.[0] || 'Strength';
+    const weak = Object.entries(hero.attributes).sort((a,b) => a[1] - b[1])[0]?.[0] || 'Agility';
+    const choices = armorPool(primary, weak);
+    let hash = 2166136261 >>> 0;
+    for (const char of `${state.seed}:${hero.id}:armor`) {
+      hash ^= char.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return choices[(hash >>> 0) % choices.length];
+  }
+
   function createCharacter(name, { mustCarryTorch = false } = {}) {
     const gearPool = mustCarryTorch ? DATA.gear.filter(entry => entry[3] === 1) : DATA.gear;
-    const [gear, primary, gearRule, gearHands] = pick(gearPool);
+    const [gear, primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost] = pick(gearPool);
     const attrs = ['Strength','Agility','Mind'];
     const weak = pick(attrs.filter(attr => attr !== primary));
     const values = { Strength: 0, Agility: 0, Mind: 0 };
     values[primary] = 3;
     values[weak] = -2;
-    const maxHp = gear === 'Arming sword' ? 3 : 2;
+    const armor = pick(armorPool(primary, weak));
+    const knack = pick(DATA.knacks);
+    const maxHp = 2 + (gear === 'Arming sword' ? 1 : 0) + (armor.reinforced ? 1 : 0);
     const item = pick(DATA.items);
     return {
       id: uid('hero'), name, attributes: values, hp: maxHp, maxHp,
-      tokens: 1, gear, gearRule, gearHands, past: pick(DATA.pasts), pastAttribute: pick(attrs),
-      knack: pick(DATA.knacks), items: [item], wound: '', scar: '', dead: false
+      tokens: 1, gear, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost,
+      burden: armor.burden, armorName: armor.name, armorRule: armor.rule,
+      past: pick(DATA.pasts), pastAttribute: pick(attrs),
+      knack: knack.name, knackCost: knack.cost, knackRule: knack.effect,
+      items: [item], wound: '', scar: '', dead: false
     };
   }
 
@@ -688,7 +734,12 @@
     const bearingTorch = state.light.remaining > 0 && state.light.holderId === hero.id;
     return `<article class="adventurer-card ${hero.dead ? 'dead' : ''}"><div class="adventurer-head"><div><h3>${esc(hero.name)}${hero.dead ? ' — dead' : ''}</h3><p>${esc(hero.past)} · ${esc(hero.knack)}${bearingTorch ? ' · 🔥 Torch bearer' : ''}</p></div><div class="tracker"><button data-action="hero-hp" data-id="${hero.id}" data-delta="-1">−</button><strong>♥ ${hero.hp}/${hero.maxHp}</strong><button data-action="hero-hp" data-id="${hero.id}" data-delta="1">+</button></div></div>
       <div class="character-row">${Object.entries(hero.attributes).map(([name,value]) => `<div class="stat"><small>${name}</small><strong>${signed(value)}</strong></div>`).join('')}</div>
-      <div class="gear-line"><strong>${esc(hero.gear)} · ${hero.gearHands || '?'} hand${hero.gearHands === 1 ? '' : 's'}:</strong> ${esc(hero.gearRule)}</div>${bearingTorch ? '<div class="gear-line"><strong>Torch:</strong> occupies one hand; bows and two-handed equipment are unavailable.</div>' : ''}<div class="gear-line"><strong>Past:</strong> ${esc(hero.past)} (${esc(hero.pastAttribute)}; +2 when invoked for 1 token)</div>
+      <div class="gear-line"><strong>${esc(hero.gear)} · ${hero.gearHands || '?'} hand${hero.gearHands === 1 ? '' : 's'}:</strong> ${esc(hero.gearRule)}</div>
+      <div class="gear-line"><strong>${esc(hero.gearTechnique)} · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}:</strong> ${esc(hero.gearTechniqueRule)}</div>
+      <div class="gear-line"><strong>${esc(hero.armorName)} · ${esc(hero.burden)}:</strong> ${esc(hero.armorRule)}</div>
+      ${bearingTorch ? '<div class="gear-line"><strong>Torch:</strong> occupies one hand; bows and two-handed equipment are unavailable.</div>' : ''}
+      <div class="gear-line"><strong>Past · 1 token:</strong> ${esc(hero.past)} (${esc(hero.pastAttribute)}; invoke for +2 when its fictional scope applies)</div>
+      <div class="gear-line"><strong>${esc(hero.knack)} · ${hero.knackCost} tokens:</strong> ${esc(hero.knackRule)}</div>
       ${hero.wound ? `<div class="gear-line"><strong>Wound:</strong> ${esc(hero.wound)}</div>` : ''}${hero.scar ? `<div class="gear-line"><strong>Scar:</strong> ${esc(hero.scar)}</div>` : ''}
       <div class="inventory">${hero.items.map((item,index) => `<button class="item-chip" data-action="remove-item" data-id="${hero.id}" data-index="${index}" title="Click to consume or remove">${esc(item)}</button>`).join('')}<button class="item-chip" data-action="add-item" data-id="${hero.id}">+ item</button></div>
       <div class="card-actions"><div class="tracker"><button data-action="hero-token" data-id="${hero.id}" data-delta="-1">−</button><strong>◆ ${hero.tokens}/3</strong><button data-action="hero-token" data-id="${hero.id}" data-delta="1">+</button></div>${hero.wound ? `<button class="btn btn-small" data-action="treat" data-id="${hero.id}">Treat Wound</button>` : ''}</div></article>`;

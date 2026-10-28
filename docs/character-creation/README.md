@@ -227,6 +227,10 @@ The burning torch occupies one hand. Its bearer cannot use a bow or other two-ha
 
 When generating a party, the first adventurer is the default torch bearer and therefore generates signature gear from the one-handed entries only. The same constraint applies to a lone adventurer. Other party members use the full gear table. Passing the torch later does not change anyone's equipment, but its new bearer cannot use two-handed gear while holding it.
 
+The web companion resolves a concrete armor package from each adventurer's Primary and Weak attributes. The character card lists its Burden and exact armor rule. Maximum-HP bonuses from armor and weapons stack.
+
+Every generated Gear technique and Knack includes its exact Skill Token cost and effect on the character card. A Past may be invoked for 1 Skill Token when it clearly applies to the current situation.
+
 ## Current build order
 
 1. **Cut candidate catalogs:** reduce signature gear, Burden/Armor, Past, and Knack results to the desired table sizes and setting tone.
