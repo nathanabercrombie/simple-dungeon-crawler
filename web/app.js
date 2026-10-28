@@ -738,7 +738,7 @@
     'O':['pillar','Pillar','○'], 'S':['statue','Statue','♙'], 'P':['pit','Pit or chasm','╱'], '=':['bridge','Bridge','═'],
     'B':['balcony','Balcony','┄'], '^':['steps','Raised floor','⌃'], 'v':['sunken','Sunken floor','⌄'],
     'D':['descent','Descent','↓'], 'U':['ascent','Ascent','↑'], '~':['water','Water','≈'], 'R':['rubble','Rubble','◇'],
-    '+':['gate','Gate','ǂ'], 'C':['cage','Cage','╫'], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
+    '|':['partition','Barred divider','║'], '+':['gate','Gate','ǂ'], 'C':['cage','Cage','╫'], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
     'L':['lava','Lava','≋'], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦']
   };
 
@@ -759,7 +759,11 @@
     if (glyph === 'D' || glyph === 'U') return `<path class="map-feature" d="M${x+6},${y+7}H${x+size-6} M${x+8},${y+12}H${x+size-8} M${x+10},${y+17}H${x+size-10} M${x+12},${y+22}H${x+size-12}"/><text class="map-symbol-text" x="${cx}" y="${cy+10}">${glyph === 'D' ? '↓' : '↑'}</text>`;
     if (glyph === '~' || glyph === 'L') return `<path class="map-feature ${glyph === 'L' ? 'feature-heavy' : ''}" d="M${x+3},${y+9}q4,-4 8,0t8,0t8,0 M${x+3},${y+17}q4,-4 8,0t8,0t8,0 M${x+3},${y+25}q4,-4 8,0t8,0t8,0"/>`;
     if (glyph === 'R') return `<path class="map-feature" d="M${x+5},${y+20}l5,-8 7,5 -3,8z M${x+15},${y+12}l5,-6 7,5 -2,7z M${x+19},${y+25}l4,-6 5,3 -2,5z"/>`;
-    if (glyph === '+' || glyph === 'C') return `<path class="map-feature feature-heavy" d="M${x+5},${y+7}H${x+size-5} M${x+5},${y+size-7}H${x+size-5}"/><path class="map-feature" d="M${x+9},${y+5}v${size-10} M${x+16},${y+5}v${size-10} M${x+23},${y+5}v${size-10}"/>`;
+    if (glyph === '|' || glyph === '+' || glyph === 'C') {
+      const kind = glyph === '+' ? 'gate' : glyph === '|' ? 'partition' : 'cage';
+      if (orientation === 'vertical') return `<g class="map-bars feature-${kind} ${kind}-vertical"><path class="map-feature feature-heavy" d="M${x+7},${y+2}V${y+size-2} M${x+size-7},${y+2}V${y+size-2}"/><path class="map-feature" d="M${x+5},${y+9}h${size-10} M${x+5},${y+16}h${size-10} M${x+5},${y+23}h${size-10}"/></g>`;
+      return `<g class="map-bars feature-${kind} ${kind}-horizontal"><path class="map-feature feature-heavy" d="M${x+2},${y+7}H${x+size-2} M${x+2},${y+size-7}H${x+size-2}"/><path class="map-feature" d="M${x+9},${y+5}v${size-10} M${x+16},${y+5}v${size-10} M${x+23},${y+5}v${size-10}"/></g>`;
+    }
     if (glyph === 'F') return `<path class="map-feature feature-heavy" d="M${x+5},${y+24}h${size-10}v4H${x+5}z M${cx},${y+23}c-8,-5 2,-8 -2,-16 9,6 3,10 8,14 3,3 0,6 -6,6"/>`;
     if (glyph === 'G') return `<circle class="map-feature feature-heavy" cx="${cx}" cy="${cy}" r="${q*.78}"/><circle class="map-feature" cx="${cx}" cy="${cy}" r="${q*.28}"/><path class="map-feature" d="M${cx},${y+4}v6 M${cx},${y+size-10}v6 M${x+4},${cy}h6 M${x+size-10},${cy}h6 M${x+7},${y+7}l4,4 M${x+size-11},${y+size-11}l4,4 M${x+size-7},${y+7}l-4,4 M${x+11},${y+size-11}l-4,4"/>`;
     if (glyph === 'M') return `<rect class="map-feature feature-heavy" x="${x+8}" y="${y+4}" width="${size-16}" height="${size-8}" rx="6"/><path class="map-feature feature-fine" d="M${x+11},${y+20}l8,-12 M${x+15},${y+25}l6,-9"/>`;
@@ -786,6 +790,21 @@
       outline = `<line class="map-wall map-doorway${glyph === '?' ? ' map-secret-wall' : ''}" x1="0" y1="1.5" x2="32" y2="1.5"/>`;
     }
     return `<svg class="legend-symbol" viewBox="0 0 32 32" aria-hidden="true">${defs}${ground}${outline}${mapSymbol(glyph,0,0,size,orientation)}</svg>`;
+  }
+
+  function tileOrientation(rows, x, y, glyph) {
+    if (glyph === '=') {
+      const vertical = rows[y-1]?.[x] === '=' || rows[y+1]?.[x] === '=';
+      const horizontal = rows[y]?.[x-1] === '=' || rows[y]?.[x+1] === '=';
+      return vertical && !horizontal ? 'vertical' : 'horizontal';
+    }
+    if (glyph === '|') return 'vertical';
+    if (glyph === '+') {
+      const vertical = ['#','|','+','C'].includes(rows[y-1]?.[x]) || ['#','|','+','C'].includes(rows[y+1]?.[x]);
+      const horizontal = ['#','|','+','C'].includes(rows[y]?.[x-1]) || ['#','|','+','C'].includes(rows[y]?.[x+1]);
+      return vertical && !horizontal ? 'vertical' : 'horizontal';
+    }
+    return 'horizontal';
   }
 
   function renderFloorplanSvg(template, instanceId, options = {}) {
@@ -858,12 +877,7 @@
         if (TILE_INFO[glyph] && glyph !== '.') {
           const [kind,label,icon] = TILE_INFO[glyph];
           used.set(kind, { label, icon });
-          let orientation = 'horizontal';
-          if (glyph === '=') {
-            const vertical = glyphAt(col, row - 1) === '=' || glyphAt(col, row + 1) === '=';
-            const horizontal = glyphAt(col - 1, row) === '=' || glyphAt(col + 1, row) === '=';
-            orientation = vertical && !horizontal ? 'vertical' : 'horizontal';
-          }
+          const orientation = tileOrientation(rows, col, row, glyph);
           features.push(mapSymbol(glyph, x, y, size, orientation));
         }
       }
@@ -901,14 +915,10 @@
     rows.forEach((row, y) => [...row].forEach((glyph, x) => {
       if (!TILE_INFO[glyph] || glyph === '.') return;
       const [kind,baseLabel] = TILE_INFO[glyph];
-      let orientation = 'horizontal';
-      if (glyph === '=') {
-        const vertical = rows[y-1]?.[x] === '=' || rows[y+1]?.[x] === '=';
-        const horizontal = row[x-1] === '=' || row[x+1] === '=';
-        orientation = vertical && !horizontal ? 'vertical' : 'horizontal';
-      }
-      const key = glyph === '=' ? `${kind}-${orientation}` : kind;
-      const label = glyph === '=' ? `${baseLabel} · ${orientation}` : baseLabel;
+      const orientation = tileOrientation(rows, x, y, glyph);
+      const oriented = ['=','|','+'].includes(glyph);
+      const key = oriented ? `${kind}-${orientation}` : kind;
+      const label = oriented ? `${baseLabel} · ${orientation}` : baseLabel;
       used.set(key, { label, glyph, orientation });
     }));
     return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,glyph,orientation}, index) => `<span data-legend-glyph="${esc(glyph)}" data-orientation="${orientation}"><i class="legend-mark">${renderLegendSymbol(glyph, `${roomId}-${index}`, orientation)}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
