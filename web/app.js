@@ -75,6 +75,40 @@
     return chosen ? chosen[1] : `The ${template.tags.slice(0,2).join(' and ')} architecture gives the chamber a deliberate, functional shape.`;
   }
 
+  function visibleFunctionProse(name) {
+    return {
+      'Processional threshold':'A broad strip of worn stone runs from the entrance toward the far side. Parallel grooves score the floor, and the walls are carved with lines of hooded mourners.',
+      'Preparation chamber':'Stone tables stand above dark floor drains. Hooks, shallow basins, and brown preservative stains cover the nearest work surface.',
+      'Common crypt':'Rows of rectangular burial niches fill the walls. Some are sealed by name plaques; others gape open around scraps of cloth and small personal objects.',
+      'Ossuary':'Human skulls and long bones are stacked in shelves and columns along the walls. Small family marks have been painted or cut into many of them.',
+      'Memorial shrine':'Low offering bowls, smoke-blackened lamps, and damaged inscriptions surround a central memorial stone.',
+      'Royal sepulcher':'Raised stonework, worn heraldic carvings, and larger-than-life funeral figures draw every sight line toward a place of honor.'
+    }[name] || 'Old funerary stonework fills the chamber.';
+  }
+
+  function visibleTerrainProse(template) {
+    const descriptions = [
+      ['lava','Orange-white liquid moves through open channels in the floor. Heat presses against your faces, and narrow stone crossings span the glow.'],
+      ['water','Black water covers the lower floor and hides the stone beneath it. Slow ripples touch the dry edges without any visible source.'],
+      ['void','The masonry ends at a lightless drop. Only narrow crossings continue over the darkness.'],
+      ['pit','A deep break cuts through the chamber. The bottom is lost in darkness, and only the remaining crossings connect the floor on either side.'],
+      ['rubble','Broken stone lies in uneven banks across the chamber, half-burying the original paths. Dust sifts down whenever the pile settles.'],
+      ['balconies','Stone galleries rise at several heights around the room. Their carved rails throw long shadows across the floor below.'],
+      ['balcony','A raised stone gallery overlooks the lower floor behind a waist-high carved rail.'],
+      ['pillars','Heavy stone pillars break up the chamber. Their surfaces carry old soot, chipped carvings, and pale impact scars.'],
+      ['mechanism','Interlocking gears, chains, and counterweights fill much of the room. Several parts continue to move with a slow iron scrape.'],
+      ['cells','Barred enclosures line the route. Several doors hang open, while others remain shut around darkness and old bedding.'],
+      ['mirrors','Tall black mirrors repeat the doorways and your torchlight. Several reflections show depth where the wall beside them is solid.'],
+      ['raised','Broad steps divide the chamber into several stone levels around a raised central space.'],
+      ['sunken','The center of the floor lies below the surrounding walkway. Dust and cold mist have gathered in the depression.'],
+      ['narrow','The walls press close around a long, straight strip of floor. There is barely room for two people to pass.'],
+      ['statues','Funerary statues stand around the chamber with their stone faces turned toward its center.'],
+      ['open','The floor lies open from entrance to exit, with no large object interrupting the view.']
+    ];
+    const chosen = descriptions.find(([tag]) => template.tags.includes(tag));
+    return chosen ? chosen[1] : 'Carved stone walls surround an irregular floor broken by old funerary structures.';
+  }
+
   function functionDefinition(name) {
     return {
       'Processional threshold':'a formal entrance designed to control how funeral parties approached the dead',
@@ -188,16 +222,15 @@
     const occupantIntroduction = occupantProse(room.enemies);
     const visiblePresence = playerFacingPresence(challenge.presence, room.enemies.length > 0);
     const readAloud = [
-      functionProse,
-      terrainProse(template),
+      visibleFunctionProse(functionName),
+      visibleTerrainProse(template),
       atmosphereProse,
       readAloudLighting,
       occupantIntroduction,
-      visiblePresence,
-      challenge.clues
+      visiblePresence
     ].filter(Boolean).join(' ');
     return {
-      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
+      version: 2, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -209,7 +242,7 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const room of state.rooms) {
-      if (!room.scene?.readAloud) room.scene = buildRoomScene(room, templateFor(room));
+      if (room.scene?.version !== 2) room.scene = buildRoomScene(room, templateFor(room));
     }
   }
 
@@ -631,9 +664,7 @@
           <div class="facilitator-heading"><div class="eyebrow">Facilitator information</div>${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p><p><strong>Haunting:</strong> ${esc(scene.atmosphereName)}.</p></div>
           <div class="scene-block"><div class="eyebrow">Challenge · d12 ${room.challengeRoll}</div><h3 class="scene-title">${esc(scene.challenge.title)}</h3><p>${esc(scene.challenge.presence)}</p>
           ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
-          <div class="clue-box"><strong>What the adventurers can see:</strong> ${esc(scene.challenge.clues)}</div>
-          <div class="rule-box"><strong>Exact rule:</strong> ${esc(scene.challenge.rule)}</div>
-          <div class="consequence-box"><strong>Consequence:</strong> ${esc(scene.challenge.consequence)}</div>
+          <ul class="facilitator-rules"><li><strong>If they stop and examine the situation:</strong> ${esc(scene.challenge.clues)}</li><li><strong>If they interact with or challenge it:</strong> ${esc(scene.challenge.rule)}</li><li><strong>If they trigger it or fail:</strong> ${esc(scene.challenge.consequence)}</li></ul>
           <h4>Possible resolutions</h4><ul>${scene.challenge.resolutions.map(item => `<li>${esc(item)}</li>`).join('')}</ul><small>These approaches are not exhaustive; a credible free-form solution can work.</small></div>
           <div class="scene-block opportunity-block"><div class="eyebrow">Opportunity · d8 ${room.opportunityRoll}</div><h3 class="scene-title">${esc(scene.opportunity.title)}</h3><p>${esc(scene.opportunity.prose)}</p><div class="effect-line"><strong>Effect:</strong> ${esc(scene.opportunity.effect)}</div></div>
           <div class="fallback"><strong>Default target:</strong> ${template.danger} ${template.target}. Use it only when the concrete rule or fiction calls for a check.</div>
