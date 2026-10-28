@@ -38,6 +38,8 @@ Record and cross off the exact numerical result. If that exact result was previo
 
 The Quest roll does not replace Challenge or Opportunity. It adds a quest-facing element to the room and should be integrated with them.
 
+The numerical Quest result is a generation index, not a target number. For example, a result of 23 places a **Quest element** in the room; adventurers do not need to roll 23 to notice, understand, or claim it. Any uncertain action still uses the room's ordinary Easy 9, Standard 12, Hard 15, or Extreme 18 target.
+
 ## Quest-result bands
 
 | Quest index | Result | Function |
@@ -62,6 +64,8 @@ The default prototype assumes two quest elements enable the intended resolution.
 - **Three or more elements:** grant a superior reward, safer extraction, important truth, faction benefit, or another Quest-specific boon.
 
 Quest elements are not abstract points. Each should be a concrete fictional thing or accomplishment whose effect on the Heart is stated when found.
+
+Generating a Quest element places it but does not automatically count it as found. State where it physically is and what currently controls access: held by an occupant, beyond an obstacle, incorporated into a trap, at a hazard's anchor, revealed by a puzzle, or possessed by a social obstacle. Once the adventurers physically secure it or complete the stated accomplishment, mark it **claimed** and increase their found-element total. Do not require a second arbitrary search roll after they have already gained access.
 
 ## Early and late Heart rules
 

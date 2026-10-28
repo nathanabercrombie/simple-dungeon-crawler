@@ -103,11 +103,36 @@
     return stablePick(room, 'quest-element', catalog[state.quest.index] || catalog[4]);
   }
 
+  function isQuestElement(room) {
+    return ['Quest element','Major quest element','Heart advantage'].includes(room.quest.name);
+  }
+
+  function questElementPlacement(room) {
+    const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
+    if (liveEnemies.length) {
+      const names = liveEnemies.map(enemy => enemy.name).join(' and ');
+      return `The ${names} visibly carry, guard, or surround it. The party can claim it after defeating them, bargaining for it, drawing them away, or otherwise gaining access.`;
+    }
+    return {
+      1:'It is visible among the room’s aftermath. Reaching and taking it requires no check unless the party creates a new danger.',
+      2:'It is visible beyond or inside the Domain obstacle. The party must cross, open, move, or bypass that obstacle to claim it.',
+      3:'It lies at the physical anchor of the active hazard. The party must neutralize the hazard or reach the anchor despite it.',
+      4:'It is visibly incorporated into or placed beyond the trap mechanism. Disarming, triggering safely, or bypassing the trap grants access.',
+      5:'It is revealed as part of the puzzle’s physical arrangement. Solving or credibly bypassing the puzzle grants access.',
+      6:'The social obstacle has it or controls access to it. Agreement, leverage, deception, theft, or force can secure it.',
+      7:'The watchful occupants keep it within their guarded space. The party must win permission, distract them, or take it by force.'
+    }[room.challengeRoll] || 'It occupies the challenge’s central position. Durably resolving or bypassing that challenge grants access.';
+  }
+
   function buildQuestScene(room) {
     const type = room.quest.name;
     if (type === 'Quest element' || type === 'Major quest element' || type === 'Heart advantage') {
       const [title, prose] = questElementFor(room);
-      return { title, prose, effect: type === 'Major quest element' ? 'This major element states exactly how one defensive layer of the Heart is removed.' : 'This is a concrete Quest element; record it and apply its stated effect at the Heart.' };
+      return {
+        title, prose,
+        effect: type === 'Major quest element' ? 'This major element states exactly how one defensive layer of the Heart is removed.' : 'This is a concrete Quest element; record it and apply its stated effect at the Heart.',
+        placement: questElementPlacement(room)
+      };
     }
     if (type === 'Heart') return { title: state.quest.heart, prose:`The objective of “${state.quest.name}” is physically present in this room. It is accessible now, with ${state.quest.elementsFound} concrete element${state.quest.elementsFound === 1 ? '' : 's'} already discovered.`, effect:'Conquering this Heart completes the site’s primary objective; extraction is still required.' };
     const options = {
@@ -180,12 +205,20 @@
   function ensureStateShape() {
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
+    const legacyFound = Math.max(0, Number(state.quest.elementsFound) || 0);
+    const alreadyClaimed = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed === true).length;
+    let legacyClaimsRemaining = Math.max(0, legacyFound - alreadyClaimed);
     for (const room of state.rooms) {
       // Prose and mechanics are canonical application data, never save data.
       // Remove copies made by builds before the normalized sceneRef format.
       delete room.scene;
       if (room.sceneRef?.version !== 2) room.sceneRef = buildSceneRef(room);
+      if (isQuestElement(room) && typeof room.quest.claimed !== 'boolean') {
+        room.quest.claimed = legacyClaimsRemaining > 0;
+        if (room.quest.claimed) legacyClaimsRemaining -= 1;
+      }
     }
+    state.quest.elementsFound = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed).length;
   }
 
   function loadSave() {
@@ -302,6 +335,7 @@
     const challengeRoll = die(12);
     const opportunityRoll = die(8);
     const quest = questRoll();
+    quest.claimed = false;
     const room = {
       id: uid('room'), number: state.rooms.length + 1, templateIndex: index, x, y,
       challengeRoll, challenge: DATA.challenges[challengeRoll - 1],
@@ -317,7 +351,6 @@
         room.quest.description = 'The Heart is already known; this supplies a major Heart-specific advantage.';
       } else state.quest.heartFound = true;
     }
-    if (quest.name.includes('quest element') || quest.name === 'Quest element') state.quest.elementsFound += 1;
     room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
     if (fromId) {
@@ -467,6 +500,16 @@
     }
     room.opportunityClaimed = true;
     log(`Claimed the Room ${room.number} opportunity: ${result}.`);
+    render();
+  }
+
+  function claimQuestElement() {
+    const room = activeRoom();
+    if (!isQuestElement(room) || room.quest.claimed) return;
+    const scene = buildQuestScene(room);
+    room.quest.claimed = true;
+    state.quest.elementsFound += 1;
+    log(`${scene.title} was claimed in Room ${room.number}. The party now has ${state.quest.elementsFound} Quest element${state.quest.elementsFound === 1 ? '' : 's'}.`);
     render();
   }
 
@@ -633,7 +676,7 @@
     const scene = buildRoomScene(room, templateFor(room));
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Encounter</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Enemy</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">No active creature cards in this room.</div>'}</div></section>
-      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">${esc(room.quest.name)} · roll ${room.quest.value}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p><p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} found. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
+      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">Quest generation result ${room.quest.value} → ${esc(room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p>${scene.quest.placement ? `<p><strong>Where it is:</strong> ${esc(scene.quest.placement)}</p><p><strong>Roll clarification:</strong> ${room.quest.value} generated this element; it is not a target number. Use the room target only when an uncertain action requires a check.</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} claimed. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }
@@ -762,6 +805,7 @@
     else if (action === 'light-torch') lightTorch();
     else if (action === 'pass-torch') passTorch();
     else if (action === 'claim') claimOpportunity();
+    else if (action === 'claim-quest-element') claimQuestElement();
     else if (action === 'pass-turn' || action === 'add-turn') { advanceTurns(1); closeModal(); render(); }
     else if (action === 'roll') openModal('roll');
     else if (action === 'dungeon-action') openModal('dungeon',{enemyId:target.dataset.id});
