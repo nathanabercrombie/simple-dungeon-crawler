@@ -1145,6 +1145,8 @@
 
   function render() {
     if (!state) return renderWelcome();
+    const previousMapViewport = $('.dungeon-overview-wrap');
+    const mapScroll = previousMapViewport ? { left:previousMapViewport.scrollLeft, top:previousMapViewport.scrollTop } : null;
     ensureStateShape();
     if (state.escaped) return renderVictory();
     const room = activeRoom();
@@ -1161,6 +1163,11 @@
       <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${escapeButton}${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
+    if (mapScroll) {
+      const nextMapViewport = $('.dungeon-overview-wrap');
+      nextMapViewport.scrollLeft = mapScroll.left;
+      nextMapViewport.scrollTop = mapScroll.top;
+    }
     persist();
   }
 
