@@ -14,6 +14,8 @@ For a stable local URL instead of a `file:` URL, run this command from the repos
 python -m http.server 8000 --directory web
 ```
 
+Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the Pages workflow](../.github/workflows/pages.yml).
+
 ## Current capabilities
 
 - seeded, reproducible Haunted Tomb expeditions;
