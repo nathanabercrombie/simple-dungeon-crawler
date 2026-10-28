@@ -230,7 +230,7 @@
       visiblePresence
     ].filter(Boolean).join(' ');
     return {
-      version: 2, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
+      version: 3, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -242,7 +242,7 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const room of state.rooms) {
-      if (room.scene?.version !== 2) room.scene = buildRoomScene(room, templateFor(room));
+      if (room.scene?.version !== 3) room.scene = buildRoomScene(room, templateFor(room));
     }
   }
 
