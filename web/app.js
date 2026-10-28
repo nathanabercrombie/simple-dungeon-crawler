@@ -364,19 +364,34 @@
     return { value, name: band[1], description: band[2] };
   }
 
-  function makeEnemy(template, major = false, wandering = false) {
-    let source;
-    if (major) source = template.danger === 'Extreme' ? DATA.monsters[5] : DATA.monsters[4];
-    else source = pick(DATA.monsters.slice(0, wandering ? 9 : 6));
+  function enemyScale(source) {
     const minimum = Math.max(2, state.party.filter(hero => !hero.dead).length);
-    let total = source.unitHp * source.baseUnits;
     const units = Math.max(source.baseUnits, Math.ceil(minimum / source.unitHp));
-    total = source.unitHp * units;
+    return { units, total: source.unitHp * units };
+  }
+
+  function makeEnemy(template, major = false, wandering = false, monsterIndex = null) {
+    let source;
+    if (Number.isInteger(monsterIndex)) source = DATA.monsters[monsterIndex];
+    else if (major) source = template.danger === 'Extreme' ? DATA.monsters[5] : DATA.monsters[4];
+    else source = pick(DATA.monsters.slice(0, wandering ? 9 : 6));
+    const { units, total } = enemyScale(source);
     return {
       id: uid('enemy'), name: source.name, hp: total, maxHp: total, units,
       defense: template.target, behavior: source.behavior, instinct: source.instinct,
-      wound: source.wound, wandering
+      wound: source.wound, wandering, manuallyAdded: Number.isInteger(monsterIndex)
     };
+  }
+
+  function addEncounter(monsterIndex = null) {
+    const room = activeRoom();
+    const random = !Number.isInteger(monsterIndex);
+    const enemy = makeEnemy(templateFor(room), false, random, monsterIndex);
+    room.enemies.push(enemy);
+    room.status = 'dangerous';
+    log(`${enemy.name} ${random ? 'were rolled as a random encounter' : 'were added to the encounter'} in Room ${room.number}.`);
+    closeModal();
+    render();
   }
 
   function generateRoom(x, y, fromId) {
@@ -637,28 +652,92 @@
   }
 
   const TILE_INFO = {
-    '#':['wall','Wall',''], '.':['floor','Floor',''], 'E':['entry','Entry','↥'], 'X':['exit','Visible exit','◆'],
-    '?':['secret','Hidden exit','?'], 'O':['pillar','Pillar',''], 'S':['statue','Statue','♜'], 'P':['pit','Pit or chasm',''],
-    '=':['bridge','Bridge',''], 'B':['balcony','Balcony',''], '^':['steps','Raised floor',''], 'v':['sunken','Sunken floor',''],
-    'D':['descent','Descent','↓'], 'U':['ascent','Ascent','↑'], '~':['water','Water','≈'], 'R':['rubble','Rubble',''],
-    '+':['gate','Gate',''], 'C':['cage','Cage',''], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
-    'L':['lava','Lava',''], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦'], ' ':['void','Outside footprint','']
+    '.':['floor','Floor',''], 'E':['entry','Entry','↥'], 'X':['exit','Visible exit','◇'], '?':['secret','Hidden exit','?'],
+    'O':['pillar','Pillar','○'], 'S':['statue','Statue','♙'], 'P':['pit','Pit or chasm','╱'], '=':['bridge','Bridge','═'],
+    'B':['balcony','Balcony','┄'], '^':['steps','Raised floor','⌃'], 'v':['sunken','Sunken floor','⌄'],
+    'D':['descent','Descent','↓'], 'U':['ascent','Ascent','↑'], '~':['water','Water','≈'], 'R':['rubble','Rubble','◇'],
+    '+':['gate','Gate','ǂ'], 'C':['cage','Cage','╫'], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
+    'L':['lava','Lava','≋'], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦']
   };
+
+  function mapSymbol(glyph, x, y, size) {
+    const cx = x + size / 2, cy = y + size / 2, q = size / 4;
+    if (glyph === 'O') return `<circle class="map-feature feature-heavy" cx="${cx}" cy="${cy}" r="${q * .72}"/><circle class="map-feature" cx="${cx}" cy="${cy}" r="${q * .35}"/>`;
+    if (glyph === 'S') return `<path class="map-feature" d="M${cx-q},${cy+q}h${q*2} M${cx-q*.7},${cy+q}v${-q*.55}h${q*1.4}v${q*.55} M${cx},${cy-q*.9}v${q*1.35} M${cx-q*.45},${cy-q*.35}h${q*.9}"/><circle class="map-feature" cx="${cx}" cy="${cy-q*1.15}" r="${q*.22}"/>`;
+    if (glyph === 'P') return `<rect class="map-feature feature-pit" x="${x+4}" y="${y+4}" width="${size-8}" height="${size-8}"/><path class="map-feature feature-fine" d="M${x+5},${y+13}l8,-8 M${x+5},${y+23}l18,-18 M${x+9},${y+27}l18,-18 M${x+19},${y+27}l8,-8"/>`;
+    if (glyph === '=') return `<path class="map-feature feature-heavy" d="M${x+4},${y+7}H${x+size-4} M${x+4},${y+size-7}H${x+size-4}"/><path class="map-feature feature-fine" d="M${x+8},${y+7}v${size-14} M${x+14},${y+7}v${size-14} M${x+20},${y+7}v${size-14} M${x+26},${y+7}v${size-14}"/>`;
+    if (glyph === 'B') return `<path class="map-feature" d="M${x+4},${y+8}H${x+size-4} M${x+4},${y+13}H${x+size-4}"/><path class="map-feature feature-fine" d="M${x+7},${y+8}v5 M${x+13},${y+8}v5 M${x+19},${y+8}v5 M${x+25},${y+8}v5"/>`;
+    if (glyph === '^' || glyph === 'v') {
+      const flip = glyph === '^' ? 1 : -1;
+      return `<path class="map-feature" d="M${x+6},${cy+flip*7}H${x+size-6} M${x+9},${cy+flip*2}H${x+size-9} M${x+12},${cy-flip*3}H${x+size-12}"/>`;
+    }
+    if (glyph === 'D' || glyph === 'U') return `<path class="map-feature" d="M${x+6},${y+7}H${x+size-6} M${x+8},${y+12}H${x+size-8} M${x+10},${y+17}H${x+size-10} M${x+12},${y+22}H${x+size-12}"/><text class="map-symbol-text" x="${cx}" y="${cy+10}">${glyph === 'D' ? '↓' : '↑'}</text>`;
+    if (glyph === '~' || glyph === 'L') return `<path class="map-feature ${glyph === 'L' ? 'feature-heavy' : ''}" d="M${x+3},${y+9}q4,-4 8,0t8,0t8,0 M${x+3},${y+17}q4,-4 8,0t8,0t8,0 M${x+3},${y+25}q4,-4 8,0t8,0t8,0"/>`;
+    if (glyph === 'R') return `<path class="map-feature" d="M${x+5},${y+20}l5,-8 7,5 -3,8z M${x+15},${y+12}l5,-6 7,5 -2,7z M${x+19},${y+25}l4,-6 5,3 -2,5z"/>`;
+    if (glyph === '+' || glyph === 'C') return `<path class="map-feature feature-heavy" d="M${x+5},${y+7}H${x+size-5} M${x+5},${y+size-7}H${x+size-5}"/><path class="map-feature" d="M${x+9},${y+5}v${size-10} M${x+16},${y+5}v${size-10} M${x+23},${y+5}v${size-10}"/>`;
+    if (glyph === 'F') return `<path class="map-feature feature-heavy" d="M${x+5},${y+24}h${size-10}v4H${x+5}z M${cx},${y+23}c-8,-5 2,-8 -2,-16 9,6 3,10 8,14 3,3 0,6 -6,6"/>`;
+    if (glyph === 'G') return `<circle class="map-feature feature-heavy" cx="${cx}" cy="${cy}" r="${q*.78}"/><circle class="map-feature" cx="${cx}" cy="${cy}" r="${q*.28}"/><path class="map-feature" d="M${cx},${y+4}v6 M${cx},${y+size-10}v6 M${x+4},${cy}h6 M${x+size-10},${cy}h6 M${x+7},${y+7}l4,4 M${x+size-11},${y+size-11}l4,4 M${x+size-7},${y+7}l-4,4 M${x+11},${y+size-11}l-4,4"/>`;
+    if (glyph === 'M') return `<rect class="map-feature feature-heavy" x="${x+8}" y="${y+4}" width="${size-16}" height="${size-8}" rx="6"/><path class="map-feature feature-fine" d="M${x+11},${y+20}l8,-12 M${x+15},${y+25}l6,-9"/>`;
+    if (glyph === 'T') return `<path class="map-feature feature-heavy" d="M${cx},${y+4}l3,8 8,-3 -5,7 7,5 -9,-1 -1,9 -4,-8 -8,4 5,-8 -7,-5 9,1z"/>`;
+    if (glyph === 'E' || glyph === 'X' || glyph === '?') return `<text class="map-symbol-text map-door-label" x="${cx}" y="${cy+5}">${TILE_INFO[glyph][2]}</text>`;
+    return '';
+  }
 
   function renderFloorplan(template) {
     const rows = template.map.split('\n');
     const width = Math.max(...rows.map(row => row.length));
-    const cells = [];
-    const used = new Map();
-    for (const row of rows) {
-      for (let x = 0; x < width; x++) {
-        const glyph = row[x] || ' ';
-        const [kind,label,icon] = TILE_INFO[glyph] || TILE_INFO['.'];
-        if (!['wall','floor','void'].includes(kind)) used.set(kind, label);
-        cells.push(`<span class="map-tile tile-${kind}" title="${esc(label)}" aria-label="${esc(label)}">${icon}</span>`);
+    const height = rows.length;
+    const size = 32;
+    const glyphAt = (x, y) => y >= 0 && y < height && x >= 0 && x < width ? (rows[y][x] || ' ') : ' ';
+    const isRawFloor = glyph => glyph !== '#' && glyph !== ' ';
+    const doorConnectors = new Set();
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        if (!['E','X','?'].includes(glyphAt(col, row))) continue;
+        let best = null;
+        for (const [dx,dy] of [[0,-1],[1,0],[0,1],[-1,0]]) {
+          for (let distance = 1; distance <= 3; distance++) {
+            const glyph = glyphAt(col + dx * distance, row + dy * distance);
+            if (glyph === ' ') break;
+            if (isRawFloor(glyph) && !['E','X','?'].includes(glyph)) {
+              if (!best || distance < best.distance) best = { dx, dy, distance };
+              break;
+            }
+          }
+        }
+        if (best) {
+          for (let distance = 1; distance < best.distance; distance++) doorConnectors.add(`${col + best.dx * distance},${row + best.dy * distance}`);
+        }
       }
     }
-    return `<div class="visual-map-wrap"><div class="visual-map" style="--map-cols:${width}" role="img" aria-label="Graphical floorplan for ${esc(template.name)}">${cells.join('')}</div><div class="terrain-legend">${[...used].map(([kind,label]) => `<span><i class="legend-tile tile-${kind}"></i>${esc(label)}</span>`).join('')}</div></div>`;
+    const isFloorAt = (x, y) => isRawFloor(glyphAt(x, y)) || doorConnectors.has(`${x},${y}`);
+    const floors = [], walls = [], features = [];
+    const used = new Map();
+    const directions = [
+      {dx:0,dy:-1,line:(x,y)=>[x,y,x+size,y]}, {dx:1,dy:0,line:(x,y)=>[x+size,y,x+size,y+size]},
+      {dx:0,dy:1,line:(x,y)=>[x,y+size,x+size,y+size]}, {dx:-1,dy:0,line:(x,y)=>[x,y,x,y+size]}
+    ];
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const glyph = glyphAt(col, row);
+        if (!isFloorAt(col, row)) continue;
+        const x = col * size, y = row * size;
+        floors.push(`<rect class="map-floor-square" x="${x}" y="${y}" width="${size}" height="${size}"/>`);
+        for (const direction of directions) {
+          if (isFloorAt(col + direction.dx, row + direction.dy)) continue;
+          const [x1,y1,x2,y2] = direction.line(x,y);
+          const door = ['E','X','?'].includes(glyph);
+          walls.push(`<line class="map-wall${door ? ' map-doorway' : ''}${glyph === '?' ? ' map-secret-wall' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+        }
+        if (TILE_INFO[glyph] && glyph !== '.') {
+          const [kind,label,icon] = TILE_INFO[glyph];
+          used.set(kind, { label, icon });
+          features.push(mapSymbol(glyph, x, y, size));
+        }
+      }
+    }
+    const hatchId = `map-hatch-${template.index}`;
+    return `<div class="visual-map-wrap"><svg class="visual-map" viewBox="0 0 ${width*size} ${height*size}" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${hatchId}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="map-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${hatchId})"/>${floors.join('')}${walls.join('')}${features.join('')}</svg><div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
   }
 
   function renderMap() {
@@ -718,14 +797,15 @@
 
   function renderEnemy(enemy) {
     const pips = Array.from({length:enemy.maxHp}, (_, index) => `<button class="pip ${index >= enemy.hp ? 'empty' : ''}" data-action="enemy-hp" data-id="${enemy.id}" data-hp="${index+1}" title="Set HP to ${index+1}"></button>`).join('');
-    return `<article class="enemy-card"><div class="enemy-top"><div><div class="eyebrow">${enemy.wandering ? 'Wandering enemy' : `${enemy.units} creature${enemy.units === 1 ? '' : 's'}`}</div><h3>${esc(enemy.name)}</h3></div><div class="hp-pips">${pips}</div></div><div class="enemy-stats"><span>Defense ${enemy.defense}</span><span>${enemy.hp}/${enemy.maxHp} HP</span></div><p>${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="damage-enemy" data-id="${enemy.id}">Deal 1</button><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></article>`;
+    const encounterType = enemy.manuallyAdded ? 'Added encounter' : enemy.wandering ? 'Wandering enemy' : `${enemy.units} creature${enemy.units === 1 ? '' : 's'}`;
+    return `<article class="enemy-card"><div class="enemy-top"><div><div class="eyebrow">${encounterType}</div><h3>${esc(enemy.name)}</h3></div><div class="hp-pips">${pips}</div></div><div class="enemy-stats"><span>${enemy.units} × ${Math.ceil(enemy.maxHp / enemy.units)} HP</span><span>Defense ${enemy.defense}</span><span>${enemy.hp}/${enemy.maxHp} HP</span></div><p>${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="damage-enemy" data-id="${enemy.id}">Deal 1</button><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></article>`;
   }
 
   function renderEncounter() {
     const room = activeRoom();
     const scene = buildRoomScene(room, templateFor(room));
     const live = room.enemies.filter(enemy => enemy.hp > 0);
-    return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Encounter</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Enemy</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">No active creature cards in this room.</div>'}</div></section>
+    return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Encounter</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Encounter</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">No active creature cards in this room.</div>'}</div></section>
       <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">Quest generation result ${room.quest.value} → ${esc(room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p>${scene.quest.placement ? `<p><strong>Where it is:</strong> ${esc(scene.quest.placement)}</p><p><strong>Roll clarification:</strong> ${room.quest.value} generated this element; it is not a target number. Use the room target only when an uncertain action requires a check.</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} claimed. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
   }
 
@@ -808,6 +888,14 @@
     } else if (modal.type === 'dungeon') {
       const live = activeRoom().enemies.filter(e=>e.hp>0);
       root.innerHTML = `<form class="modal" id="dungeon-form"><div class="modal-head"><h2>Dungeon action</h2><p>Use the creature’s Instinct and current fiction to choose a target. Ordinary attacks automatically deal 1 damage.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Creature</label><select name="enemyId">${live.map(e=>`<option value="${e.id}" ${e.id===modal.enemyId?'selected':''}>${esc(e.name)} — ${esc(e.instinct)}</option>`).join('')}</select></div><div class="field full"><label>Target</label><select name="heroId">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)} · ${h.hp}/${h.maxHp} HP${h.wound?' · Wounded':''}</option>`).join('')}</select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-danger" type="submit" ${live.length?'':'disabled'}>Deal 1 damage</button></div></form>`;
+    } else if (modal.type === 'encounter') {
+      const template = templateFor(activeRoom());
+      const options = DATA.monsters.map((monster, index) => {
+        const { units, total } = enemyScale(monster);
+        const search = `${monster.name} ${monster.behavior} ${monster.instinct}`.toLowerCase();
+        return `<article class="monster-option" data-monster-option data-search="${esc(search)}"><div><h3>${esc(monster.name)}</h3><p>${units} creature${units === 1 ? '' : 's'} · ${monster.unitHp} HP each · ${total} total HP · Defense ${template.target}</p><small>${esc(monster.behavior)}</small></div><button class="btn btn-small" data-action="add-specific-enemy" data-index="${index}">Add</button></article>`;
+      }).join('');
+      root.innerHTML = `<section class="modal encounter-picker"><div class="modal-head"><h2>Add encounter</h2><p>Choose the creature named by the room, search the roster, or roll a random roaming encounter.</p></div><div class="modal-body"><div class="field"><label for="enemy-search">Search creatures</label><input id="enemy-search" data-action="enemy-search" type="search" placeholder="Skeleton, spirit, wounded prey…" autocomplete="off"></div><button class="random-encounter" data-action="add-random-enemy"><strong>Roll random encounter</strong><span>Uses the full roaming-creature table and scales it to the living party.</span></button><div class="monster-options">${options}</div><div class="empty-state monster-search-empty hidden">No creatures match that search.</div></div><div class="modal-foot"><button class="btn btn-quiet" data-action="close-modal">Cancel</button></div></section>`;
     } else if (modal.type === 'settings') {
       root.innerHTML = modalShell('Expedition data',`Delvekeeper build ${esc(BUILD)}. Progress saves automatically in this browser. Export a backup before clearing browser data.`, `<div class="button-row"><button class="btn" data-action="export">Export save</button><button class="btn" data-action="import">Import save</button><button class="btn btn-danger" data-action="end-expedition">End and erase expedition</button></div><div class="subhead">Manual controls</div><div class="button-row"><button class="btn btn-small" data-action="add-turn">+1 turn</button><button class="btn btn-small" data-action="add-torch">+1 spare torch</button><button class="btn btn-small" data-action="toggle-secured">Toggle secured light</button></div>`);
     }
@@ -868,7 +956,9 @@
     else if (action === 'damage-enemy') { const e=activeRoom().enemies.find(e=>e.id===target.dataset.id); e.hp=Math.max(0,e.hp-1); log(`${e.name} took 1 damage${e.hp===0?' and was defeated':''}.`); render(); }
     else if (action === 'enemy-hp') { const e=activeRoom().enemies.find(e=>e.id===target.dataset.id); e.hp = e.hp===Number(target.dataset.hp) ? Number(target.dataset.hp)-1 : Number(target.dataset.hp); render(); }
     else if (action === 'remove-enemy') { activeRoom().enemies=activeRoom().enemies.filter(e=>e.id!==target.dataset.id); render(); }
-    else if (action === 'add-enemy') { activeRoom().enemies.push(makeEnemy(templateFor(activeRoom()),false,true)); activeRoom().status='dangerous'; log(`A ${activeRoom().enemies.at(-1).name} card was added manually.`); render(); }
+    else if (action === 'add-enemy') openModal('encounter');
+    else if (action === 'add-random-enemy') addEncounter();
+    else if (action === 'add-specific-enemy') addEncounter(Number(target.dataset.index));
     else if (action === 'hero-hp') { const h=state.party.find(h=>h.id===target.dataset.id); h.hp=clamp(h.hp+Number(target.dataset.delta),0,h.maxHp); render(); }
     else if (action === 'hero-token') { const h=state.party.find(h=>h.id===target.dataset.id); h.tokens=clamp(h.tokens+Number(target.dataset.delta),0,3); render(); }
     else if (action === 'add-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=prompt('Item name'); if(item){h.items.push(item); if(item.toLowerCase().includes('torch')) state.light.reserve++; render();} }
@@ -913,6 +1003,16 @@
     if (event.target.dataset.action === 'notes') {
       activeRoom().notes = event.target.value;
       persist();
+    } else if (event.target.dataset.action === 'enemy-search') {
+      const query = event.target.value.trim().toLowerCase();
+      const picker = event.target.closest('.encounter-picker');
+      let matches = 0;
+      picker.querySelectorAll('[data-monster-option]').forEach(option => {
+        const visible = !query || option.dataset.search.includes(query);
+        option.classList.toggle('hidden', !visible);
+        if (visible) matches += 1;
+      });
+      picker.querySelector('.monster-search-empty').classList.toggle('hidden', matches > 0);
     }
   }
 
