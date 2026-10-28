@@ -204,11 +204,26 @@
     return { title, prose, effect: `${type}: this information advances “${state.quest.name}” but is not itself an abstract point.` };
   }
 
+  function buildSceneRef(room) {
+    return {
+      challengeVariant: stableIndex(room, 'challenge', DATA.sceneChallenges[room.challengeRoll].length),
+      opportunityVariant: stableIndex(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll].length),
+      functionVariant: stableIndex(room, 'function', DATA.tombFunctions.length),
+      atmosphereVariant: stableIndex(room, 'atmosphere', DATA.hauntedAtmospheres.length)
+    };
+  }
+
+  function canonicalVariant(room, key, collection) {
+    if (!room.sceneRef) room.sceneRef = buildSceneRef(room);
+    const index = Number(room.sceneRef[key]) || 0;
+    return collection[index % collection.length];
+  }
+
   function buildRoomScene(room, template) {
-    const challenge = stablePick(room, 'challenge', DATA.sceneChallenges[room.challengeRoll]);
-    const opportunity = stablePick(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll]);
-    const [functionName, functionProse] = stablePick(room, 'function', DATA.tombFunctions);
-    const [atmosphereName, atmosphereProse] = stablePick(room, 'atmosphere', DATA.hauntedAtmospheres);
+    const challenge = canonicalVariant(room, 'challengeVariant', DATA.sceneChallenges[room.challengeRoll]);
+    const opportunity = canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]);
+    const [functionName, functionProse] = canonicalVariant(room, 'functionVariant', DATA.tombFunctions);
+    const [atmosphereName, atmosphereProse] = canonicalVariant(room, 'atmosphereVariant', DATA.hauntedAtmospheres);
     const lighting = template.lighting === 'Fixtures'
       ? 'Blackened sconces and lamps are built into the walls; a living flame can establish secured light here.'
       : template.lighting === 'Inherent'
@@ -235,7 +250,7 @@
       visiblePresence
     ].filter(Boolean).join(' ');
     return {
-      version: 4, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
+      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -247,7 +262,10 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const room of state.rooms) {
-      if (room.scene?.version !== 4) room.scene = buildRoomScene(room, templateFor(room));
+      // Prose and mechanics are canonical application data, never save data.
+      // Remove copies made by builds before the normalized sceneRef format.
+      delete room.scene;
+      if (!room.sceneRef) room.sceneRef = buildSceneRef(room);
     }
   }
 
@@ -260,6 +278,7 @@
 
   function persist() {
     if (!state) return;
+    state.rooms?.forEach(room => delete room.scene);
     state.savedAt = new Date().toISOString();
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     const indicator = $('#save-state');
@@ -380,7 +399,7 @@
       } else state.quest.heartFound = true;
     }
     if (quest.name.includes('quest element') || quest.name === 'Quest element') state.quest.elementsFound += 1;
-    room.scene = buildRoomScene(room, template);
+    room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
     if (fromId) {
       const from = roomById(fromId);
@@ -519,8 +538,9 @@
     const room = activeRoom();
     if (room.opportunityClaimed || room.opportunityRoll === 1) return;
     ensureStateShape();
-    let result = room.scene.opportunity.title;
-    const item = room.scene.opportunity.item;
+    const scene = buildRoomScene(room, templateFor(room));
+    let result = scene.opportunity.title;
+    const item = scene.opportunity.item;
     if (item) {
       state.party[0].items.push(item);
       if (item === 'Fresh torch') state.light.reserve += 1;
@@ -652,10 +672,7 @@
   function renderRoom() {
     const room = activeRoom();
     const template = templateFor(room);
-    // Rebuild from the active room every time. This prevents an imported or
-    // older local save from leaving player-facing prose attached to another room.
-    room.scene = buildRoomScene(room, template);
-    const scene = room.scene;
+    const scene = buildRoomScene(room, template);
     const termDefinition = roomTermDefinition(template.name);
     const darkness = state.light.remaining <= 0 && !room.securedLight;
     return `<main class="pane pane-room">
@@ -694,9 +711,10 @@
 
   function renderEncounter() {
     const room = activeRoom();
+    const scene = buildRoomScene(room, templateFor(room));
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Encounter</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Enemy</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">No active creature cards in this room.</div>'}</div></section>
-      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">${esc(room.quest.name)} · roll ${room.quest.value}</div><h3>${esc(room.scene.quest.title)}</h3><p>${esc(room.scene.quest.prose)}</p><p><strong>Effect:</strong> ${esc(room.scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} found. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
+      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">${esc(room.quest.name)} · roll ${room.quest.value}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p><p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} found. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }

@@ -45,6 +45,8 @@ There is no build step and no third-party runtime dependency.
 
 The deployed app displays a manually advanced build number. A network-only service worker and build-versioned asset URLs prevent stale GitHub Pages assets from masking a deployment; expedition state remains stored separately in `localStorage`.
 
+Saved rooms contain generation references (`sceneRef`) rather than copied prose or rules. Rendering resolves those references against the current canonical content, so wording corrections apply to existing expeditions.
+
 ## Constraints
 
 - Runs locally.
