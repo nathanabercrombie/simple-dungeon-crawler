@@ -130,6 +130,17 @@ button.map-cell:hover { border-color: var(--gold-soft); }
 .site-card { margin-top: 18px; padding: 13px; border: 1px solid var(--line); background: var(--panel); }
 .site-card h3 { margin: 0 0 7px; font: 600 16px var(--serif); }
 .site-card p { margin: 4px 0; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.dungeon-overview-wrap { width:100%; max-height:560px; overflow:auto; border:1px solid var(--line); background:#10110e; }
+.dungeon-overview { display:block; max-width:none; background:#151613; }
+.dungeon-overview .overview-floorplan { width:auto; height:auto; max-width:none; margin:0; border:0; box-shadow:none; }
+.overview-room-node { cursor:pointer; }
+.overview-room-number-bg { fill:#171814; stroke:#eee7d6; stroke-width:1.5; pointer-events:none; }
+.overview-room-node.active .overview-room-number-bg { stroke:#c7a95a; stroke-width:3; }
+.overview-room-node.danger:not(.active) .overview-room-number-bg { stroke:#b9665b; stroke-width:2.5; }
+.overview-room-number,.overview-room-icons { fill:#f6efdd; font:700 12px Georgia,serif; text-anchor:middle; pointer-events:none; }
+.overview-room-icons { font-size:10px; text-anchor:end; }
+.overview-corridor-tile { fill:#fffef8; }
+.overview-corridor-wall { stroke-width:3; }
 
 .room-card {
   position: relative; max-width: 920px; margin: 0 auto;
@@ -296,6 +307,7 @@ input, select, textarea {
   width: 100%; border: 1px solid var(--line); border-radius: 2px; padding: 9px 10px;
   color: var(--ink); background: #161712;
 }
+.static-field { min-height:37px; padding:10px; border:1px solid var(--line); color:var(--muted); background:#161712; font-size:11px; }
 textarea { line-height: 1.45; }
 .direction-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
 .direction-card { padding: 18px; text-align: left; }

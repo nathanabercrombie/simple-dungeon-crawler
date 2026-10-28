@@ -65,8 +65,13 @@
   function emptyAdjacentSectors(room) {
     return CARDINALS.filter(({dx,dy}) => {
       const x = room.x + dx, y = room.y + dy;
-      return x >= 0 && x < state.size && y >= 0 && y < state.size && !state.rooms.some(candidate => candidate.x === x && candidate.y === y);
+      return !state.rooms.some(candidate => candidate.x === x && candidate.y === y);
     });
+  }
+
+  function directRouteTarget(room, route) {
+    const direction = rotateDirection(route.direction, room.rotation);
+    return direction ? { ...direction, x:room.x + direction.dx, y:room.y + direction.dy } : null;
   }
 
   function routeLabel(room, route) {
@@ -414,7 +419,7 @@
     }
     state.light.holderId = state.party[0]?.id || null;
     log(`Expedition begun with seed ${seed}. Quest: ${state.quest.name}.`);
-    generateRoom(Math.floor(size / 2), size - 1, null);
+    generateRoom(0, 0, null);
     render();
   }
 
@@ -762,7 +767,7 @@
   }
 
   function renderFloorplanSvg(template, instanceId, options = {}) {
-    const { overview = false, rotation = 0, corridorAssignments = [] } = options;
+    const { overview = false, rotation = 0, corridorAssignments = [], embeddedX = null, embeddedY = null } = options;
     const rows = template.map.split('\n');
     const width = Math.max(...rows.map(row => row.length));
     const height = rows.length;
@@ -842,31 +847,30 @@
       }
     }
     const contentWidth = width * size, contentHeight = height * size;
-    const canvasSize = Math.max(contentWidth, contentHeight);
-    const viewWidth = overview ? canvasSize : contentWidth;
-    const viewHeight = overview ? canvasSize : contentHeight;
-    const transform = overview
-      ? `translate(${canvasSize/2} ${canvasSize/2}) rotate(${rotation}) translate(${-contentWidth/2} ${-contentHeight/2})`
-      : '';
-    const radians = rotation * Math.PI / 180;
+    const quarterTurn = overview ? ((rotation % 360) + 360) % 360 : 0;
+    const viewWidth = quarterTurn === 90 || quarterTurn === 270 ? contentHeight : contentWidth;
+    const viewHeight = quarterTurn === 90 || quarterTurn === 270 ? contentWidth : contentHeight;
+    const transform = quarterTurn === 90 ? `translate(${contentHeight} 0) rotate(90)`
+      : quarterTurn === 180 ? `translate(${contentWidth} ${contentHeight}) rotate(180)`
+      : quarterTurn === 270 ? `translate(0 ${contentWidth}) rotate(270)` : '';
     const rotateRoute = route => {
-      const rawX = (route.x + .5) * size - contentWidth / 2;
-      const rawY = (route.y + .5) * size - contentHeight / 2;
-      return {
-        x: canvasSize / 2 + rawX * Math.cos(radians) - rawY * Math.sin(radians),
-        y: canvasSize / 2 + rawX * Math.sin(radians) + rawY * Math.cos(radians)
-      };
+      const rawX = (route.x + .5) * size, rawY = (route.y + .5) * size;
+      if (quarterTurn === 90) return { x:contentHeight-rawY, y:rawX };
+      if (quarterTurn === 180) return { x:contentWidth-rawX, y:contentHeight-rawY };
+      if (quarterTurn === 270) return { x:rawY, y:contentWidth-rawX };
+      return { x:rawX, y:rawY };
     };
     const overviewCorridors = overview ? corridorAssignments.map(({ route, dx, dy }) => {
       const start = rotateRoute(route);
-      const end = { x: dx < 0 ? 0 : dx > 0 ? canvasSize : canvasSize / 2, y: dy < 0 ? 0 : dy > 0 ? canvasSize : canvasSize / 2 };
+      const end = { x: dx < 0 ? 0 : dx > 0 ? viewWidth : viewWidth / 2, y: dy < 0 ? 0 : dy > 0 ? viewHeight : viewHeight / 2 };
       const middle = dx ? (start.x + end.x) / 2 : (start.y + end.y) / 2;
       const path = dx
         ? `M${start.x},${start.y} H${middle} V${end.y} H${end.x}`
         : `M${start.x},${start.y} V${middle} H${end.x} V${end.y}`;
       return `<path class="overview-corridor corridor-shadow" d="${path}"/><path class="overview-corridor corridor-floor" d="${path}"/>`;
     }).join('') : '';
-    return `<svg class="visual-map${overview ? ' overview-floorplan' : ''}" viewBox="0 0 ${viewWidth} ${viewHeight}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${rockHatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern><pattern id="${pitHatchId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern><pattern id="${balconyHatchId}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" class="map-balcony-ground"/><path d="M0,2H10 M0,8H10" class="map-balcony-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${rockHatchId})"/>${overviewCorridors}<g${transform ? ` transform="${transform}"` : ''}>${floors.join('')}${pits.join('')}${balconies.join('')}${pitOutlines.join('')}${balconyOutlines.join('')}${walls.join('')}${features.join('')}</g></svg>`;
+    const embedded = embeddedX !== null && embeddedY !== null ? ` x="${embeddedX}" y="${embeddedY}" width="${viewWidth}" height="${viewHeight}"` : '';
+    return `<svg class="visual-map${overview ? ' overview-floorplan' : ''}"${embedded} viewBox="0 0 ${viewWidth} ${viewHeight}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Black and white floorplan for ${esc(template.name)}"><defs><pattern id="${rockHatchId}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern><pattern id="${pitHatchId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern><pattern id="${balconyHatchId}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" class="map-balcony-ground"/><path d="M0,2H10 M0,8H10" class="map-balcony-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#${rockHatchId})"/>${overviewCorridors}<g${transform ? ` transform="${transform}"` : ''}>${floors.join('')}${pits.join('')}${balconies.join('')}${pitOutlines.join('')}${balconyOutlines.join('')}${walls.join('')}${features.join('')}</g></svg>`;
   }
 
   function renderFloorplan(template, roomId) {
@@ -880,31 +884,107 @@
     return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
   }
 
+  function templateGridSize(template, rotation = 0) {
+    const rows = template.map.split('\n');
+    const width = Math.max(...rows.map(row => row.length));
+    const height = rows.length;
+    return rotation === 90 || rotation === 270 ? { width:height, height:width } : { width, height };
+  }
+
+  function rotateRouteCell(route, template, rotation = 0) {
+    const rows = template.map.split('\n');
+    const width = Math.max(...rows.map(row => row.length));
+    const height = rows.length;
+    if (rotation === 90) return { x:height - 1 - route.y, y:route.x };
+    if (rotation === 180) return { x:width - 1 - route.x, y:height - 1 - route.y };
+    if (rotation === 270) return { x:route.y, y:width - 1 - route.x };
+    return { x:route.x, y:route.y };
+  }
+
+  function addGridSegment(cells, from, to) {
+    let x = from.x, y = from.y;
+    cells.add(`${x},${y}`);
+    while (x !== to.x) { x += Math.sign(to.x - x); cells.add(`${x},${y}`); }
+    while (y !== to.y) { y += Math.sign(to.y - y); cells.add(`${x},${y}`); }
+  }
+
   function renderMap() {
-    const cells = [];
-    const connectionVectors = [['n',0,-1],['e',1,0],['s',0,1],['w',-1,0]];
-    for (let y = 0; y < state.size; y++) {
-      for (let x = 0; x < state.size; x++) {
-        const room = state.rooms.find(item => item.x === x && item.y === y);
-        if (!room) cells.push('<div class="map-cell"></div>');
-        else {
-          const template = templateFor(room);
-          const routes = templateRoutes(template);
-          const corridorAssignments = room.connections.map(roomById).map(neighbor => ({
-            route:routes.find(route => route.key === room.routeAssignments?.[neighbor.id]),
-            dx:neighbor.x-room.x, dy:neighbor.y-room.y
-          })).filter(assignment => assignment.route);
-          const links = connectionVectors.map(([direction,dx,dy]) => {
-            const neighbor = state.rooms.find(item => item.x === x + dx && item.y === y + dy);
-            return neighbor && room.connections.includes(neighbor.id) ? `<i class="room-link link-${direction}"></i>` : '';
-          }).join('');
-          cells.push(`<button class="map-cell room ${room.id === state.activeRoomId ? 'active' : ''} ${room.status}" data-action="travel" data-id="${room.id}" title="Room ${room.number}: ${esc(template.name)}">${links}${renderFloorplanSvg(template, `overview-${room.id}`, { overview:true, rotation:room.rotation || 0, corridorAssignments })}<span class="number">${room.number}</span><span class="name">${esc(template.name)}</span><span class="icons">${statusIcon(room)}</span></button>`);
+    const unit = 32;
+    const maxTemplateSpan = Math.max(...DATA.rooms.flatMap(template => {
+      const rows = template.map.split('\n');
+      return [rows.length, Math.max(...rows.map(row => row.length))];
+    }));
+    const pitch = maxTemplateSpan + 4;
+    const minX = Math.min(...state.rooms.map(room => room.x));
+    const maxX = Math.max(...state.rooms.map(room => room.x));
+    const minY = Math.min(...state.rooms.map(room => room.y));
+    const maxY = Math.max(...state.rooms.map(room => room.y));
+    const padding = 2;
+    const layouts = new Map();
+    for (const room of state.rooms) {
+      const template = templateFor(room);
+      const dimensions = templateGridSize(template, room.rotation || 0);
+      layouts.set(room.id, {
+        ...dimensions,
+        x:padding + (room.x-minX)*pitch + Math.floor((pitch-dimensions.width)/2),
+        y:padding + (room.y-minY)*pitch + Math.floor((pitch-dimensions.height)/2)
+      });
+    }
+    const totalWidth = padding*2 + (maxX-minX+1)*pitch;
+    const totalHeight = padding*2 + (maxY-minY+1)*pitch;
+    const corridorCells = new Set();
+    const connectionDoorCells = new Set();
+    for (const room of state.rooms) {
+      for (const neighborId of room.connections) {
+        const neighbor = roomById(neighborId);
+        if (room.number > neighbor.number) continue;
+        const route = templateRoutes(templateFor(room)).find(candidate => candidate.key === room.routeAssignments?.[neighbor.id]);
+        const neighborRoute = templateRoutes(templateFor(neighbor)).find(candidate => candidate.key === neighbor.routeAssignments?.[room.id]);
+        if (!route || !neighborRoute) continue;
+        const roomLayout = layouts.get(room.id), neighborLayout = layouts.get(neighbor.id);
+        const routeCell = rotateRouteCell(route, templateFor(room), room.rotation || 0);
+        const neighborCell = rotateRouteCell(neighborRoute, templateFor(neighbor), neighbor.rotation || 0);
+        const doorA = { x:roomLayout.x+routeCell.x, y:roomLayout.y+routeCell.y };
+        const doorB = { x:neighborLayout.x+neighborCell.x, y:neighborLayout.y+neighborCell.y };
+        connectionDoorCells.add(`${doorA.x},${doorA.y}`);
+        connectionDoorCells.add(`${doorB.x},${doorB.y}`);
+        const directionA = rotateDirection(route.direction, room.rotation) || { dx:Math.sign(neighbor.x-room.x), dy:Math.sign(neighbor.y-room.y) };
+        const directionB = rotateDirection(neighborRoute.direction, neighbor.rotation) || { dx:Math.sign(room.x-neighbor.x), dy:Math.sign(room.y-neighbor.y) };
+        const start = { x:doorA.x+directionA.dx, y:doorA.y+directionA.dy };
+        const end = { x:doorB.x+directionB.dx, y:doorB.y+directionB.dy };
+        if (room.x !== neighbor.x) {
+          const middleX = Math.floor((start.x+end.x)/2);
+          addGridSegment(corridorCells,start,{x:middleX,y:start.y});
+          addGridSegment(corridorCells,{x:middleX,y:start.y},{x:middleX,y:end.y});
+          addGridSegment(corridorCells,{x:middleX,y:end.y},end);
+        } else {
+          const middleY = Math.floor((start.y+end.y)/2);
+          addGridSegment(corridorCells,start,{x:start.x,y:middleY});
+          addGridSegment(corridorCells,{x:start.x,y:middleY},{x:end.x,y:middleY});
+          addGridSegment(corridorCells,{x:end.x,y:middleY},end);
         }
       }
     }
+    const corridorTiles = [...corridorCells].map(key => {
+      const [x,y] = key.split(',').map(Number);
+      return `<rect class="overview-corridor-tile map-floor-square" x="${x*unit}" y="${y*unit}" width="${unit}" height="${unit}"/>`;
+    }).join('');
+    const corridorWalls = [...corridorCells].flatMap(key => {
+      const [x,y] = key.split(',').map(Number);
+      return [[0,-1,x*unit,y*unit,(x+1)*unit,y*unit],[1,0,(x+1)*unit,y*unit,(x+1)*unit,(y+1)*unit],[0,1,x*unit,(y+1)*unit,(x+1)*unit,(y+1)*unit],[-1,0,x*unit,y*unit,x*unit,(y+1)*unit]]
+        .filter(([dx,dy]) => !corridorCells.has(`${x+dx},${y+dy}`) && !connectionDoorCells.has(`${x+dx},${y+dy}`))
+        .map(([, ,x1,y1,x2,y2]) => `<line class="map-wall overview-corridor-wall" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+    }).join('');
+    const roomPlans = state.rooms.map(room => {
+      const layout = layouts.get(room.id);
+      const plan = renderFloorplanSvg(templateFor(room), `overview-${room.id}`, { overview:true, rotation:room.rotation || 0, embeddedX:layout.x*unit, embeddedY:layout.y*unit });
+      const stateClass = `${room.id === state.activeRoomId ? ' active' : ''} ${room.status}`;
+      return `<g class="overview-room-node${stateClass}" data-action="travel" data-id="${room.id}" tabindex="0"><title>Room ${room.number}: ${esc(templateFor(room).name)}</title>${plan}<circle class="overview-room-number-bg" cx="${layout.x*unit+14}" cy="${layout.y*unit+14}" r="11"/><text class="overview-room-number" x="${layout.x*unit+14}" y="${layout.y*unit+18}">${room.number}</text><text class="overview-room-icons" x="${(layout.x+layout.width)*unit-6}" y="${layout.y*unit+15}">${statusIcon(room)}</text></g>`;
+    }).join('');
+    const displayWidth = totalWidth * 12, displayHeight = totalHeight * 12;
     return `<aside class="pane pane-map"><div class="map-wrap">
-      <div class="section-head"><h2>Dungeon map</h2><span>${state.rooms.length}/${state.size*state.size} sectors</span></div>
-      <div class="map-grid" style="grid-template-columns:repeat(${state.size},1fr)">${cells.join('')}</div>
+      <div class="section-head"><h2>Dungeon map</h2><span>${state.rooms.length} rooms · unbounded</span></div>
+      <div class="dungeon-overview-wrap"><svg class="dungeon-overview" width="${displayWidth}" height="${displayHeight}" viewBox="0 0 ${totalWidth*unit} ${totalHeight*unit}" role="img" aria-label="Connected dungeon overview at one shared grid scale"><defs><pattern id="overview-rock" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#overview-rock)"/>${roomPlans}${corridorTiles}${corridorWalls}</svg></div>
       <div class="map-legend"><div class="legend-line"><i class="legend-swatch active"></i> Current room</div><div class="legend-line"><i class="legend-swatch danger"></i> Active danger</div><div class="legend-line">✦ Secured light &nbsp; ⚔ Enemies &nbsp; ♥ Heart</div></div>
       <div class="site-card"><div class="eyebrow">${esc(state.domain)} · ${esc(state.theme)}</div><h3>${esc(state.quest.name)}</h3><p>${esc(state.quest.elements)}</p><p><strong>${state.quest.elementsFound}</strong> quest elements · Heart ${state.quest.heartFound ? 'revealed' : 'unrevealed'}</p></div>
     </div></aside>`;
@@ -990,10 +1070,10 @@
     const template = templateFor(room);
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
-      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Room</small><strong>${room.number}/${state.size*state.size}</strong></div></div>
+      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Rooms found</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoom()}${renderEncounter()}${renderParty()}</div>
-      <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${availableExitRoutes(room).length <= 0 || state.rooms.length >= state.size*state.size ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
+      <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${availableExitRoutes(room).length <= 0 ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
     persist();
@@ -1007,7 +1087,7 @@
     root.innerHTML = `<form class="modal" id="setup-form"><div class="modal-head"><div class="eyebrow">New expedition</div><h2>Enter the haunted tomb</h2><p>The first room is generated immediately and consumes one turn of the shared six-turn torch.</p></div><div class="modal-body"><div class="form-grid">
       <div class="field full"><label>Expedition title</label><input name="title" value="The King Who Was Buried Twice"></div>
       <div class="field"><label>Seed</label><input name="seed" value="${today}"></div><div class="field"><label>Quest</label><select name="quest"><option value="random">Random quest</option>${DATA.quests.map(q => `<option value="${q.index}" ${q.index === 4 ? 'selected' : ''}>${q.name}</option>`).join('')}</select></div>
-      <div class="field"><label>Site size</label><select name="size"><option value="3">Compact · 3×3</option><option value="4">Standard · 4×4</option><option value="5">Sprawling · 5×5</option></select></div><div class="field"><label>Escalation</label><select name="escalation"><option value="3">Fast · E3</option><option value="2">Standard · E2</option><option value="1">Slow · E1</option></select></div>
+      <div class="field"><label>Map</label><div class="static-field">Unbounded · expands as exits are explored</div></div><div class="field"><label>Escalation</label><select name="escalation"><option value="3">Fast · E3</option><option value="2">Standard · E2</option><option value="1">Slow · E1</option></select></div>
       <div class="field"><label>Adventurers</label><select name="partySize" id="party-size"><option value="1">1 adventurer</option><option value="2" selected>2 adventurers</option><option value="3">3 adventurers</option><option value="4">4 adventurers</option></select></div><div class="field"><label>Names (comma separated)</label><input name="names" value="Mara, Corvin"></div>
       </div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-setup">Cancel</button><button class="btn btn-primary" type="submit">Generate expedition</button></div></form>`;
   }
@@ -1030,9 +1110,12 @@
           : exits.length ? `<div class="direction-grid">${exits.map(route => {
               const direction = rotateDirection(route.direction, room.rotation);
               const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
-              return `<button class="btn direction-card" data-action="choose-exit" data-route="${esc(route.key)}"><strong>${cardinal?.arrow || (route.glyph === 'D' ? '↓' : '↑')} ${esc(routeLabel(room, route))}</strong><small>${route.glyph === 'X' ? 'Visible doorway' : route.glyph === 'D' ? 'Route descends' : 'Route ascends'}</small></button>`;
+              const target = directRouteTarget(room, route);
+              const occupied = target && state.rooms.some(candidate => candidate.x === target.x && candidate.y === target.y);
+              if (target) return `<button class="btn direction-card" data-action="choose-direction" data-route="${esc(route.key)}" data-x="${target.x}" data-y="${target.y}" ${occupied ? 'disabled' : ''}><strong>${cardinal.arrow} ${esc(routeLabel(room, route))}</strong><small>${occupied ? 'That map position is already occupied' : `Explore directly ${cardinal.name.toLowerCase()}`}</small></button>`;
+              return `<button class="btn direction-card" data-action="choose-exit" data-route="${esc(route.key)}"><strong>${route.glyph === 'D' ? '↓' : '↑'} ${esc(routeLabel(room, route))}</strong><small>${route.glyph === 'D' ? 'Choose where the lower level is diagrammed' : 'Choose where the upper level is diagrammed'}</small></button>`;
             }).join('')}</div>` : '<div class="empty-state">Every generated exit from this room has already been assigned.</div>';
-        root.innerHTML = modalShell('Choose an exit', `${exits.length} uncharted exit${exits.length === 1 ? '' : 's'} remain in this rotated room. Choose the physical route first.`, body);
+        root.innerHTML = modalShell('Choose an exit', `${exits.length} uncharted exit${exits.length === 1 ? '' : 's'} remain. A cardinal doorway always places the next room in that direction.`, body);
       } else {
         const route = exits.find(candidate => candidate.key === modal.routeKey);
         if (!route) { delete modal.routeKey; return renderModal(); }
