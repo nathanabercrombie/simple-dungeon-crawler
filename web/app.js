@@ -240,17 +240,18 @@
     const visiblePresence = room.status === 'conquered'
       ? 'The chamber is quiet now. The marks left by your earlier actions remain, but its main danger is no longer active.'
       : playerFacingPresence(challenge.presence, liveEnemies.length > 0);
-    const readAloud = [
-      visibleFunctionProse(functionName),
-      DATA.roomSightlines[template.index - 1],
-      visibleTerrainProse(template),
-      atmosphereProse,
-      readAloudLighting,
-      occupantIntroduction,
-      visiblePresence
-    ].filter(Boolean).join(' ');
+    const readAloudParts = [
+      { source:`Rolled tomb function · ${functionName}`, text:visibleFunctionProse(functionName) },
+      { source:`Room template · ${template.name}`, text:DATA.roomSightlines[template.index - 1] },
+      { source:`Template terrain · ${template.tags.slice(0,3).join(', ')}`, text:visibleTerrainProse(template) },
+      { source:`Rolled haunting · ${atmosphereName}`, text:atmosphereProse },
+      { source:`Template lighting · ${template.lighting}`, text:readAloudLighting },
+      occupantIntroduction ? { source:'Generated occupants', text:occupantIntroduction } : null,
+      { source:`Visible challenge · ${challenge.title}`, text:visiblePresence }
+    ].filter(part => part?.text);
+    const readAloud = readAloudParts.map(part => part.text).join(' ');
     return {
-      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
+      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud, readAloudParts,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -679,7 +680,7 @@
       <div class="section-head"><h2>Active room</h2><span>Template ${template.index} · roll ${room.templateIndex}</span></div>
       <article class="room-card">
         <header class="room-header"><div class="eyebrow">Room ${room.number} · ${room.status}</div><h2>${esc(template.name)}</h2></header>
-        <section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud · Room ${room.number}</div><p><em>${esc(scene.readAloud)}</em></p></section>
+        <section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud · Room ${room.number}</div><div class="read-aloud-parts">${scene.readAloudParts.map(part => `<div class="read-aloud-part"><span class="prose-source">${esc(part.source)}</span><p><em>${esc(part.text)}</em></p></div>`).join('')}</div></section>
         <div class="room-meta room-meta-strip">
           <span class="tag danger-${template.danger.toLowerCase()}">${template.danger} ${template.target}</span>
           <span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? '✦ Secured light' : template.lighting}</span>

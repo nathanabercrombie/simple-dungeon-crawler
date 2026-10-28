@@ -136,7 +136,10 @@ button.map-cell:hover { border-color: var(--gold-soft); }
 .room-meta { display: flex; flex-wrap: wrap; gap: 6px; }
 .room-meta-strip { padding: 11px 22px; border-bottom: 1px solid var(--line); background:#1a1b16; }
 .read-aloud { padding: 22px 26px 24px; border-bottom: 1px solid var(--line); background: linear-gradient(135deg,rgba(120,153,166,.07),transparent 68%); }
-.read-aloud p { max-width: 780px; margin: 8px 0 0; color:#eee5d2; font: 19px/1.62 var(--serif); }
+.read-aloud-parts { display:grid; gap:16px; margin-top:13px; }
+.read-aloud-part { max-width:780px; }
+.prose-source { display:block; margin-bottom:4px; color:#747a73; font-size:8px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; }
+.read-aloud p { margin: 0; color:#eee5d2; font: 18px/1.58 var(--serif); }
 .read-aloud em { font-style: italic; }
 .tag { display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); font-size: 10px; }
 .tag.danger-hard, .tag.danger-extreme { border-color: #70463e; color: #d99b91; }
