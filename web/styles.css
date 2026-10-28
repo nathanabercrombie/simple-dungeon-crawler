@@ -200,7 +200,9 @@ button.map-cell:hover { border-color: var(--gold-soft); }
 .map-door-label { font-size:17px; }
 .terrain-legend { display:flex; flex-wrap:wrap; gap:7px 10px; margin-top:10px; color:var(--muted); font-size:9px; }
 .terrain-legend span { display:flex; align-items:center; gap:4px; }
-.legend-mark { display:grid; place-items:center; width:17px; height:17px; border:1px solid #777267; background:#f8f6ee; color:#171715; font:700 11px Georgia,serif; }
+.legend-mark { display:grid; place-items:center; width:27px; height:27px; border:1px solid #777267; background:#f8f6ee; color:#171715; }
+.legend-symbol { display:block; width:100%; height:100%; }
+.legend-terrain-outline { vector-effect:non-scaling-stroke; }
 .map-scale { margin:7px 0 0; color:var(--dim); font-size:9px; text-align:center; letter-spacing:.04em; }
 .scene-block { margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
 .scene-block .scene-title { margin: 5px 0 10px; color: var(--ink); font: 600 24px/1.08 var(--serif); letter-spacing: 0; text-transform: none; }

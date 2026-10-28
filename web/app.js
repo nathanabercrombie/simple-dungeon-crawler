@@ -766,6 +766,26 @@
     return '';
   }
 
+  function renderLegendSymbol(glyph, instanceId, orientation = 'horizontal') {
+    const size = 32;
+    const safeId = `legend-${instanceId}-${glyph.charCodeAt(0)}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const pitId = `${safeId}-pit`;
+    const balconyId = `${safeId}-balcony`;
+    const defs = `<defs><pattern id="${pitId}" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" class="map-pit-ground"/><line x1="0" y1="0" x2="0" y2="9" class="map-pit-hatch-line"/></pattern><pattern id="${balconyId}" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" class="map-balcony-ground"/><path d="M0,2H10 M0,8H10" class="map-balcony-hatch-line"/></pattern></defs>`;
+    let ground = `<rect class="map-floor-square" x="0" y="0" width="${size}" height="${size}"/>`;
+    let outline = '';
+    if (glyph === 'P' || glyph === '=') {
+      ground = `<rect class="map-pit-fill" x="0" y="0" width="${size}" height="${size}" fill="url(#${pitId})"/>`;
+      outline = `<rect class="map-pit-outline legend-terrain-outline" x="1.5" y="1.5" width="29" height="29"/>`;
+    } else if (glyph === 'B') {
+      ground = `<rect class="map-balcony-fill" x="0" y="0" width="${size}" height="${size}" fill="url(#${balconyId})"/>`;
+      outline = `<rect class="map-balcony-outline legend-terrain-outline" x="1.5" y="1.5" width="29" height="29"/>`;
+    } else if (['E','X','?'].includes(glyph)) {
+      outline = `<line class="map-wall map-doorway${glyph === '?' ? ' map-secret-wall' : ''}" x1="0" y1="1.5" x2="32" y2="1.5"/>`;
+    }
+    return `<svg class="legend-symbol" viewBox="0 0 32 32" aria-hidden="true">${defs}${ground}${outline}${mapSymbol(glyph,0,0,size,orientation)}</svg>`;
+  }
+
   function renderFloorplanSvg(template, instanceId, options = {}) {
     const { overview = false, rotation = 0, corridorAssignments = [], embeddedX = null, embeddedY = null } = options;
     const rows = template.map.split('\n');
@@ -875,13 +895,21 @@
 
   function renderFloorplan(template, roomId) {
     const used = new Map();
-    for (const glyph of template.map) {
-      if (TILE_INFO[glyph] && glyph !== '.') {
-        const [kind,label,icon] = TILE_INFO[glyph];
-        used.set(kind, { label, icon });
+    const rows = template.map.split('\n');
+    rows.forEach((row, y) => [...row].forEach((glyph, x) => {
+      if (!TILE_INFO[glyph] || glyph === '.') return;
+      const [kind,baseLabel] = TILE_INFO[glyph];
+      let orientation = 'horizontal';
+      if (glyph === '=') {
+        const vertical = rows[y-1]?.[x] === '=' || rows[y+1]?.[x] === '=';
+        const horizontal = row[x-1] === '=' || row[x+1] === '=';
+        orientation = vertical && !horizontal ? 'vertical' : 'horizontal';
       }
-    }
-    return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,icon}) => `<span><i class="legend-mark">${icon}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
+      const key = glyph === '=' ? `${kind}-${orientation}` : kind;
+      const label = glyph === '=' ? `${baseLabel} · ${orientation}` : baseLabel;
+      used.set(key, { label, glyph, orientation });
+    }));
+    return `<div class="visual-map-wrap">${renderFloorplanSvg(template, `detail-${roomId}`)}<div class="terrain-legend">${[...used.values()].map(({label,glyph,orientation}, index) => `<span data-legend-glyph="${esc(glyph)}" data-orientation="${orientation}"><i class="legend-mark">${renderLegendSymbol(glyph, `${roomId}-${index}`, orientation)}</i>${esc(label)}</span>`).join('')}</div><p class="map-scale">One square ≈ one pace · copy directly to grid paper</p></div>`;
   }
 
   function templateGridSize(template, rotation = 0) {
