@@ -63,6 +63,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .resource small { display: block; color: var(--muted); font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
 .resource strong { display: block; margin-top: 2px; font: 600 17px/1 var(--serif); }
 .resource.torch strong { color: #e9bd61; }
+.resource.challenge-rating strong { color:#d8c99f; font-size:15px; white-space:nowrap; }
 .top-actions { display: flex; gap: 7px; }
 .build-pill { display:inline-flex; align-items:center; align-self:center; padding:5px 8px; border:1px solid var(--gold-soft); border-radius:99px; color:#e4c878; background:#211f16; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
 
