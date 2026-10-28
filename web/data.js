@@ -58,6 +58,59 @@ window.GAME_DATA = (() => {
     room(50,'Heart Chamber','Extreme','Fixtures',6,['heart','raised','pillars','objective'],`####X####\n#^^^^^^^#\nX^O...O^X\n#^.....^#\n#^..T..^#\n#^.....^#\nX^O.D.O^X\n#^^^^^^^#\n####E####`)
   ];
 
+  const roomSightlines = [
+    'The entrance opens into a square chamber. One doorway stands directly opposite you and another breaks the right-hand wall.',
+    'A narrow chamber stretches straight ahead, scarcely wide enough for two people abreast. One opening waits at the far end and another halfway along the right wall.',
+    'The walls bend around a blind left-hand corner before the chamber widens. Openings are visible ahead and to the right.',
+    'Four thick pillars divide a broad rectangular floor. You can see one exit beyond them and another in the right-hand wall.',
+    'Short interior walls divide the room into paired alcoves, leaving a crossing through the center toward openings ahead and left.',
+    'The chamber narrows toward a raised stone platform at its far end. There is no visible doorway beyond the entrance.',
+    'A jagged bank of fallen masonry splits the center of the room. Doorways remain visible beyond the rubble and through the left wall.',
+    'A broad gallery opens around a central intersection, with clear doorways ahead, left, and right.',
+    'Most of the chamber floor has fallen away. A single narrow bridge leads toward the far doorway while a second exit waits on the right-hand ledge.',
+    'A raised gallery wraps around the far and side walls above a lower open floor. Exits stand ahead and at the right edge of the balcony.',
+    'Two channels of black water run lengthwise through the chamber, leaving one narrow dry path between them. Openings are visible ahead and left.',
+    'A barred divider splits the chamber into two long cells. Openings stand ahead and left, while an unbroken patch of wall at the lower right looks different from the stone around it.',
+    'Four large funeral statues stand in a square around the middle of the court. Doorways open ahead and to the right.',
+    'A broad pit cuts across the room. One isolated stone remnant interrupts the gap, but no complete crossing remains between you and the openings ahead and right.',
+    'The center of the court drops into a shallow square depression surrounded by a higher walkway. Exits stand ahead and left.',
+    'A passage spirals around a solid central core toward a stair descending inside it. Another doorway remains visible at the far end.',
+    'Pairs of raised stone obstacles create a straight gauntlet through the chamber. Openings lie ahead and through the left wall.',
+    'A balcony clings to the walls around a deep central pit. A single narrow bridge crosses part of the void toward exits ahead and right.',
+    'The remains of a great hall spread beyond the entrance. Rubble lies in several separate banks, and doorways survive ahead, left, and right.',
+    'A raised perimeter surrounds three pillars and a central descending stair. A doorway continues straight ahead beyond the higher floor.',
+    'Rows of pillars form several long lanes through an immense hall. Openings break the far, left, and right walls.',
+    'A circular pit encloses an isolated stone platform at the room’s center. The outer walkway reaches doorways ahead, left, and right.',
+    'Two separate narrow bridges cross different sections of a broken floor, forcing the route to shift from one side of the chamber to the other.',
+    'A raised balcony surrounds a long central break in the floor. Openings stand ahead and at both sides of the gallery.',
+    'Water fills most of the chamber behind two visible gates. A large wheel-and-lever assembly occupies the dry central crossing.',
+    'Barred cages line both sides of a narrow central aisle. Gates interrupt the bars, and doorways remain visible ahead, left, and right.',
+    'Four furnace mouths glow in paired lanes divided by stone walls. Two large mechanisms stand near the center between exits ahead, left, and right.',
+    'Raised platforms occupy the far corners while sunken floors fill the near corners. A dividing wall splits the middle around three visible exits.',
+    'The chamber forms a narrow cross. Five large stone mechanisms crowd its center, and openings lie at the end of three arms.',
+    'A ring-shaped walkway surrounds a broad shaft. At the shaft’s center, a separate stair descends into darkness; three other doorways leave the outer ring.',
+    'Two raised platforms face one another across an open central floor, each marked by a pair of pillars. Openings stand ahead, left, and right.',
+    'Broken interior walls and long banks of rubble turn the chamber into several crooked lanes. Three doorways are visible through the debris.',
+    'Three repeated chasms divide the floor into narrow strips connected by thin crossings. Openings remain ahead, left, and right.',
+    'Narrow causeways hang over a broad pit in a broken geometric pattern. Three openings can be seen beyond the exposed crossings.',
+    'Concentric stone terraces descend toward a flooded central stage and a lone pillar. Openings stand ahead and on both sides.',
+    'Pillars and short walls alternate in a dense maze, repeatedly blocking sight across the room. Three exits are visible only in fragments between them.',
+    'Raised terraces step down through bands of loose rubble into a sunken center. Openings break the far, left, and right walls.',
+    'Tall mirrors stand in alternating rows along the walls and through the middle of the gallery. Three real openings repeat many times in their reflections.',
+    'Interlocking gears cover nearly the entire floor, leaving only a few narrow strips of bare stone between three exits.',
+    'A balcony encloses a square execution pit around a fixed stone block. Steps descend from the near side, and openings stand ahead, left, and right.',
+    'Channels of glowing lava divide the room into narrow stone lanes and bridges. Three exits wait beyond the heat.',
+    'One balcony surrounds another in a series of raised rectangles. Five openings pierce the nested galleries at different sides.',
+    'Barred cells surround a column of interlocked gears and gates. The central aisle connects three visible openings.',
+    'Columns of carefully stacked human bones form a spiral path around a central descending stair. Openings interrupt the spiral ahead, left, and right.',
+    'Two water channels flank a broken raised causeway. A mound of fallen stone blocks the near end, while three exits remain visible beyond it.',
+    'An enormous mechanism fills the room from wall to wall around two pairs of pillars. A shaft descends at its center beneath three outward routes.',
+    'A lattice of narrow bridges crosses a floorless void in two exposed bands. Five openings meet the lattice from different sides.',
+    'Short stone walls and gates form a compact maze around a throne at the far end. Openings stand ahead, left, and right.',
+    'A broken ring of pits surrounds one central pillar. Stairs rise and descend on opposite sides while a large mechanism faces three horizontal exits.',
+    'A raised ring surrounds four pillars and a central stone fixture. Openings pierce every side, and a stair descends from the far half of the chamber.'
+  ];
+
   const challenges = [
     ['Quiet aftermath','No immediate challenge. Evidence shows what happened, changed, or recently departed.'],
     ['Domain obstacle','Burial architecture, a sealed mechanism, or a damaged processional route blocks progress.'],
@@ -243,7 +296,7 @@ window.GAME_DATA = (() => {
   const names = ['Mara','Corvin','Iona','Bram','Sable','Orin','Vey','Hester','Tarn','Elian','Nera','Garrick'];
 
   return {
-    rooms, challenges, opportunities, sceneChallenges, sceneOpportunities,
+    rooms, roomSightlines, challenges, opportunities, sceneChallenges, sceneOpportunities,
     tombFunctions, hauntedAtmospheres, quests, questBands, monsters,
     gear, pasts, knacks, items, names
   };

@@ -227,6 +227,7 @@
       : playerFacingPresence(challenge.presence, liveEnemies.length > 0);
     const readAloud = [
       visibleFunctionProse(functionName),
+      DATA.roomSightlines[template.index - 1],
       visibleTerrainProse(template),
       atmosphereProse,
       readAloudLighting,
@@ -234,7 +235,7 @@
       visiblePresence
     ].filter(Boolean).join(' ');
     return {
-      version: 3, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
+      version: 4, functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -246,7 +247,7 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const room of state.rooms) {
-      if (room.scene?.version !== 3) room.scene = buildRoomScene(room, templateFor(room));
+      if (room.scene?.version !== 4) room.scene = buildRoomScene(room, templateFor(room));
     }
   }
 
@@ -725,7 +726,7 @@
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
       <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Room</small><strong>${room.number}/${state.size*state.size}</strong></div></div>
-      <div class="top-actions"><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
+      <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoom()}${renderEncounter()}${renderParty()}</div>
       <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${room.remainingExits <= 0 || state.rooms.length >= state.size*state.size ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
