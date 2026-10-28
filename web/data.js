@@ -17,7 +17,7 @@ window.GAME_DATA = (() => {
     room(9,'Pit Bridge','Standard','None',2,['pit','bridge','traversal'],`###X###\n#PP.PP#\n#PP=PP#\n#PP=PP#\n#PP=PP#\n#.....X\n###E###`),
     room(10,'Balcony Chamber','Standard','Fixtures',2,['balcony','high ground'],`###X###\n#BBBBB#\n#B...B#\n#B.^.BX\n#.....#\n#.....#\n###E###`),
     room(11,'Flooded Channel','Standard','None',2,['water','channel','traversal'],`  ##X###\n ##~.~~#\n##~~.~~#\nX~~~.~~#\n##~~.~~#\n ##....#\n  ##E###`),
-    room(12,'Twin Cells','Standard','None',2,['cells','gate','hidden exit'],`###X###\n#..|..#\nX..|..#\n#..+..#\n#..|..#\n#..|..?\n###E###`),
+    room(12,'Twin Cells','Standard','None',2,['cells','gate','hidden exit'],`###X###\n#.....#\nX.....#\n#--+--#\n#.....#\n#.....?\n###E###`),
     room(13,'Statue Court','Standard','Fixtures',2,['statues','cover','ritual'],`###X###\n#.S.S.#\n#.....#\n#.S.S.X\n#.....#\n###E###`),
     room(14,'Broken Crossing','Standard','None',2,['pit','jump','traversal'],`  ##X##\n ##...#\n##PPPPP\n#PP.PP##\n#PPPPP.X\n##....##\n ##E###`),
     room(15,'Sunken Court','Standard','None',2,['sunken','elevation'],`###X###\n#.....#\n#.vvv.#\nX.v.v.#\n#.vvv.#\n#.....#\n###E###`),

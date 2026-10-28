@@ -764,7 +764,7 @@
     'O':['pillar','Pillar','○'], 'S':['statue','Statue','♙'], 'P':['pit','Pit or chasm','╱'], '=':['bridge','Bridge','═'],
     'B':['balcony','Balcony','┄'], '^':['steps','Raised floor','⌃'], 'v':['sunken','Sunken floor','⌄'],
     'D':['descent','Descent','↓'], 'U':['ascent','Ascent','↑'], '~':['water','Water','≈'], 'R':['rubble','Rubble','◇'],
-    '|':['partition','Barred divider','║'], '+':['gate','Gate','ǂ'], 'C':['cage','Cage','╫'], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
+    '|':['partition','Barred divider','║'], '-':['partition','Barred divider','═'], '+':['gate','Gate','ǂ'], 'C':['cage','Cage','╫'], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
     'L':['lava','Lava','≋'], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦']
   };
 
@@ -785,7 +785,7 @@
     if (glyph === 'D' || glyph === 'U') return `<path class="map-feature" d="M${x+6},${y+7}H${x+size-6} M${x+8},${y+12}H${x+size-8} M${x+10},${y+17}H${x+size-10} M${x+12},${y+22}H${x+size-12}"/><text class="map-symbol-text" x="${cx}" y="${cy+10}">${glyph === 'D' ? '↓' : '↑'}</text>`;
     if (glyph === '~' || glyph === 'L') return `<path class="map-feature ${glyph === 'L' ? 'feature-heavy' : ''}" d="M${x+3},${y+9}q4,-4 8,0t8,0t8,0 M${x+3},${y+17}q4,-4 8,0t8,0t8,0 M${x+3},${y+25}q4,-4 8,0t8,0t8,0"/>`;
     if (glyph === 'R') return `<path class="map-feature" d="M${x+5},${y+20}l5,-8 7,5 -3,8z M${x+15},${y+12}l5,-6 7,5 -2,7z M${x+19},${y+25}l4,-6 5,3 -2,5z"/>`;
-    if (glyph === '|') {
+    if (glyph === '|' || glyph === '-') {
       if (orientation === 'vertical') return `<g class="map-bars feature-partition partition-vertical"><path class="map-feature feature-heavy" d="M${cx},${y}V${y+size}"/><path class="map-feature" d="M${cx-6},${y+6}h12 M${cx-6},${y+13}h12 M${cx-6},${y+20}h12 M${cx-6},${y+27}h12"/></g>`;
       return `<g class="map-bars feature-partition partition-horizontal"><path class="map-feature feature-heavy" d="M${x},${cy}H${x+size}"/><path class="map-feature" d="M${x+6},${cy-6}v12 M${x+13},${cy-6}v12 M${x+20},${cy-6}v12 M${x+27},${cy-6}v12"/></g>`;
     }
@@ -832,9 +832,10 @@
       return vertical && !horizontal ? 'vertical' : 'horizontal';
     }
     if (glyph === '|') return 'vertical';
+    if (glyph === '-') return 'horizontal';
     if (glyph === '+') {
-      const vertical = ['#','|','+','C'].includes(rows[y-1]?.[x]) || ['#','|','+','C'].includes(rows[y+1]?.[x]);
-      const horizontal = ['#','|','+','C'].includes(rows[y]?.[x-1]) || ['#','|','+','C'].includes(rows[y]?.[x+1]);
+      const vertical = ['#','|','-','+','C'].includes(rows[y-1]?.[x]) || ['#','|','-','+','C'].includes(rows[y+1]?.[x]);
+      const horizontal = ['#','|','-','+','C'].includes(rows[y]?.[x-1]) || ['#','|','-','+','C'].includes(rows[y]?.[x+1]);
       return vertical && !horizontal ? 'vertical' : 'horizontal';
     }
     return 'horizontal';
@@ -949,7 +950,7 @@
       if (!TILE_INFO[glyph] || glyph === '.') return;
       const [kind,baseLabel] = TILE_INFO[glyph];
       const orientation = tileOrientation(rows, x, y, glyph);
-      const oriented = ['=','|','+'].includes(glyph);
+      const oriented = ['=','|','-','+'].includes(glyph);
       const key = oriented ? `${kind}-${orientation}` : kind;
       const label = oriented ? `${baseLabel} · ${orientation}` : baseLabel;
       used.set(key, { label, glyph, orientation });
