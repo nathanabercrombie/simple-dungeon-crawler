@@ -75,6 +75,49 @@
     return chosen ? chosen[1] : `The ${template.tags.slice(0,2).join(' and ')} architecture gives the chamber a deliberate, functional shape.`;
   }
 
+  function functionDefinition(name) {
+    return {
+      'Processional threshold':'a formal entrance designed to control how funeral parties approached the dead',
+      'Preparation chamber':'a room where bodies were washed, preserved, dressed, and made ready for burial',
+      'Common crypt':'a burial chamber shared by a family or community',
+      'Ossuary':'a chamber where human bones were stored and arranged, often after earlier burial',
+      'Memorial shrine':'a place where living mourners left offerings and remembered the dead',
+      'Royal sepulcher':'an elaborate burial chamber built for a ruler or other person of exceptional rank'
+    }[name] || 'the room’s original funerary purpose';
+  }
+
+  function roomTermDefinition(name) {
+    const terms = [
+      ['Ossuary','a chamber where human bones were stored and arranged, often after earlier burial'],
+      ['Sepulcher','an elaborate tomb or burial chamber'],
+      ['Colonnade','a row of columns supporting or bordering a passage'],
+      ['Antechamber','a smaller room serving as the entrance to a larger chamber'],
+      ['Sanctum','a private sacred chamber'],
+      ['Aqueduct','a structure built to carry water'],
+      ['Amphitheater','a circular or semicircular space with rising rows around a central floor']
+    ];
+    return terms.find(([term]) => name.includes(term)) || null;
+  }
+
+  function readableCount(value) {
+    return ['zero','one','two','three','four','five','six','seven','eight','nine','ten'][value] || String(value);
+  }
+
+  function occupantProse(enemies) {
+    if (!enemies.length) return '';
+    const groups = enemies.map(enemy => `${readableCount(enemy.units)} ${enemy.name}`);
+    const joined = groups.length === 1 ? groups[0] : `${groups.slice(0,-1).join(', ')}, and ${groups.at(-1)}`;
+    return `You can make out ${joined} in the chamber.`;
+  }
+
+  function playerFacingPresence(presence, hasOccupants) {
+    if (!hasOccupants) return presence;
+    return presence
+      .replace(/^The listed creatures\b/, 'They')
+      .replace(/^The creatures\b/, 'They')
+      .replace(/^A major listed creature\b/, 'One of them');
+  }
+
   function questElementFor(room) {
     const catalog = {
       1: [['The Barbed Antler','A broken antler bears the sovereign beast’s blood and reveals which material pierces its hide.'],['The Last Hunter’s Journal','A dead hunter’s field notes identify the sovereign’s feeding route and blind side.'],['The Scent Chain','A blood-marked chain can draw the sovereign from its lair on chosen ground.']],
@@ -136,9 +179,25 @@
       : template.lighting === 'Inherent'
         ? 'The room’s own heat and fire throw moving light across every surface.'
         : 'No permanent lighting fixture survives, so every deep recess depends on portable light.';
+    const readAloudLighting = template.lighting === 'Fixtures'
+      ? 'Rows of blackened sconces and lamps line the walls, but none are burning.'
+      : template.lighting === 'Inherent'
+        ? 'The chamber’s own fire throws restless orange light across the stone.'
+        : 'There are no lamps or sconces here; beyond the reach of your light, the recesses remain completely black.';
     const occupants = room.enemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.maxHp} total HP, Defense ${enemy.defense})`);
+    const occupantIntroduction = occupantProse(room.enemies);
+    const visiblePresence = playerFacingPresence(challenge.presence, room.enemies.length > 0);
+    const readAloud = [
+      functionProse,
+      terrainProse(template),
+      atmosphereProse,
+      readAloudLighting,
+      occupantIntroduction,
+      visiblePresence,
+      challenge.clues
+    ].filter(Boolean).join(' ');
     return {
-      functionName, atmosphereName,
+      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud,
       description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
@@ -150,7 +209,7 @@
     if (!state) return;
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const room of state.rooms) {
-      if (!room.scene) room.scene = buildRoomScene(room, templateFor(room));
+      if (!room.scene?.readAloud) room.scene = buildRoomScene(room, templateFor(room));
     }
   }
 
@@ -555,18 +614,21 @@
     const room = activeRoom();
     const template = templateFor(room);
     const scene = room.scene;
+    const termDefinition = roomTermDefinition(template.name);
     const darkness = state.light.remaining <= 0 && !room.securedLight;
     return `<main class="pane pane-room">
       <div class="section-head"><h2>Active room</h2><span>Template ${template.index} · roll ${room.templateIndex}</span></div>
       <article class="room-card">
-        <header class="room-header"><div class="eyebrow">Room ${room.number} · ${room.status}</div><h2>${esc(template.name)}</h2><div class="room-meta">
+        <header class="room-header"><div class="eyebrow">Room ${room.number} · ${room.status}</div><h2>${esc(template.name)}</h2></header>
+        <section class="read-aloud"><div class="eyebrow">Read aloud</div><p><em>${esc(scene.readAloud)}</em></p></section>
+        <div class="room-meta room-meta-strip">
           <span class="tag danger-${template.danger.toLowerCase()}">${template.danger} ${template.target}</span>
           <span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? '✦ Secured light' : template.lighting}</span>
           ${darkness ? '<span class="tag danger-hard">Darkness: disadvantage</span>' : ''}
           ${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}
-        </div></header>
+        </div>
         <div class="room-body">${renderFloorplan(template)}<div class="room-copy">
-          <h3>${esc(scene.functionName)} · ${esc(scene.atmosphereName)}</h3><p class="room-description">${esc(scene.description)}</p>
+          <div class="facilitator-heading"><div class="eyebrow">Facilitator information</div>${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p><p><strong>Haunting:</strong> ${esc(scene.atmosphereName)}.</p></div>
           <div class="scene-block"><div class="eyebrow">Challenge · d12 ${room.challengeRoll}</div><h3 class="scene-title">${esc(scene.challenge.title)}</h3><p>${esc(scene.challenge.presence)}</p>
           ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
           <div class="clue-box"><strong>What the adventurers can see:</strong> ${esc(scene.challenge.clues)}</div>
