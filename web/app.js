@@ -53,74 +53,6 @@
     return list[stableIndex(room, salt, list.length)];
   }
 
-  function terrainProse(template) {
-    const descriptions = [
-      ['lava', 'Open channels of orange-white lava divide the usable floor; narrow stone crossings are the only obvious route between them.'],
-      ['water', 'Black water fills the lower ground, swallowing floor markings and making depth impossible to judge from the edge.'],
-      ['void', 'The masonry ends at a lightless drop, leaving only an exposed lattice of narrow crossings.'],
-      ['pit', 'A deep cut through the chamber breaks ordinary movement and turns the remaining crossings into choke points.'],
-      ['rubble', 'Fresh and ancient rubble forms unstable banks, half-burying the original paths through the room.'],
-      ['balconies', 'Nested stone galleries overlook one another, creating several defensible heights and blind spaces below.'],
-      ['balcony', 'A raised gallery commands the lower floor and offers cover along its carved parapet.'],
-      ['pillars', 'Heavy pillars interrupt sight lines and carry old soot, impact scars, and half-erased memorial carving.'],
-      ['mechanism', 'A room-sized funerary mechanism occupies the architecture; its gears and counterweights can still move.'],
-      ['cells', 'Barred enclosures line the route, each built to confine a body, spirit, or unwilling witness.'],
-      ['mirrors', 'Tall black mirrors multiply every doorway and make several solid walls appear passable.'],
-      ['raised', 'Steps divide the room into deliberate levels, placing the central ritual space above the approaches.'],
-      ['sunken', 'The center lies below the perimeter, collecting dust, cold air, and anything spilled into the chamber.'],
-      ['narrow', 'The architecture compresses movement into a long, exposed lane with little room to pass.'],
-      ['statues', 'Funerary statues stand where mourners once gathered, their faces angled toward the room’s point of honor.'],
-      ['open', 'The open floor provides clear sight from entrance to exit, with nowhere to hide an approach.']
-    ];
-    const chosen = descriptions.find(([tag]) => template.tags.includes(tag));
-    return chosen ? chosen[1] : `The ${template.tags.slice(0,2).join(' and ')} architecture gives the chamber a deliberate, functional shape.`;
-  }
-
-  function visibleFunctionProse(name) {
-    return {
-      'Processional threshold':'A broad strip of worn stone runs from the entrance toward the far side. Parallel grooves score the floor, and the walls are carved with lines of hooded mourners.',
-      'Preparation chamber':'Stone tables stand above dark floor drains. Hooks, shallow basins, and brown preservative stains cover the nearest work surface.',
-      'Common crypt':'Rows of rectangular burial niches fill the walls. Some are sealed by name plaques; others gape open around scraps of cloth and small personal objects.',
-      'Ossuary':'Human skulls and long bones are stacked in shelves and columns along the walls. Small family marks have been painted or cut into many of them.',
-      'Memorial shrine':'Low offering bowls, smoke-blackened lamps, and damaged inscriptions surround a central memorial stone.',
-      'Royal sepulcher':'Raised stonework, worn heraldic carvings, and larger-than-life funeral figures draw every sight line toward a place of honor.'
-    }[name] || 'Old funerary stonework fills the chamber.';
-  }
-
-  function visibleTerrainProse(template) {
-    const descriptions = [
-      ['lava','Orange-white liquid moves through open channels in the floor. Heat presses against your faces, and narrow stone crossings span the glow.'],
-      ['water','Black water covers the lower floor and hides the stone beneath it. Slow ripples touch the dry edges without any visible source.'],
-      ['void','The masonry ends at a lightless drop. Only narrow crossings continue over the darkness.'],
-      ['pit','A deep break cuts through the chamber. The bottom is lost in darkness, and only the remaining crossings connect the floor on either side.'],
-      ['rubble','Broken stone lies in uneven banks across the chamber, half-burying the original paths. Dust sifts down whenever the pile settles.'],
-      ['balconies','Stone galleries rise at several heights around the room. Their carved rails throw long shadows across the floor below.'],
-      ['balcony','A raised stone gallery overlooks the lower floor behind a waist-high carved rail.'],
-      ['pillars','Heavy stone pillars break up the chamber. Their surfaces carry old soot, chipped carvings, and pale impact scars.'],
-      ['mechanism','Interlocking gears, chains, and counterweights fill much of the room. Several parts continue to move with a slow iron scrape.'],
-      ['cells','Barred enclosures line the route. Several doors hang open, while others remain shut around darkness and old bedding.'],
-      ['mirrors','Tall black mirrors repeat the doorways and your torchlight. Several reflections show depth where the wall beside them is solid.'],
-      ['raised','Broad steps divide the chamber into several stone levels around a raised central space.'],
-      ['sunken','The center of the floor lies below the surrounding walkway. Dust and cold mist have gathered in the depression.'],
-      ['narrow','The walls press close around a long, straight strip of floor. There is barely room for two people to pass.'],
-      ['statues','Funerary statues stand around the chamber with their stone faces turned toward its center.'],
-      ['open','The floor lies open from entrance to exit, with no large object interrupting the view.']
-    ];
-    const chosen = descriptions.find(([tag]) => template.tags.includes(tag));
-    return chosen ? chosen[1] : 'Carved stone walls surround an irregular floor broken by old funerary structures.';
-  }
-
-  function functionDefinition(name) {
-    return {
-      'Processional threshold':'a formal entrance designed to control how funeral parties approached the dead',
-      'Preparation chamber':'a room where bodies were washed, preserved, dressed, and made ready for burial',
-      'Common crypt':'a burial chamber shared by a family or community',
-      'Ossuary':'a chamber where human bones were stored and arranged, often after earlier burial',
-      'Memorial shrine':'a place where living mourners left offerings and remembered the dead',
-      'Royal sepulcher':'an elaborate burial chamber built for a ruler or other person of exceptional rank'
-    }[name] || 'the room’s original funerary purpose';
-  }
-
   function roomTermDefinition(name) {
     const terms = [
       ['Ossuary','a chamber where human bones were stored and arranged, often after earlier burial'],
@@ -206,9 +138,9 @@
 
   function buildSceneRef(room) {
     return {
+      version: 2,
       challengeVariant: stableIndex(room, 'challenge', DATA.sceneChallenges[room.challengeRoll].length),
       opportunityVariant: stableIndex(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll].length),
-      functionVariant: stableIndex(room, 'function', DATA.tombFunctions.length),
       atmosphereVariant: stableIndex(room, 'atmosphere', DATA.hauntedAtmospheres.length)
     };
   }
@@ -222,18 +154,7 @@
   function buildRoomScene(room, template) {
     const challenge = canonicalVariant(room, 'challengeVariant', DATA.sceneChallenges[room.challengeRoll]);
     const opportunity = canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]);
-    const [functionName, functionProse] = canonicalVariant(room, 'functionVariant', DATA.tombFunctions);
     const [atmosphereName, atmosphereProse] = canonicalVariant(room, 'atmosphereVariant', DATA.hauntedAtmospheres);
-    const lighting = template.lighting === 'Fixtures'
-      ? 'Blackened sconces and lamps are built into the walls; a living flame can establish secured light here.'
-      : template.lighting === 'Inherent'
-        ? 'The room’s own heat and fire throw moving light across every surface.'
-        : 'No permanent lighting fixture survives, so every deep recess depends on portable light.';
-    const readAloudLighting = template.lighting === 'Fixtures'
-      ? 'Rows of blackened sconces and lamps line the walls, but none are burning.'
-      : template.lighting === 'Inherent'
-        ? 'The chamber’s own fire throws restless orange light across the stone.'
-        : 'There are no lamps or sconces here; beyond the reach of your light, the recesses remain completely black.';
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
     const occupantIntroduction = occupantProse(liveEnemies);
@@ -241,18 +162,15 @@
       ? 'The chamber is quiet now. The marks left by your earlier actions remain, but its main danger is no longer active.'
       : playerFacingPresence(challenge.presence, liveEnemies.length > 0);
     const readAloudParts = [
-      { source:`Rolled tomb function · ${functionName}`, text:visibleFunctionProse(functionName) },
-      { source:`Room template · ${template.name}`, text:DATA.roomSightlines[template.index - 1] },
-      { source:`Template terrain · ${template.tags.slice(0,3).join(', ')}`, text:visibleTerrainProse(template) },
+      { source:`Room roll ${String(template.index).padStart(2,'0')} · ${template.name} · ${template.originalUse}`, text:template.readAloud },
       { source:`Rolled haunting · ${atmosphereName}`, text:atmosphereProse },
-      { source:`Template lighting · ${template.lighting}`, text:readAloudLighting },
       occupantIntroduction ? { source:'Generated occupants', text:occupantIntroduction } : null,
       { source:`Visible challenge · ${challenge.title}`, text:visiblePresence }
     ].filter(part => part?.text);
     const readAloud = readAloudParts.map(part => part.text).join(' ');
     return {
-      functionName, functionDefinition: functionDefinition(functionName), atmosphereName, readAloud, readAloudParts,
-      description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
+      functionName:template.originalUse, functionDefinition:template.originalUseDefinition, atmosphereName, readAloud, readAloudParts,
+      description: `${template.readAloud} ${atmosphereProse}`,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
       quest: buildQuestScene(room)
@@ -266,7 +184,7 @@
       // Prose and mechanics are canonical application data, never save data.
       // Remove copies made by builds before the normalized sceneRef format.
       delete room.scene;
-      if (!room.sceneRef) room.sceneRef = buildSceneRef(room);
+      if (room.sceneRef?.version !== 2) room.sceneRef = buildSceneRef(room);
     }
   }
 

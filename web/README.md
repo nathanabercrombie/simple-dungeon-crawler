@@ -47,6 +47,8 @@ The deployed app displays a manually advanced build number. A network-only servi
 
 Saved rooms contain generation references (`sceneRef`) rather than copied prose or rules. Rendering resolves those references against the current canonical content, so wording corrections apply to existing expeditions.
 
+Each room-template roll is one complete architectural result. The template owns its unique Tomb function, footprint, terrain, lighting, and sensory prose; these are not rolled from independent tables. Theme manifestations, occupants, challenges, opportunities, and Quest results are layered onto that coherent room.
+
 ## Constraints
 
 - Runs locally.

@@ -111,6 +111,72 @@ window.GAME_DATA = (() => {
     'A raised ring surrounds four pillars and a central stone fixture. Openings pierce every side, and a stair descends from the far half of the chamber.'
   ];
 
+  const roomUses = [
+    ['Receiving antechamber','the formal room where a funeral party assembled before entering the tomb'],
+    ['Bier corridor','a narrow passage built to carry a coffin or burial platform deeper into the tomb'],
+    ['Mourner’s annex','a side chamber where family members waited apart from the main procession'],
+    ['Ancestor gallery','a pillared hall displaying the names and images of earlier generations'],
+    ['Family offering alcoves','divided spaces where different households left gifts for their dead'],
+    ['Private memorial shrine','a small sacred room for offerings to one particular dead person'],
+    ['Collapsed service passage','a working route once used by attendants moving behind the public chambers'],
+    ['Processional gallery','a broad junction where funeral groups formed, turned, and separated'],
+    ['Coffin bridge','a narrow crossing built to carry the dead over a deliberately opened burial pit'],
+    ['Witness gallery','a raised viewing chamber where mourners observed rites below'],
+    ['Purification channel','a chamber where water washed bodies, tools, and attendants before burial'],
+    ['Sealed burial cells','paired chambers used to isolate bodies or grave goods behind gates'],
+    ['Guardian court','a statue-lined chamber displaying the protectors of the buried dead'],
+    ['Broken bier crossing','a ruined route once used to move coffins across an open shaft'],
+    ['Mourning court','a lowered gathering place for communal grief and funeral speech'],
+    ['Lower crypt stair','a turning passage built around the descent to deeper burials'],
+    ['Ritual trial passage','a narrow hall where entrants proved their right to approach the dead'],
+    ['Elevated vigil gallery','a balcony where attendants watched over a burial pit through the night'],
+    ['Great funeral hall','the tomb’s largest public chamber for royal or communal ceremonies'],
+    ['Descending sanctuary','a sacred chamber surrounding the stair to restricted graves below'],
+    ['Royal ancestor hall','a monumental colonnade honoring generations of a ruling family'],
+    ['Isolation ring','a circular ritual boundary separating one grave or relic from every approach'],
+    ['Twin coffin bridges','parallel routes built to move separate funeral parties across the same pit'],
+    ['Nobles’ viewing balcony','a raised gallery reserved for high-ranking witnesses to burial rites'],
+    ['Embalming floodgate','a water-control chamber serving the tomb’s preparation rooms'],
+    ['Guardian confinement aisle','barred cells built to hold living, dead, or constructed tomb guardians'],
+    ['Cremation furnace','a divided chamber where bodies, offerings, and contaminated materials were burned'],
+    ['Split mourning stair','paired raised and lowered routes separating different ranks of mourner'],
+    ['Rotating processional junction','a mechanical crossing that redirected funeral traffic through the tomb'],
+    ['Burial shaft rim','a ring-shaped chamber used to lower bodies into graves beneath the floor'],
+    ['Twin offering daises','opposed platforms where rival families or heirs presented funeral gifts'],
+    ['Collapsed catacomb','a dense burial passage broken by failed walls and fallen stone'],
+    ['Threefold ordeal','a sequence of chasm crossings used as a final test before the deeper tomb'],
+    ['Suspended funeral way','exposed causeways built for a ceremonial crossing above an open void'],
+    ['Drowned memorial theater','terraced seating around a central stage now covered by dark water'],
+    ['Ancestor pillar maze','a dense field of memorial columns arranged to obscure the route inward'],
+    ['Terraced burial court','stepped platforms surrounding a lower place for graves and offerings'],
+    ['Mirror memorial gallery','a reflective hall intended to multiply mourners and images of the dead'],
+    ['Funerary clock floor','a chamber-sized mechanism that timed and moved parts of the burial rite'],
+    ['Execution memorial','a viewing chamber preserving the place where condemned bodies entered the tomb'],
+    ['Fire river crossing','a lethal ceremonial route above channels of molten stone'],
+    ['Hierarchical viewing galleries','nested balconies separating witnesses by status and ritual role'],
+    ['Rotating prison crypt','a mechanical cell block used to confine oath-breakers beside the dead'],
+    ['Spiral bone repository','a descending chamber built from carefully stored human bones'],
+    ['Funeral aqueduct','a raised water route carrying purification water through the lower tomb'],
+    ['Monumental burial engine','an enormous machine used to lower, seal, or reposition royal graves'],
+    ['Void procession lattice','intersecting bridges used for a final exposed passage over darkness'],
+    ['Royal audience tomb','a gated approach arranged around the dead ruler’s throne'],
+    ['Vertical burial nexus','a ruined junction connecting graves above, below, and across the complex'],
+    ['Royal heart sanctuary','the tomb’s central ceremonial chamber and final place of authority']
+  ];
+
+  const roomLightingProse = {
+    Fixtures:'Blackened wall lamps and sconces surround the chamber, but none are burning.',
+    Inherent:'The chamber’s own fire throws restless orange light across the stone.',
+    None:'There are no fixed lamps or sconces; beyond the reach of your light, the recesses remain completely black.'
+  };
+
+  rooms.forEach((template, index) => {
+    const [originalUse, originalUseDefinition] = roomUses[index];
+    template.originalUse = originalUse;
+    template.originalUseDefinition = originalUseDefinition;
+    template.readAloud = `${roomSightlines[index]} ${roomLightingProse[template.lighting]}`;
+  });
+
   const challenges = [
     ['Quiet aftermath','No immediate challenge. Evidence shows what happened, changed, or recently departed.'],
     ['Domain obstacle','Burial architecture, a sealed mechanism, or a damaged processional route blocks progress.'],
@@ -221,15 +287,6 @@ window.GAME_DATA = (() => {
     ]
   };
 
-  const tombFunctions = [
-    ['Processional threshold','This chamber was built to control the order in which mourners approached the dead. Worn tracks preserve the path of heavy biers.'],
-    ['Preparation chamber','Stone drains, tool marks, and preservative stains show where bodies were prepared for burial.'],
-    ['Common crypt','Rows of family niches compress generations of names and possessions into the surrounding walls.'],
-    ['Ossuary','Bones were sorted here by family, rank, and ritual purpose; the architecture treats identity as a physical inventory.'],
-    ['Memorial shrine','Offering bowls, soot marks, and damaged inscriptions show where the living maintained relationships with the dead.'],
-    ['Royal sepulcher','Every surface asserts status: raised stone, heraldic carving, and deliberate sight lines toward a place of honor.']
-  ];
-
   const hauntedAtmospheres = [
     ['Dead Lanterns','Your breath fogs and every unattended flame bends toward the room’s oldest remains.'],
     ['Uninvited Names','Whispers use the adventurers’ names before anyone speaks them aloud.'],
@@ -296,8 +353,8 @@ window.GAME_DATA = (() => {
   const names = ['Mara','Corvin','Iona','Bram','Sable','Orin','Vey','Hester','Tarn','Elian','Nera','Garrick'];
 
   return {
-    rooms, roomSightlines, challenges, opportunities, sceneChallenges, sceneOpportunities,
-    tombFunctions, hauntedAtmospheres, quests, questBands, monsters,
+    rooms, challenges, opportunities, sceneChallenges, sceneOpportunities,
+    hauntedAtmospheres, quests, questBands, monsters,
     gear, pasts, knacks, items, names
   };
 })();
