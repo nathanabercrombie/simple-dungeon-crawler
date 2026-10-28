@@ -4,13 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171813">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Delvekeeper — Simple Dungeon Crawler</title>
-  <link rel="stylesheet" href="styles.css?v=room-switch-1">
+  <link rel="stylesheet" href="styles.css?build=20261028.1">
 </head>
 <body>
   <div id="app"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="data.js?v=room-switch-1"></script>
-  <script src="app.js?v=room-switch-1"></script>
+  <script>window.DELVEKEEPER_BUILD = '20261028.1';</script>
+  <script src="data.js?build=20261028.1"></script>
+  <script src="app.js?build=20261028.1"></script>
+  <script>
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register(`sw.js?build=${window.DELVEKEEPER_BUILD}`, { updateViaCache: 'none' })
+          .then(registration => registration.update())
+          .catch(error => console.warn('No-cache worker could not start:', error));
+      });
+    }
+  </script>
 </body>
 </html>

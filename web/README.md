@@ -43,6 +43,8 @@ The application deliberately permits manual adjustment. Current rules still requ
 
 There is no build step and no third-party runtime dependency.
 
+The deployed app displays a manually advanced build number. A network-only service worker and build-versioned asset URLs prevent stale GitHub Pages assets from masking a deployment; expedition state remains stored separately in `localStorage`.
+
 ## Constraints
 
 - Runs locally.
