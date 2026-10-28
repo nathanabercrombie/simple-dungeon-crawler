@@ -218,9 +218,12 @@
       : template.lighting === 'Inherent'
         ? 'The chamber’s own fire throws restless orange light across the stone.'
         : 'There are no lamps or sconces here; beyond the reach of your light, the recesses remain completely black.';
-    const occupants = room.enemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.maxHp} total HP, Defense ${enemy.defense})`);
-    const occupantIntroduction = occupantProse(room.enemies);
-    const visiblePresence = playerFacingPresence(challenge.presence, room.enemies.length > 0);
+    const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
+    const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
+    const occupantIntroduction = occupantProse(liveEnemies);
+    const visiblePresence = room.status === 'conquered'
+      ? 'The chamber is quiet now. The marks left by your earlier actions remain, but its main danger is no longer active.'
+      : playerFacingPresence(challenge.presence, liveEnemies.length > 0);
     const readAloud = [
       visibleFunctionProse(functionName),
       visibleTerrainProse(template),
@@ -646,6 +649,9 @@
   function renderRoom() {
     const room = activeRoom();
     const template = templateFor(room);
+    // Rebuild from the active room every time. This prevents an imported or
+    // older local save from leaving player-facing prose attached to another room.
+    room.scene = buildRoomScene(room, template);
     const scene = room.scene;
     const termDefinition = roomTermDefinition(template.name);
     const darkness = state.light.remaining <= 0 && !room.securedLight;
@@ -653,7 +659,7 @@
       <div class="section-head"><h2>Active room</h2><span>Template ${template.index} · roll ${room.templateIndex}</span></div>
       <article class="room-card">
         <header class="room-header"><div class="eyebrow">Room ${room.number} · ${room.status}</div><h2>${esc(template.name)}</h2></header>
-        <section class="read-aloud"><div class="eyebrow">Read aloud</div><p><em>${esc(scene.readAloud)}</em></p></section>
+        <section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud · Room ${room.number}</div><p><em>${esc(scene.readAloud)}</em></p></section>
         <div class="room-meta room-meta-strip">
           <span class="tag danger-${template.danger.toLowerCase()}">${template.danger} ${template.target}</span>
           <span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? '✦ Secured light' : template.lighting}</span>
