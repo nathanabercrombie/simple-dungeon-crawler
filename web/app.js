@@ -38,6 +38,122 @@
   const die = sides => Math.floor(random() * sides) + 1;
   const pick = list => list[Math.floor(random() * list.length)];
 
+  function stableIndex(room, salt, length) {
+    const text = `${state.seed}:${room.number}:${room.templateIndex}:${salt}`;
+    let hash = 2166136261 >>> 0;
+    for (const char of text) {
+      hash ^= char.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0) % length;
+  }
+
+  function stablePick(room, salt, list) {
+    return list[stableIndex(room, salt, list.length)];
+  }
+
+  function terrainProse(template) {
+    const descriptions = [
+      ['lava', 'Open channels of orange-white lava divide the usable floor; narrow stone crossings are the only obvious route between them.'],
+      ['water', 'Black water fills the lower ground, swallowing floor markings and making depth impossible to judge from the edge.'],
+      ['void', 'The masonry ends at a lightless drop, leaving only an exposed lattice of narrow crossings.'],
+      ['pit', 'A deep cut through the chamber breaks ordinary movement and turns the remaining crossings into choke points.'],
+      ['rubble', 'Fresh and ancient rubble forms unstable banks, half-burying the original paths through the room.'],
+      ['balconies', 'Nested stone galleries overlook one another, creating several defensible heights and blind spaces below.'],
+      ['balcony', 'A raised gallery commands the lower floor and offers cover along its carved parapet.'],
+      ['pillars', 'Heavy pillars interrupt sight lines and carry old soot, impact scars, and half-erased memorial carving.'],
+      ['mechanism', 'A room-sized funerary mechanism occupies the architecture; its gears and counterweights can still move.'],
+      ['cells', 'Barred enclosures line the route, each built to confine a body, spirit, or unwilling witness.'],
+      ['mirrors', 'Tall black mirrors multiply every doorway and make several solid walls appear passable.'],
+      ['raised', 'Steps divide the room into deliberate levels, placing the central ritual space above the approaches.'],
+      ['sunken', 'The center lies below the perimeter, collecting dust, cold air, and anything spilled into the chamber.'],
+      ['narrow', 'The architecture compresses movement into a long, exposed lane with little room to pass.'],
+      ['statues', 'Funerary statues stand where mourners once gathered, their faces angled toward the room’s point of honor.'],
+      ['open', 'The open floor provides clear sight from entrance to exit, with nowhere to hide an approach.']
+    ];
+    const chosen = descriptions.find(([tag]) => template.tags.includes(tag));
+    return chosen ? chosen[1] : `The ${template.tags.slice(0,2).join(' and ')} architecture gives the chamber a deliberate, functional shape.`;
+  }
+
+  function questElementFor(room) {
+    const catalog = {
+      1: [['The Barbed Antler','A broken antler bears the sovereign beast’s blood and reveals which material pierces its hide.'],['The Last Hunter’s Journal','A dead hunter’s field notes identify the sovereign’s feeding route and blind side.'],['The Scent Chain','A blood-marked chain can draw the sovereign from its lair on chosen ground.']],
+      2: [['The Brass Vault Key','A toothed ceremonial key opens the relic’s inner housing without waking its final seal.'],['The Command Phrase','A complete inscription records the words that make the guardian stand down.'],['The Reliquary Map','A vellum cross-section exposes the false wall behind the relic chamber.']],
+      3: [['The Gaoler’s Key','A black iron key opens the captive’s restraint rather than merely the outer cell.'],['The Captor’s Ledger','A schedule reveals when the captive is moved and which guard acts alone.'],['The Smuggled Message','The captive names a safe signal and warns exactly which rescue attempt will get them killed.']],
+      4: [['The Murder Weapon','The ceremonial embalming knife is the physical anchor of the repeated royal murder. Returning or destroying it ends that reenactment.'],['The Broken Oath','The guard’s original oath contains a release clause: it ends when the buried sovereign’s true identity is spoken.'],['The Stolen Name','A sealed genealogy proves the corpse in the royal tomb was buried under another person’s name. Speaking the true name silences the mass haunting.']],
+      5: [['The North Ward','An intact ward plate can seal one quarter of the breach.'],['Salt of the Threshold','A lead urn contains enough consecrated salt to define the final ritual boundary.'],['The Exile Formula','A damaged tablet preserves the missing final line needed to force the emerging entity back.']],
+      6: [['The Witness Tablet','A first-person account identifies who ordered the false burial and why.'],['The Unaltered Register','An original burial record contradicts every public version of the event.'],['The Signet Impression','A wax impression proves which official authorized the crime.']],
+      7: [['The Unattended Remains','Named remains can be returned to the correct grave, ending one layer of unrest.'],['The Funeral Bell','The bell’s missing clapper can call the wandering dead back to their proper rites.'],['The Last Name','A family record restores the identity deliberately erased from the tomb.']],
+      8: [['The Governor Key','This toothed rod locks the engine at the top of its cycle.'],['The Cooling Diagram','A slate plan identifies the line whose failure will disable the core safely.'],['The Blind Control','A hidden manual lever bypasses the controlling intelligence for one operation.']],
+      9: [['The Assayer’s Token','This marked coin passes the treasury’s first identity test.'],['The Shift Record','A duty slate reveals the one interval when no watcher observes the prize.'],['The Inner Casket Key','A tiny key opens the treasure’s container without damaging its contents.']],
+      10: [['The Sterile Egg','An intact sample reveals the exact heat that kills the brood without spreading spores.'],['The Survivor’s Map','A blood-marked sketch identifies the queen’s feeding tunnel.'],['The Bitter Smoke','A sealed censer contains enough repellent to divide the final swarm.']],
+      11: [['The Cartographer’s Reel','A route reel records the lost party’s final three chambers.'],['The Captain’s Whistle','Its coded signal will receive an answer from any surviving expedition member.'],['The Abandoned Pack','The contents prove what threat forced the expedition to leave supplies behind.']],
+      12: [['The Funeral Gift','A culturally exact offering removes one declared insult from the negotiation.'],['The Grievance Record','Signed testimony proves one of the ruler’s complaints was caused by a third party.'],['The Faction Seal','A recognized seal demonstrates that the adventurers can make a binding promise.']]
+    };
+    return stablePick(room, 'quest-element', catalog[state.quest.index] || catalog[4]);
+  }
+
+  function buildQuestScene(room) {
+    const type = room.quest.name;
+    if (type === 'Quest element' || type === 'Major quest element' || type === 'Heart advantage') {
+      const [title, prose] = questElementFor(room);
+      return { title, prose, effect: type === 'Major quest element' ? 'This major element states exactly how one defensive layer of the Heart is removed.' : 'This is a concrete Quest element; record it and apply its stated effect at the Heart.' };
+    }
+    if (type === 'Heart') return { title: state.quest.heart, prose:`The objective of “${state.quest.name}” is physically present in this room. It is accessible now, with ${state.quest.elementsFound} concrete element${state.quest.elementsFound === 1 ? '' : 's'} already discovered.`, effect:'Conquering this Heart completes the site’s primary objective; extraction is still required.' };
+    const options = {
+      Omen: [
+        ['The Empty Face','Every portrait in the room has the same face scratched away with a narrow blade. The damage is old, deliberate, and limited to one identity.'],
+        ['The Repeated Last Words','The room’s faint voices all stop their separate prayers to say, “It was buried under a borrowed name.”'],
+        ['The Unopened Funeral','Dusty mourners’ tracks circle an untouched bier, but no tracks approach or leave it.']
+      ],
+      Trace: [
+        ['Resin on the Wrong Door','Fresh-looking embalming resin marks a door never intended for bodies, proving the Quest’s agents used this route.'],
+        ['The Dragged Regalia','A line through the dust shows a heavy royal object was dragged toward one specific exit.'],
+        ['A Second Set of Footprints','One set of spectral prints repeats the official procession; another cuts across it toward a hidden destination.']
+      ],
+      Lead: [
+        ['The Embalmer’s Index','A preparation number matches a lower-level chamber mark and identifies the route used for the substituted corpse.'],
+        ['The Guard Rotation','A wall slate names the one threshold where the ancient oath changes wording and becomes vulnerable.'],
+        ['The Split Epitaph','Two halves of an epitaph name different people as the same royal dead, pointing toward the record that can settle the identity.']
+      ],
+      'Guardian or setback': [
+        ['The Loyal Lie','A risen lieutenant has destroyed part of the evidence and moved the surviving piece behind the room’s active challenge.'],
+        ['The False Confession','A plausible record accuses the wrong person; physical details in this room expose one contradiction.'],
+        ['The Pursuing Witness','A frightened spirit takes the needed fact and flees toward a connected room when approached openly.']
+      ]
+    };
+    const [title, prose] = stablePick(room, 'quest-detail', options[type] || options.Omen);
+    return { title, prose, effect: `${type}: this information advances “${state.quest.name}” but is not itself an abstract point.` };
+  }
+
+  function buildRoomScene(room, template) {
+    const challenge = stablePick(room, 'challenge', DATA.sceneChallenges[room.challengeRoll]);
+    const opportunity = stablePick(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll]);
+    const [functionName, functionProse] = stablePick(room, 'function', DATA.tombFunctions);
+    const [atmosphereName, atmosphereProse] = stablePick(room, 'atmosphere', DATA.hauntedAtmospheres);
+    const lighting = template.lighting === 'Fixtures'
+      ? 'Blackened sconces and lamps are built into the walls; a living flame can establish secured light here.'
+      : template.lighting === 'Inherent'
+        ? 'The room’s own heat and fire throw moving light across every surface.'
+        : 'No permanent lighting fixture survives, so every deep recess depends on portable light.';
+    const occupants = room.enemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.maxHp} total HP, Defense ${enemy.defense})`);
+    return {
+      functionName, atmosphereName,
+      description: `${functionProse} ${terrainProse(template)} ${atmosphereProse} ${lighting}`,
+      challenge: { ...challenge, occupants },
+      opportunity: { ...opportunity },
+      quest: buildQuestScene(room)
+    };
+  }
+
+  function ensureStateShape() {
+    if (!state) return;
+    if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
+    for (const room of state.rooms) {
+      if (!room.scene) room.scene = buildRoomScene(room, templateFor(room));
+    }
+  }
+
   function loadSave() {
     try {
       const parsed = JSON.parse(localStorage.getItem(SAVE_KEY));
@@ -167,6 +283,7 @@
       } else state.quest.heartFound = true;
     }
     if (quest.name.includes('quest element') || quest.name === 'Quest element') state.quest.elementsFound += 1;
+    room.scene = buildRoomScene(room, template);
     state.rooms.push(room);
     if (fromId) {
       const from = roomById(fromId);
@@ -304,9 +421,10 @@
   function claimOpportunity() {
     const room = activeRoom();
     if (room.opportunityClaimed || room.opportunityRoll === 1) return;
-    let result = room.opportunity[0];
-    if (room.opportunityRoll === 3) {
-      const item = pick(DATA.items);
+    ensureStateShape();
+    let result = room.scene.opportunity.title;
+    const item = room.scene.opportunity.item;
+    if (item) {
       state.party[0].items.push(item);
       if (item === 'Fresh torch') state.light.reserve += 1;
       result = `${item} added to ${state.party[0].name}`;
@@ -388,6 +506,31 @@
     return icons.join('');
   }
 
+  const TILE_INFO = {
+    '#':['wall','Wall',''], '.':['floor','Floor',''], 'E':['entry','Entry','↥'], 'X':['exit','Visible exit','◆'],
+    '?':['secret','Hidden exit','?'], 'O':['pillar','Pillar',''], 'S':['statue','Statue','♜'], 'P':['pit','Pit or chasm',''],
+    '=':['bridge','Bridge',''], 'B':['balcony','Balcony',''], '^':['steps','Raised floor',''], 'v':['sunken','Sunken floor',''],
+    'D':['descent','Descent','↓'], 'U':['ascent','Ascent','↑'], '~':['water','Water','≈'], 'R':['rubble','Rubble',''],
+    '+':['gate','Gate',''], 'C':['cage','Cage',''], 'F':['furnace','Furnace','♨'], 'G':['gear','Mechanism','⚙'],
+    'L':['lava','Lava',''], 'M':['mirror','Mirror','◫'], 'T':['objective','Objective fixture','✦'], ' ':['void','Outside footprint','']
+  };
+
+  function renderFloorplan(template) {
+    const rows = template.map.split('\n');
+    const width = Math.max(...rows.map(row => row.length));
+    const cells = [];
+    const used = new Map();
+    for (const row of rows) {
+      for (let x = 0; x < width; x++) {
+        const glyph = row[x] || ' ';
+        const [kind,label,icon] = TILE_INFO[glyph] || TILE_INFO['.'];
+        if (!['wall','floor','void'].includes(kind)) used.set(kind, label);
+        cells.push(`<span class="map-tile tile-${kind}" title="${esc(label)}" aria-label="${esc(label)}">${icon}</span>`);
+      }
+    }
+    return `<div class="visual-map-wrap"><div class="visual-map" style="--map-cols:${width}" role="img" aria-label="Graphical floorplan for ${esc(template.name)}">${cells.join('')}</div><div class="terrain-legend">${[...used].map(([kind,label]) => `<span><i class="legend-tile tile-${kind}"></i>${esc(label)}</span>`).join('')}</div></div>`;
+  }
+
   function renderMap() {
     const cells = [];
     for (let y = 0; y < state.size; y++) {
@@ -411,6 +554,7 @@
   function renderRoom() {
     const room = activeRoom();
     const template = templateFor(room);
+    const scene = room.scene;
     const darkness = state.light.remaining <= 0 && !room.securedLight;
     return `<main class="pane pane-room">
       <div class="section-head"><h2>Active room</h2><span>Template ${template.index} · roll ${room.templateIndex}</span></div>
@@ -421,10 +565,16 @@
           ${darkness ? '<span class="tag danger-hard">Darkness: disadvantage</span>' : ''}
           ${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}
         </div></header>
-        <div class="room-body"><pre class="floorplan" aria-label="Room floor plan">${esc(template.map)}</pre><div class="room-copy">
-          <h3>Challenge · d12 ${room.challengeRoll}</h3><p><strong>${esc(room.challenge[0])}.</strong> ${esc(room.challenge[1])}</p>
-          <h3>Opportunity · d8 ${room.opportunityRoll}</h3><p><strong>${esc(room.opportunity[0])}.</strong> ${esc(room.opportunity[1])}</p>
-          <div class="fallback"><strong>Mechanical fallback:</strong> use ${template.danger} ${template.target} for uncertain room actions. On failure, apply the inherent consequence and give the dungeon one meaningful action.</div>
+        <div class="room-body">${renderFloorplan(template)}<div class="room-copy">
+          <h3>${esc(scene.functionName)} · ${esc(scene.atmosphereName)}</h3><p class="room-description">${esc(scene.description)}</p>
+          <div class="scene-block"><div class="eyebrow">Challenge · d12 ${room.challengeRoll}</div><h3 class="scene-title">${esc(scene.challenge.title)}</h3><p>${esc(scene.challenge.presence)}</p>
+          ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
+          <div class="clue-box"><strong>What the adventurers can see:</strong> ${esc(scene.challenge.clues)}</div>
+          <div class="rule-box"><strong>Exact rule:</strong> ${esc(scene.challenge.rule)}</div>
+          <div class="consequence-box"><strong>Consequence:</strong> ${esc(scene.challenge.consequence)}</div>
+          <h4>Possible resolutions</h4><ul>${scene.challenge.resolutions.map(item => `<li>${esc(item)}</li>`).join('')}</ul><small>These approaches are not exhaustive; a credible free-form solution can work.</small></div>
+          <div class="scene-block opportunity-block"><div class="eyebrow">Opportunity · d8 ${room.opportunityRoll}</div><h3 class="scene-title">${esc(scene.opportunity.title)}</h3><p>${esc(scene.opportunity.prose)}</p><div class="effect-line"><strong>Effect:</strong> ${esc(scene.opportunity.effect)}</div></div>
+          <div class="fallback"><strong>Default target:</strong> ${template.danger} ${template.target}. Use it only when the concrete rule or fiction calls for a check.</div>
         </div></div>
         <footer class="room-footer"><div class="button-row">
           ${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Light fixtures</button>' : ''}
@@ -444,7 +594,7 @@
     const room = activeRoom();
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Encounter</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Enemy</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">No active creature cards in this room.</div>'}</div></section>
-      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">Quest roll ${room.quest.value}</div><h3>${esc(room.quest.name)}</h3><p>${esc(room.quest.description)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} found. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
+      <section><div class="subhead">Quest thread</div><div class="quest-list"><article class="quest-card"><div class="eyebrow">${esc(room.quest.name)} · roll ${room.quest.value}</div><h3>${esc(room.scene.quest.title)}</h3><p>${esc(room.scene.quest.prose)}</p><p><strong>Effect:</strong> ${esc(room.scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} found. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}</div></section></aside>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }
@@ -468,6 +618,7 @@
 
   function render() {
     if (!state) return renderWelcome();
+    ensureStateShape();
     const room = activeRoom();
     const template = templateFor(room);
     app.innerHTML = `<div class="app-shell">

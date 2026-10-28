@@ -20,8 +20,10 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 
 - seeded, reproducible Haunted Tomb expeditions;
 - compact, standard, and sprawling macro-grids with E1–E3 escalation;
-- all fifty authored room templates, including floorplans and template-based lighting;
-- Challenge, Opportunity, and escalating Quest draws;
+- all fifty authored room templates, including graphical terrain maps and template-based lighting;
+- concrete, named Challenges with visible evidence, exact rules, consequences, and suggested resolutions;
+- room-specific prose combining architecture, original function, haunting, terrain, and lighting;
+- exact Opportunities and escalating Quest discoveries rather than unresolved category prompts;
 - scaled creature and wandering-enemy cards with Instincts and Wounds;
 - room conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
 - the shared torch clock, darkness, fixtures, secured light, and spare torches;

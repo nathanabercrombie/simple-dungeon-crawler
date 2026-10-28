@@ -84,6 +84,108 @@ window.GAME_DATA = (() => {
     ['Major discovery','A relic weapon, spellbook, proof of lineage, named remains, royal seal, or haunting anchor.']
   ];
 
+  const sceneChallenges = {
+    1: [
+      { title:'The Abandoned Vigil', presence:'A circle of kneeling candles surrounds an empty bier. Every wick is cold, but fresh wax still creeps down the stands.', clues:'A single trail of bare footprints leaves the circle and ends at a solid wall.', rule:'There is no immediate danger and no conquest reward. A thorough search costs 1 exploration turn.', consequence:'Disturbing the bier causes every candle to relight with blue flame, revealing who last lay here.', resolutions:['Follow the impossible footprints','Search the bier and candle circle','Leave the aftermath undisturbed'] },
+      { title:'The Interrupted Embalming', presence:'A prepared corpse lies beneath a clean linen sheet. The tools beside it are neatly arranged except for one empty, blood-dark slot.', clues:'Preservative is still dripping into the floor drain; whoever fled did so moments—or centuries—ago.', rule:'There is no immediate challenge. Examining the corpse or tools is safe unless the party desecrates the remains.', consequence:'Desecration awakens the room’s next haunting or gives a nearby spirit a reason to pursue.', resolutions:['Identify the missing tool','Read the preparation marks','Perform the unfinished funerary step'] },
+      { title:'The Plundered Family Niche', presence:'A burial niche has been opened from within. Grave goods are scattered carefully rather than stolen, as though the dead searched their own possessions.', clues:'One family token has been placed beneath the wrong name plaque.', rule:'No check is required to inspect the scene. Correcting the token may establish goodwill with the family dead.', consequence:'Taking the token marks its bearer as the thief in the eyes of that family’s spirits.', resolutions:['Return the token to its proper plaque','Take the token and accept the attention','Compare the disturbed names with the Quest'] }
+    ],
+    2: [
+      { title:'The Processional Slab', presence:'A single black stone slab seals the onward route. Worn grooves show that funeral parties once moved it without brute force.', clues:'Four finger-sized sockets surround a counterweight release hidden in the wall.', rule:'Open it with a successful room-target Mind check, a suitable tool, or combined leverage. Forcing it with Strength has disadvantage without a crowbar or assistance.', consequence:'Failure drops the slab’s counterweight: the acting adventurer takes 1 damage and the dungeon acts.', resolutions:['Restore the counterweight linkage','Lever the slab with tools','Find the attendants’ release gesture'] },
+      { title:'The Bone-Choked Gate', presence:'Sorted bones have avalanched through an iron gate, wedging it half open above a crawlspace.', clues:'The pile shifts whenever anyone speaks a name aloud.', rule:'Clearing the gate costs 1 exploration turn. A successful room-target Agility check clears it quietly; no check is needed if noise and a possible wandering response are accepted.', consequence:'On failure, the pile collapses for 1 damage and leaves the adventurer pinned until helped.', resolutions:['Clear and sort the bones carefully','Crawl through the narrow gap','Break the gate and accept the noise'] },
+      { title:'The Door of the Misnamed Dead', presence:'The stone door has no handle—only six name plaques, one freshly chiseled and visibly false.', clues:'Cold breath fogs the false plaque while the other five remain dry.', rule:'Speaking or restoring the correct name opens the door. Discover it with a room-target Mind check or concrete evidence from another room.', consequence:'A wrong declaration deals 1 damage to the speaker as the door steals their breath; the dungeon then acts.', resolutions:['Identify the false inscription','Use a discovered name or record','Remove every plaque and endure the backlash'] }
+    ],
+    3: [
+      { title:'The Grave Frost', presence:'White frost races outward from an open sarcophagus, climbing boots and extinguishing exposed flame.', clues:'The frost recoils from funeral oil and from the carved name of the properly buried dead.', rule:'At the end of each failed action in this room, the acting adventurer takes 1 damage from the cold. Ordinary warmth does not stop it.', consequence:'If portable light reaches 0 here, the frost immediately inflicts 1 damage on every exposed adventurer.', resolutions:['Seal or properly name the sarcophagus','Burn funeral oil around the anchor','Cross without rolling by abandoning something warm'] },
+      { title:'The Confessional Whispers', presence:'Whispers address each adventurer by a secret shame, growing louder near the center of the room.', clues:'Wax tablets in wall niches contain confessions written in several hands but the same voice.', rule:'The first adventurer to act against the whispers tests Mind at the room target. On success, they expose the controlling voice. On failure, they must reveal a truth or lose their next free choice while the dungeon acts through them.', consequence:'A possessed adventurer moves, opens, drops, or strikes as the haunting directs; it cannot force immediate self-destruction.', resolutions:['Confess a meaningful truth','Destroy or rewrite the controlling tablet','Trace the voice to its physical anchor'] },
+      { title:'The Murder Reenactment', presence:'A translucent royal figure crosses the room, is stabbed, and vanishes. The scene restarts whenever someone crosses its path.', clues:'A real bloodstain and a knife-shaped gap in the dust remain when the figures disappear.', rule:'Crossing the reenactment requires a room-target Agility check. Failure deals 1 damage from the spectral knife and gives the dungeon an action.', consequence:'After three repetitions, the victim turns to accuse the nearest living witness, raising the next attempt to Extreme 18.', resolutions:['Return or destroy the missing weapon','Interrupt the murderer before the blow','Take the victim’s place and name the killer'] }
+    ],
+    4: [
+      { title:'The Mourner’s Scythe', presence:'Prayer cords hang across the route at ankle and throat height. Behind the wall, a heavy curved blade waits under tension.', clues:'Old blood marks stop just short of the safest-looking cord.', rule:'Detecting the true trigger requires no roll after careful inspection. Disarming it under pressure is a room-target Agility or Mind check.', consequence:'Triggering or failing to disarm it deals 1 damage to the lead adventurer and cuts off the route until reset.', resolutions:['Pin the blade with a durable tool','Cut the non-trigger cord sequence','Trigger it safely from beyond reach'] },
+      { title:'The False Sarcophagus', presence:'A richly carved coffin occupies the only dry path. Its lid is attached to hidden bellows in the floor.', clues:'Green residue rims the carved mouths of its mourning figures; nearby vermin lie perfectly preserved.', rule:'Opening or moving it releases poison unless the vents are sealed. Disarming the bellows is a room-target Mind check.', consequence:'Failure causes 1 damage and a Poisoned Wound if the victim was already exposed.', resolutions:['Seal every carved mouth','Vent the bellows from a distance','Leave the coffin and create another path'] },
+      { title:'The Epitaph Ward', presence:'Gold letters across the floor demand that every entrant state their name and lineage.', clues:'One skeleton beyond the inscription has no jaw; another clutches a stolen name plaque.', rule:'A true name permits passage. A convincing assumed identity requires a room-target Mind check and matching evidence.', consequence:'A rejected name animates the letters into cutting wire for 1 damage, then the dungeon acts.', resolutions:['Speak truthfully and accept recognition','Present a legitimate funerary token','Erase the ward without crossing it'] }
+    ],
+    5: [
+      { title:'The Six Turned Effigies', presence:'Six stone mourners face six different walls. Their hands hold fragments of one continuous funeral scene.', clues:'Scratches on the plinths show the statues rotate; the final figure has deliberately been turned backward.', rule:'Arrange the effigies from death through burial. A room-target Mind check reveals two correct adjacencies; physical experimentation needs no check but each wrong full arrangement costs 1 exploration turn.', consequence:'A wrong arrangement makes the statues wail, immediately extinguishing portable flame.', resolutions:['Reconstruct the funeral sequence','Use historical or Quest evidence','Break the backward effigy and accept what it releases'] },
+      { title:'The Weighing of Offerings', presence:'Two bronze bowls balance before a sealed arch: one holds funeral coins, the other a human tooth.', clues:'An inscription reads, “Memory must equal what the dead surrendered.”', rule:'Place a personally meaningful object in the empty third bowl. An adequate offering opens the arch without a roll; judging a lesser substitute is a room-target Mind check.', consequence:'An unworthy offering ages and crumbles while the giver takes 1 damage.', resolutions:['Give up a meaningful possession','Identify the dead person’s own missing object','Jam or dismantle the balance'] },
+      { title:'The Borrowed Skeleton', presence:'A complete skeleton has been assembled on a stone table from bones belonging to at least four people.', clues:'Each bone carries a different family mark; the skull silently mouths “not mine.”', rule:'Sort the remains correctly with a room-target Mind check. Relevant records or close inspection reduce the target one step.', consequence:'Failure assembles a hostile bone scuttler from the rejected pieces and gives it the first dungeon action.', resolutions:['Separate the remains by family marks','Ask the skull where each bone belongs','Burn the mixed remains and forfeit reconciliation'] }
+    ],
+    6: [
+      { title:'Lady Vey, the Last Mourner', presence:'A translucent noblewoman kneels beside an unmarked bier, blocking the route with the train of her funeral dress.', clues:'She asks every visitor the same exact question: “Which of my sons did they bury as king?”', rule:'She permits passage in exchange for a truthful answer, credible evidence, or a room-target Mind check that addresses her grief rather than merely deceiving her.', consequence:'An obvious lie turns her hostile and she summons a Mourning Shade with the first dungeon action.', resolutions:['Present evidence of the substituted burial','Promise to recover the erased name','Offer restitution for the family’s dead'] },
+      { title:'Orren, Cornered Grave Robber', presence:'A living robber holds a pry bar like a spear from behind an overturned bier. His wounded partner is hidden nearby.', clues:'Orren watches the exits, not the treasure, and lowers the weapon whenever the partner coughs.', rule:'He wants safe passage and treatment. Threatening or deceiving him is a room-target check; providing a medkit or credible escape route succeeds automatically.', consequence:'Failure makes him topple the bier for cover, attack for 1 damage, and flee toward a known room.', resolutions:['Treat the hidden partner','Trade a safe route for information','Disarm or drive him away'] },
+      { title:'The Oathbound Embalmer', presence:'A ghost in a stained apron continues preparing an invisible body across the only doorway.', clues:'It repeats, “No sovereign passes unfinished,” and reaches for a missing ceremonial needle.', rule:'Complete the protocol, produce the missing tool, or persuade it that the burial was fraudulent. Unsupported persuasion is a room-target Mind check.', consequence:'Interruption makes its spectral tools attack the responsible adventurer for 1 damage.', resolutions:['Supply an equivalent needle and thread','Follow the visible embalming sequence','Prove the corpse was never the sovereign'] }
+    ],
+    7: [
+      { title:'A Watchful Occupant', presence:'The creatures are alert but have not committed to violence. They guard something in this room more fiercely than they hate intruders.', clues:'Their attention repeatedly returns to one anchor, nest, threshold, or funerary object.', rule:'The group uses the creature card’s Defense, HP, Instinct, and Wound. A concrete offer or respectful retreat can prevent combat; unsupported influence uses the room target.', consequence:'The first threatening failure makes them hostile and grants them an immediate dungeon action.', resolutions:['Identify and respect what they guard','Offer food, remains, recognition, or release','Attack before they choose a target'] }
+    ],
+    8: [
+      { title:'Ambush Among the Dead', presence:'The listed creatures attack as soon as the party’s light reveals them.', clues:'Their approach is visible in disturbed dust, moving shadows, or bones displaced from nearby niches.', rule:'Use the exact creature cards in the Encounter panel. Each failed adventurer action gives one listed enemy a dungeon action governed by its Instinct.', consequence:'An ordinary attack automatically deals 1 damage; striking an exposed adventurer causes the printed Wound.', resolutions:['Defeat or drive off the group','Escape through a viable route','Exploit the room or satisfy the creatures’ underlying drive'] }
+    ],
+    9: [
+      { title:'Guardian of the Funeral Works', presence:'The listed creatures control this room’s original machinery and use it to divide the party.', clues:'Counterweights, gates, biers, or burial platforms move in answer to their gestures.', rule:'Until the Domain mechanism is disabled, the first dungeon action each fight may reposition one adventurer instead of dealing damage. Disabling it is a room-target action.', consequence:'A failed disabling attempt activates the mechanism and the acting creature still receives its normal dungeon action.', resolutions:['Disable the funerary mechanism','Turn the machinery against its guardian','Separate the creatures from their control position'] }
+    ],
+    10: [
+      { title:'Creatures Inside the Memory', presence:'The listed creatures flicker between their present forms and the people who died here.', clues:'Each repeats one motion from the room’s violent past immediately before it attacks.', rule:'At the start of combat, choose: endure the haunting, or spend an action exposing its anchor with a room-target Mind check. While anchored, the first enemy to be defeated returns with 1 HP once.', consequence:'Failure to expose the anchor gives the returning creature an immediate dungeon action.', resolutions:['Destroy or reconcile the haunting anchor','Force the creatures outside the reenacted area','Defeat them twice'] }
+    ],
+    11: [
+      { title:'The Possessed Funeral Engine', presence:'The listed creatures operate a burial mechanism animated by a second, room-wide spirit. Neither threat can be ignored safely.', clues:'The mechanism moves even when no creature touches it, and the creatures flinch whenever its central nameplate is struck.', rule:'On each dungeon turn choose one: a creature follows its Instinct, or the engine shifts terrain and deals 1 damage to someone in its path. The engine is disabled by a successful room-target action at its control point.', consequence:'Failure at the controls triggers both the engine and one creature, producing two distinct dungeon effects.', resolutions:['Reach and disable the control point','Break the shared spiritual anchor','Draw the creatures into the engine’s path'] }
+    ],
+    12: [
+      { title:'Named Master of the Chamber', presence:'A major listed creature claims the entire room as its body, court, or sacred duty. Lesser signs identify it before it attacks.', clues:'Its title is carved into the architecture, alongside one prohibition it cannot willingly break.', rule:'Use the major creature card. It acts after every failed roll and may use room terrain as part of that action. Discovering its prohibition with evidence or a room-target Mind check removes 1 HP from its protection without dealing damage.', consequence:'Its attack deals 1 damage normally; its printed Wound applies to an exposed victim. Retreat does not end pursuit unless its Instinct or prohibition prevents it.', resolutions:['Defeat the major creature directly','Invoke its prohibition or obsolete law','Resolve the duty or anchor sustaining it'] }
+    ]
+  };
+
+  const sceneOpportunities = {
+    1: [{ title:'No Additional Spoils', prose:'Nothing useful remains beyond what the challenge itself reveals.', effect:'No item or map benefit is added.' }],
+    2: [
+      { title:'The Embalmer’s Margin Note', prose:'A waterproof strip of linen records that the royal corpse arrived after its public funeral.', effect:'Record this as evidence about the site’s central wrong.' },
+      { title:'A Guard’s Final Scratching', prose:'A dying guard carved the words “THE OATH ENDS AT THE TRUE NAME” behind a loose stone.', effect:'This clue may justify a future solution involving names or oaths.' }
+    ],
+    3: [
+      { title:'Sealed Medkit', prose:'A leather surgeon’s roll still contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Add one Medkit to the party.', item:'Medkit' },
+      { title:'Fresh Funeral Torch', prose:'A pitch-soaked ceremonial torch remains wrapped in waxed cloth and will burn for six turns.', effect:'Add one fresh torch to the party.', item:'Fresh torch' },
+      { title:'Coil of Burial Rope', prose:'Twelve metres of strong cord once used to lower stone coffins hangs from an intact wall peg.', effect:'Add Rope to the party.', item:'Rope' }
+    ],
+    4: [
+      { title:'The Bier Counterweight', prose:'A wheeled stone bier is linked to a ceiling counterweight and can be released from either side of the room.', effect:'Use it once to create cover, block a route, or move a heavy object without a check.' },
+      { title:'Commandable Funeral Lamps', prose:'A bronze valve redirects oil between the room’s fixtures, creating sudden light or darkness in one area.', effect:'Use it to expose a hidden thing or deny ordinary sight to a creature.' }
+    ],
+    5: [
+      { title:'The Mourner’s Silver', prose:'A sealed bowl contains thirty blackened funeral coins stamped with a deposed royal face.', effect:'Record valuable funeral silver.' },
+      { title:'Votive Ruby', prose:'One statue’s stone tear is a thumb-sized ruby held by old wax rather than mortar.', effect:'Record a portable valuable with obvious funerary provenance.' }
+    ],
+    6: [
+      { title:'The False Niche', prose:'Pressure on a blank name plaque opens a person-wide cavity behind the burial wall.', effect:'Reveal a hiding place and a plausible secret connection from this room.' },
+      { title:'The Erased Confession', prose:'Writing beneath flaked plaster names the witness who approved the false royal burial.', effect:'Record the witness’s identity as actionable evidence.' }
+    ],
+    7: [
+      { title:'The Ossuary Crawlway', prose:'A narrow maintenance passage bypasses the formal processional route and opens toward another sector.', effect:'Record a shortcut; connect it manually when its destination becomes known.' },
+      { title:'The Corpse Lift', prose:'A hand-cranked platform still travels between this chamber and a lower preparation level.', effect:'Record a vertical shortcut that can improve extraction.' }
+    ],
+    8: [
+      { title:'Bell of the Unburied Name', prose:'This palm-sized silver bell forces a nearby incorporeal spirit to become visible when rung.', effect:'Add the exceptional Bell of the Unburied Name to an adventurer.', item:'Bell of the Unburied Name' },
+      { title:'The Last Vigil Seal', prose:'An intact royal seal proves who possessed authority when the tomb was closed.', effect:'Record a major discovery; it counts as strong evidence in royal or oath-bound disputes.' }
+    ]
+  };
+
+  const tombFunctions = [
+    ['Processional threshold','This chamber was built to control the order in which mourners approached the dead. Worn tracks preserve the path of heavy biers.'],
+    ['Preparation chamber','Stone drains, tool marks, and preservative stains show where bodies were prepared for burial.'],
+    ['Common crypt','Rows of family niches compress generations of names and possessions into the surrounding walls.'],
+    ['Ossuary','Bones were sorted here by family, rank, and ritual purpose; the architecture treats identity as a physical inventory.'],
+    ['Memorial shrine','Offering bowls, soot marks, and damaged inscriptions show where the living maintained relationships with the dead.'],
+    ['Royal sepulcher','Every surface asserts status: raised stone, heraldic carving, and deliberate sight lines toward a place of honor.']
+  ];
+
+  const hauntedAtmospheres = [
+    ['Dead Lanterns','Your breath fogs and every unattended flame bends toward the room’s oldest remains.'],
+    ['Uninvited Names','Whispers use the adventurers’ names before anyone speaks them aloud.'],
+    ['Restless Objects','Small objects return to ceremonial positions whenever no living person watches them.'],
+    ['The Last Violence','A murder flickers at the edge of sight, always ending just before the victim’s face becomes clear.'],
+    ['Disobedient Reflections','Reflections and shadows complete gestures their owners never made.'],
+    ['The Many-Voiced Dead','Dozens of faint voices breathe one unfinished sentence through cracks in the masonry.']
+  ];
+
   const quests = [
     ['Hunt the sovereign','Spoor, wounded prey, trophies, and hunting lore','A lair and sovereign monster'],
     ['Recover the relic','Seals, maps, command phrases, and vault keys','The relic chamber and guardian'],
@@ -140,5 +242,9 @@ window.GAME_DATA = (() => {
   const items = ['Medkit','Rope','Fresh torch','Crowbar','Climbing tools','Flask of oil','Lantern','Bandages','Chalk and spikes','Small mirror'];
   const names = ['Mara','Corvin','Iona','Bram','Sable','Orin','Vey','Hester','Tarn','Elian','Nera','Garrick'];
 
-  return { rooms, challenges, opportunities, quests, questBands, monsters, gear, pasts, knacks, items, names };
+  return {
+    rooms, challenges, opportunities, sceneChallenges, sceneOpportunities,
+    tombFunctions, hauntedAtmospheres, quests, questBands, monsters,
+    gear, pasts, knacks, items, names
+  };
 })();
