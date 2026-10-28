@@ -18,6 +18,7 @@
   const roomById = id => state.rooms.find(room => room.id === id);
   const activeRoom = () => roomById(state.activeRoomId);
   const templateFor = room => DATA.rooms[room.templateIndex - 1];
+  const liveEnemies = room => room.enemies.filter(enemy => enemy.hp > 0);
   const CARDINALS = [
     { name:'North', dx:0, dy:-1, arrow:'↑' }, { name:'East', dx:1, dy:0, arrow:'→' },
     { name:'South', dx:0, dy:1, arrow:'↓' }, { name:'West', dx:-1, dy:0, arrow:'←' }
@@ -28,9 +29,9 @@
     const width = Math.max(...rows.map(row => row.length));
     const routes = [];
     rows.forEach((row, y) => [...row].forEach((glyph, x) => {
-      if (!['E','X','D','U'].includes(glyph)) return;
+      if (!['E','X','?','D','U'].includes(glyph)) return;
       let direction = null;
-      if (glyph === 'E' || glyph === 'X') {
+      if (glyph === 'E' || glyph === 'X' || glyph === '?') {
         const distances = [
           { dx:0, dy:-1, distance:y }, { dx:1, dy:0, distance:width - 1 - x },
           { dx:0, dy:1, distance:rows.length - 1 - y }, { dx:-1, dy:0, distance:x }
@@ -79,6 +80,7 @@
     if (route.glyph === 'U') return 'Ascending stair';
     const direction = rotateDirection(route.direction, room.rotation);
     const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
+    if (route.glyph === '?') return `Hidden passage${cardinal ? ` ${cardinal.name.toLowerCase()}` : ''}`;
     return `${cardinal?.name || 'Outer'} doorway`;
   }
 
@@ -288,6 +290,12 @@
 
   function ensureStateShape() {
     if (!state) return;
+    const canonicalQuest = DATA.quests.find(quest => quest.index === state.quest?.index);
+    if (canonicalQuest) {
+      state.quest.elements = canonicalQuest.elements;
+      state.quest.heart = canonicalQuest.heart;
+      state.quest.objective = canonicalQuest.objective;
+    }
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const hero of state.party) {
       const gear = DATA.gear.find(entry => entry[0] === hero.gear);
@@ -479,7 +487,11 @@
     render();
   }
 
-  function generateRoom(x, y, fromId, fromRouteKey = null) {
+  function generateRoom(x, y, fromId, fromRouteKey = null, bypassed = false) {
+    const sourceRoom = fromId ? roomById(fromId) : null;
+    if (sourceRoom && liveEnemies(sourceRoom).length && !bypassed) {
+      return openModal('bypass', { movement:'explore' });
+    }
     const index = templateRoll();
     const template = DATA.rooms[index - 1];
     const parent = fromId ? roomById(fromId) : null;
@@ -548,8 +560,11 @@
     return null;
   }
 
-  function travelTo(targetId) {
+  function travelTo(targetId, bypassed = false) {
     if (targetId === state.activeRoomId) return;
+    if (liveEnemies(activeRoom()).length && !bypassed) {
+      return openModal('bypass', { movement:'travel', targetId });
+    }
     const path = findPath(state.activeRoomId, targetId);
     if (!path) return showToast('No known route connects those rooms.');
     let normalInTurn = 0;
@@ -582,6 +597,16 @@
     advanceTurns(turns, false);
     state.activeRoomId = destination.id;
     log(`Travelled to Room ${destination.number} in ${turns} turn${turns === 1 ? '' : 's'}${dangerResults.length ? `; danger rolls ${dangerResults.join(', ')}` : ''}.`);
+    render();
+  }
+
+  function escapeDungeon(bypassed = false) {
+    const room = activeRoom();
+    if (room.number !== 1 || !state.quest.completed) return;
+    if (liveEnemies(room).length && !bypassed) return openModal('bypass', { movement:'escape' });
+    state.escaped = true;
+    state.escapedAt = new Date().toISOString();
+    log(`The surviving adventurers escaped with their objective. “${state.quest.name}” was completed.`, 'success');
     render();
   }
 
@@ -680,6 +705,7 @@
   }
 
   function resolveRoll(form) {
+    const afterSuccess = modal?.afterSuccess || null;
     const hero = state.party.find(item => item.id === form.heroId);
     const bonus = Number(form.bonus);
     const target = Number(form.target);
@@ -701,7 +727,7 @@
     }
     if (!success) detail += ' The dungeon has one meaningful action.';
     log(detail, success ? 'success' : 'warning');
-    modal = { type:'rollResult', result:{ hero, dice, kept, bonus, total, target, success, mode } };
+    modal = { type:'rollResult', result:{ hero, dice, kept, bonus, total, target, success, mode, afterSuccess } };
     renderModal();
     persist();
   }
@@ -759,10 +785,17 @@
     if (glyph === 'D' || glyph === 'U') return `<path class="map-feature" d="M${x+6},${y+7}H${x+size-6} M${x+8},${y+12}H${x+size-8} M${x+10},${y+17}H${x+size-10} M${x+12},${y+22}H${x+size-12}"/><text class="map-symbol-text" x="${cx}" y="${cy+10}">${glyph === 'D' ? '↓' : '↑'}</text>`;
     if (glyph === '~' || glyph === 'L') return `<path class="map-feature ${glyph === 'L' ? 'feature-heavy' : ''}" d="M${x+3},${y+9}q4,-4 8,0t8,0t8,0 M${x+3},${y+17}q4,-4 8,0t8,0t8,0 M${x+3},${y+25}q4,-4 8,0t8,0t8,0"/>`;
     if (glyph === 'R') return `<path class="map-feature" d="M${x+5},${y+20}l5,-8 7,5 -3,8z M${x+15},${y+12}l5,-6 7,5 -2,7z M${x+19},${y+25}l4,-6 5,3 -2,5z"/>`;
-    if (glyph === '|' || glyph === '+' || glyph === 'C') {
-      const kind = glyph === '+' ? 'gate' : glyph === '|' ? 'partition' : 'cage';
-      if (orientation === 'vertical') return `<g class="map-bars feature-${kind} ${kind}-vertical"><path class="map-feature feature-heavy" d="M${x+7},${y+2}V${y+size-2} M${x+size-7},${y+2}V${y+size-2}"/><path class="map-feature" d="M${x+5},${y+9}h${size-10} M${x+5},${y+16}h${size-10} M${x+5},${y+23}h${size-10}"/></g>`;
-      return `<g class="map-bars feature-${kind} ${kind}-horizontal"><path class="map-feature feature-heavy" d="M${x+2},${y+7}H${x+size-2} M${x+2},${y+size-7}H${x+size-2}"/><path class="map-feature" d="M${x+9},${y+5}v${size-10} M${x+16},${y+5}v${size-10} M${x+23},${y+5}v${size-10}"/></g>`;
+    if (glyph === '|') {
+      if (orientation === 'vertical') return `<g class="map-bars feature-partition partition-vertical"><path class="map-feature feature-heavy" d="M${cx},${y}V${y+size}"/><path class="map-feature" d="M${cx-6},${y+6}h12 M${cx-6},${y+13}h12 M${cx-6},${y+20}h12 M${cx-6},${y+27}h12"/></g>`;
+      return `<g class="map-bars feature-partition partition-horizontal"><path class="map-feature feature-heavy" d="M${x},${cy}H${x+size}"/><path class="map-feature" d="M${x+6},${cy-6}v12 M${x+13},${cy-6}v12 M${x+20},${cy-6}v12 M${x+27},${cy-6}v12"/></g>`;
+    }
+    if (glyph === '+') {
+      if (orientation === 'vertical') return `<g class="map-gate feature-gate gate-vertical"><path class="map-feature feature-heavy" d="M${cx},${y}V${cy-7} M${cx},${cy+7}V${y+size}"/><circle class="map-feature feature-heavy" cx="${cx}" cy="${cy+7}" r="2"/><path class="map-feature feature-heavy" d="M${cx},${cy+7}L${cx+11},${cy-4}"/><path class="map-feature feature-fine" d="M${cx},${cy-7}A14,14 0 0 1 ${cx+14},${cy+7}"/></g>`;
+      return `<g class="map-gate feature-gate gate-horizontal"><path class="map-feature feature-heavy" d="M${x},${cy}H${cx-7} M${cx+7},${cy}H${x+size}"/><circle class="map-feature feature-heavy" cx="${cx+7}" cy="${cy}" r="2"/><path class="map-feature feature-heavy" d="M${cx+7},${cy}L${cx-4},${cy-11}"/><path class="map-feature feature-fine" d="M${cx-7},${cy}A14,14 0 0 0 ${cx+7},${cy-14}"/></g>`;
+    }
+    if (glyph === 'C') {
+      if (orientation === 'vertical') return `<g class="map-bars feature-cage cage-vertical"><path class="map-feature feature-heavy" d="M${x+7},${y+2}V${y+size-2} M${x+size-7},${y+2}V${y+size-2}"/><path class="map-feature" d="M${x+5},${y+9}h${size-10} M${x+5},${y+16}h${size-10} M${x+5},${y+23}h${size-10}"/></g>`;
+      return `<g class="map-bars feature-cage cage-horizontal"><path class="map-feature feature-heavy" d="M${x+2},${y+7}H${x+size-2} M${x+2},${y+size-7}H${x+size-2}"/><path class="map-feature" d="M${x+9},${y+5}v${size-10} M${x+16},${y+5}v${size-10} M${x+23},${y+5}v${size-10}"/></g>`;
     }
     if (glyph === 'F') return `<path class="map-feature feature-heavy" d="M${x+5},${y+24}h${size-10}v4H${x+5}z M${cx},${y+23}c-8,-5 2,-8 -2,-16 9,6 3,10 8,14 3,3 0,6 -6,6"/>`;
     if (glyph === 'G') return `<circle class="map-feature feature-heavy" cx="${cx}" cy="${cy}" r="${q*.78}"/><circle class="map-feature" cx="${cx}" cy="${cy}" r="${q*.28}"/><path class="map-feature" d="M${cx},${y+4}v6 M${cx},${y+size-10}v6 M${x+4},${cy}h6 M${x+size-10},${cy}h6 M${x+7},${y+7}l4,4 M${x+size-11},${y+size-11}l4,4 M${x+size-7},${y+7}l-4,4 M${x+11},${y+size-11}l-4,4"/>`;
@@ -1026,7 +1059,7 @@
       <div class="section-head"><h2>Dungeon map</h2><span>${state.rooms.length} rooms · unbounded</span></div>
       <div class="dungeon-overview-wrap"><svg class="dungeon-overview" width="${displayWidth}" height="${displayHeight}" viewBox="0 0 ${totalWidth*unit} ${totalHeight*unit}" role="img" aria-label="Connected dungeon overview at one shared grid scale"><defs><pattern id="overview-rock" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#overview-rock)"/>${roomPlans}${corridorTiles}${corridorWalls}</svg></div>
       <div class="map-legend"><div class="legend-line"><i class="legend-swatch active"></i> Current room</div><div class="legend-line"><i class="legend-swatch danger"></i> Active danger</div><div class="legend-line">✦ Secured light &nbsp; ⚔ Enemies &nbsp; ♥ Heart</div></div>
-      <div class="site-card"><div class="eyebrow">${esc(state.domain)} · ${esc(state.theme)}</div><h3>${esc(state.quest.name)}</h3><p>${esc(state.quest.elements)}</p><p><strong>${state.quest.elementsFound}</strong> quest elements · Heart ${state.quest.heartFound ? 'revealed' : 'unrevealed'}</p></div>
+      <div class="site-card"><div class="eyebrow">Mission · ${esc(state.domain)} · ${esc(state.theme)}</div><h3>${esc(state.quest.name)}</h3><p>${esc(state.quest.objective)}</p><p><strong>Useful discoveries:</strong> ${esc(state.quest.elements)}.</p><p><strong>${state.quest.elementsFound}</strong> quest elements · Heart ${state.quest.heartFound ? 'revealed' : 'unrevealed'}</p></div>
     </div></aside>`;
   }
 
@@ -1103,17 +1136,28 @@
     return `<aside id="log-drawer" class="drawer hidden"><div class="drawer-head"><h2>Expedition log</h2><button class="btn icon-btn" data-action="toggle-log">×</button></div><div class="log-list">${state.log.map(entry => `<article class="log-entry"><time>Turn ${entry.turn}</time><p>${esc(entry.message)}</p></article>`).join('')}</div></aside>`;
   }
 
+  function renderVictory() {
+    const survivors = state.party.filter(hero => !hero.dead);
+    persist();
+    app.innerHTML = `<main class="welcome"><section class="welcome-card"><div class="welcome-hero"><div class="eyebrow">Expedition complete · ${esc(state.domain)} · ${esc(state.theme)}</div><h1>You escaped the dungeon</h1><p>${esc(state.quest.objective)}</p></div><div class="welcome-body"><div class="resume-box"><strong>Congratulations — ${esc(state.quest.name)} succeeded.</strong><p>${survivors.length} of ${state.party.length} adventurer${state.party.length === 1 ? '' : 's'} escaped after ${state.turn} turns and ${state.rooms.length} discovered room${state.rooms.length === 1 ? '' : 's'}.</p></div><div class="button-row"><button class="btn" data-action="export">Export completed expedition</button><button class="btn btn-primary" data-action="setup">Begin another expedition</button></div><div class="build-badge">Delvekeeper build ${esc(BUILD)}</div></div></section></main>`;
+  }
+
   function render() {
     if (!state) return renderWelcome();
     ensureStateShape();
+    if (state.escaped) return renderVictory();
     const room = activeRoom();
     const template = templateFor(room);
+    const enemiesPresent = liveEnemies(room).length > 0;
+    const exitsRemain = availableExitRoutes(room).length > 0;
+    const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : ''}">${enemiesPresent ? 'Creatures block exploration' : 'Explore new room'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass creatures…</button>' : ''}`;
+    const escapeButton = state.quest.completed && room.number === 1 ? `<button class="btn btn-primary" data-action="escape">${enemiesPresent ? 'Escape past creatures…' : 'Escape dungeon'}</button>` : '';
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
       <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="Default check target for the active room"><small>Room check</small><strong>${esc(template.danger)} · ${template.target}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Rooms found</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoom()}${renderEncounter()}${renderParty()}</div>
-      <footer class="action-dock"><div class="primary-actions"><button class="btn btn-primary" data-action="explore" ${availableExitRoutes(room).length <= 0 ? 'disabled' : ''}>Explore new room</button><button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
+      <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button><button class="btn" data-action="conquer" ${room.status === 'conquered' ? 'disabled' : ''}>Conquer room</button>${escapeButton}${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
     persist();
@@ -1140,7 +1184,12 @@
     const root = $('#modal');
     if (!root || !modal) return;
     root.classList.remove('hidden');
-    if (modal.type === 'explore') {
+    if (modal.type === 'bypass') {
+      const enemies = liveEnemies(activeRoom());
+      const movementLabel = modal.movement === 'travel' ? 'leave this room and travel through the dungeon' : modal.movement === 'escape' ? 'reach the dungeon entrance and escape' : 'reach an unexplored exit';
+      const body = `<div class="empty-state"><strong>${enemies.map(enemy => esc(enemy.name)).join(' and ')} control the route.</strong><p>Defeat or drive them off, or use the room’s fiction to sneak, distract, bargain, flee, or otherwise ${movementLabel}. Make an appropriate check against ${esc(templateFor(activeRoom()).danger)} ${templateFor(activeRoom()).target} when the outcome is uncertain. On failure, the dungeon gets an action.</p></div>`;
+      root.innerHTML = modalShell('Creatures block the way','They remain in this room if the party gets past them.',body,`<button class="btn" data-action="roll-bypass">Make bypass check</button><button class="btn btn-primary" data-action="confirm-bypass">Continue after success</button>`);
+    } else if (modal.type === 'explore') {
       const room = activeRoom();
       const exits = availableExitRoutes(room);
       const sectors = emptyAdjacentSectors(room);
@@ -1172,12 +1221,13 @@
       root.innerHTML = `<form class="modal" id="roll-form"><div class="modal-head"><h2>Make a check</h2><p>Darkness and an active Wound each impose disadvantage; advantage and disadvantage cancel.</p></div><div class="modal-body"><div class="form-grid">
         <div class="field full"><label>Adventurer</label><select name="heroId" id="roll-hero">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)}</option>`).join('')}</select></div>
         <div class="field"><label>Total bonus</label><input name="bonus" id="roll-bonus" type="number" min="-9" max="12" value="0"><small style="color:var(--muted)">Use the attribute, or the complete printed skill bonus.</small></div>
-        <div class="field"><label>Target</label><select name="target"><option value="9">Easy 9</option><option value="12">Standard 12</option><option value="15" ${template.target===15?'selected':''}>Hard 15</option><option value="18" ${template.target===18?'selected':''}>Extreme 18</option></select></div>
+        <div class="field"><label>Target</label><select name="target"><option value="9" ${template.target===9?'selected':''}>Easy 9</option><option value="12" ${template.target===12?'selected':''}>Standard 12</option><option value="15" ${template.target===15?'selected':''}>Hard 15</option><option value="18" ${template.target===18?'selected':''}>Extreme 18</option></select></div>
         <div class="field full"><label>Roll mode</label><select name="mode"><option value="normal">Normal${state.light.remaining<=0&&!room.securedLight?' (app will apply darkness disadvantage)':''}</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select></div>
         </div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-primary" type="submit">Roll d20</button></div></form>`;
     } else if (modal.type === 'rollResult') {
       const r = modal.result;
-      root.innerHTML = modalShell(r.success ? 'Success' : 'Failure', r.success ? 'The adventurers retain momentum.' : 'The dungeon receives one meaningful action.', `<div class="roll-result"><strong>${r.total}</strong><span>${r.dice.join(' / ')} · kept ${r.kept} · ${signed(r.bonus)} bonus · target ${r.target}</span></div>`, !r.success ? '<button class="btn btn-danger" data-action="open-dungeon-action">Take dungeon action</button>' : '');
+      const followUp = r.success && r.afterSuccess ? '<button class="btn btn-primary" data-action="complete-bypass">Continue past the creatures</button>' : !r.success ? '<button class="btn btn-danger" data-action="open-dungeon-action">Take dungeon action</button>' : '';
+      root.innerHTML = modalShell(r.success ? 'Success' : 'Failure', r.success ? 'The adventurers retain momentum.' : 'The dungeon receives one meaningful action.', `<div class="roll-result"><strong>${r.total}</strong><span>${r.dice.join(' / ')} · kept ${r.kept} · ${signed(r.bonus)} bonus · target ${r.target}</span></div>`, followUp);
     } else if (modal.type === 'dungeon') {
       const live = activeRoom().enemies.filter(e=>e.hp>0);
       root.innerHTML = `<form class="modal" id="dungeon-form"><div class="modal-head"><h2>Dungeon action</h2><p>Use the creature’s Instinct and current fiction to choose a target. Ordinary attacks automatically deal 1 damage.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Creature</label><select name="enemyId">${live.map(e=>`<option value="${e.id}" ${e.id===modal.enemyId?'selected':''}>${esc(e.name)} — ${esc(e.instinct)}</option>`).join('')}</select></div><div class="field full"><label>Target</label><select name="heroId">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)} · ${h.hp}/${h.maxHp} HP${h.wound?' · Wounded':''}</option>`).join('')}</select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-danger" type="submit" ${live.length?'':'disabled'}>Deal 1 damage</button></div></form>`;
@@ -1196,6 +1246,14 @@
 
   function openModal(type, extra = {}) { modal = { type, ...extra }; renderModal(); }
   function closeModal() { modal = null; const root = $('#modal'); if (root) { root.classList.add('hidden'); root.innerHTML = ''; } }
+
+  function completeBypass(details) {
+    if (!details) return;
+    if (details.movement === 'explore') return openModal('explore', { bypassed:true });
+    closeModal();
+    if (details.movement === 'travel') travelTo(details.targetId, true);
+    else if (details.movement === 'escape') escapeDungeon(true);
+  }
 
   function exportSave() {
     const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
@@ -1233,10 +1291,15 @@
     else if (action === 'toggle-log') $('#log-drawer')?.classList.toggle('hidden');
     else if (action === 'settings') openModal('settings');
     else if (action === 'close-modal') closeModal();
-    else if (action === 'explore') openModal('explore');
+    else if (action === 'explore') liveEnemies(activeRoom()).length ? openModal('bypass',{movement:'explore'}) : openModal('explore');
+    else if (action === 'bypass-movement') openModal('bypass',{movement:target.dataset.movement,targetId:target.dataset.id});
+    else if (action === 'escape') escapeDungeon();
+    else if (action === 'roll-bypass') openModal('roll',{afterSuccess:{movement:modal.movement,targetId:modal.targetId}});
+    else if (action === 'confirm-bypass') completeBypass({movement:modal.movement,targetId:modal.targetId});
+    else if (action === 'complete-bypass') completeBypass(modal.result.afterSuccess);
     else if (action === 'choose-exit') { modal.routeKey = target.dataset.route; renderModal(); }
     else if (action === 'back-to-exits') { delete modal.routeKey; renderModal(); }
-    else if (action === 'choose-direction') { generateRoom(Number(target.dataset.x),Number(target.dataset.y),state.activeRoomId,target.dataset.route); closeModal(); render(); }
+    else if (action === 'choose-direction') { const bypassed=Boolean(modal?.bypassed); generateRoom(Number(target.dataset.x),Number(target.dataset.y),state.activeRoomId,target.dataset.route,bypassed); closeModal(); render(); }
     else if (action === 'travel') travelTo(target.dataset.id);
     else if (action === 'conquer') conquerRoom();
     else if (action === 'light-fixtures') lightFixtures();

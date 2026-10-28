@@ -297,19 +297,19 @@ window.GAME_DATA = (() => {
   ];
 
   const quests = [
-    ['Hunt the sovereign','Spoor, wounded prey, trophies, and hunting lore','A lair and sovereign monster'],
-    ['Recover the relic','Seals, maps, command phrases, and vault keys','The relic chamber and guardian'],
-    ['Rescue the captive','Signs of passage, keys, allies, and the captor’s weakness','The prison, captive, and captor'],
-    ['Break the curse','Anchor fragments, true names, and counter-rites','The curse source and its vessel'],
-    ['Seal the breach','Ward pieces, ritual components, and planar lore','The breach and emerging entity'],
-    ['Expose the truth','Testimony, records, and physical evidence','Proof that changes everything'],
-    ['Lay the dead to rest','Remains, names, funeral objects, and missing rites','What prevents the dead from resting'],
-    ['Sabotage the engine','Tools, schematics, weak points, and controls','The engine core or intelligence'],
-    ['Steal the treasure','Access tokens, routes, schedules, and keys','The treasury, owner, and prize'],
-    ['Purge the infestation','Nests, samples, vulnerabilities, and survivor reports','The brood chamber and source'],
-    ['Find the lost expedition','Journals, camps, survivors, and route markers','The final camp and what stopped them'],
-    ['Win the parley','Leverage, gifts, grievances, and faction support','The entity empowered to agree']
-  ].map(([name,elements,heart], index) => ({ index:index+1,name,elements,heart }));
+    ['Hunt the sovereign','Spoor, wounded prey, trophies, and hunting lore','The Gravehorn’s feeding crypt and the sovereign beast itself','Find and kill the Gravehorn, an antlered beast feeding on the tomb’s royal dead. Carry one of its black antlers back to the entrance as proof.'],
+    ['Recover the relic','Seals, maps, command phrases, and vault keys','Saint Orra’s sealed reliquary and its oathbound guardian','Recover Saint Orra’s silver funeral bell from its sealed reliquary and carry it safely back to the entrance.'],
+    ['Rescue the captive','Signs of passage, keys, allies, and the captor’s weakness','The prison of Elian Voss, its gaoler, and the captive','Find the missing royal archivist Elian Voss, free him from his restraint, and escort him alive back to the entrance.'],
+    ['Break the curse','Anchor fragments, true names, and counter-rites','The Royal Revenant and the false burial that sustains it','Discover who was buried under the king’s name, break the false burial’s anchors, defeat or release the Royal Revenant, and escape the tomb.'],
+    ['Seal the breach','Ward pieces, ritual components, and planar lore','The Mirror Wound and the entity forcing its way through','Reach the Mirror Wound beneath the tomb and seal it before the Pale Court can enter. The seal must hold while the party extracts.'],
+    ['Expose the truth','Testimony, records, and physical evidence','The unaltered burial record and the witness guarding it','Prove that Chancellor Vale substituted another corpse for the king. Recover decisive physical evidence and carry it back to the living authorities.'],
+    ['Lay the dead to rest','Remains, names, funeral objects, and missing rites','Queen Mereth’s nameless grave and the rite denied to her','Restore Queen Mereth’s erased name, return her remains to the proper grave, and complete the funeral rite that lets her household rest.'],
+    ['Sabotage the engine','Tools, schematics, weak points, and controls','The Mortuary Engine and the intelligence directing it','Disable the Mortuary Engine that reanimates the tomb’s guardians. Leave it unable to restart, then return to the entrance.'],
+    ['Steal the treasure','Access tokens, routes, schedules, and keys','The royal treasury, its oathbound keeper, and the Widow-King’s Crown','Steal the Widow-King’s black-gold funeral crown from the royal treasury and carry it back out through the dungeon entrance.'],
+    ['Purge the infestation','Nests, samples, vulnerabilities, and survivor reports','The bone-moth brood chamber and its corpse-swollen queen','Destroy the bone-moth queen and every viable brood clutch before the infestation reaches the surface.'],
+    ['Find the lost expedition','Journals, camps, survivors, and route markers','Captain Ysra’s final camp and what trapped her company','Find Captain Ysra’s missing expedition, rescue any survivors, and recover the company’s route journal before extracting.'],
+    ['Win the parley','Leverage, gifts, grievances, and faction support','Lady Vey’s funeral court and the authority empowered to agree','Win safe passage from Lady Vey’s funeral court by resolving its central grievance and securing a binding agreement for future travelers.']
+  ].map(([name,elements,heart,objective], index) => ({ index:index+1,name,elements,heart,objective }));
 
   const questBands = [
     [8,'Omen','Foreshadow the Heart, stakes, or opposition without concrete progress.'],

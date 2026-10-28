@@ -20,6 +20,8 @@ Do not make this danger roll for a room whose persistent fixtures are currently 
 
 Movement also stops when the party reaches an unconquered room or a room that is already actively dangerous. Use the same procedure for deeper travel, backtracking, and extraction.
 
+Living hostile creatures in the party's current room also block ordinary departure. The party must defeat or drive them off, or establish through the fiction how it sneaks, bargains, distracts, flees, or otherwise bypasses them. Make a room-target check when that bypass is uncertain; failure gives the dungeon its normal action. Bypassed creatures remain in their room unless their Instinct and the fiction cause them to pursue.
+
 The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent features. Do not charge an additional turn merely because the new room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
 
 Conquest does not erase those features. On a later visit, a conquered room with persistent traversal cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, reduce active light by one turn, and make its normal conquered-room danger roll. Roll a traversal check only if the crossing remains uncertain and failure would have a meaningful consequence.
@@ -169,6 +171,9 @@ Each site selects or rolls a Quest, then makes a separate escalating Quest roll 
 - Low results retire as the modifier rises, pushing the site toward concrete progress and its Heart.
 - Quest results supplement rather than replace normal Challenge and Opportunity.
 - The Heart can be reached before the intended requirements are met, preserving free-form solutions at greater risk.
+- Every selected Quest must state a concrete mission briefing: name the objective or subject, say what the party must do, and state what must be brought, protected, destroyed, proven, or changed.
+- A hidden room exit is an internal secret passage unless its specific fiction explicitly identifies it as a site exit. It does not complete the expedition merely because the map marks it as hidden.
+- After conquering the Heart, the party must physically return to the original dungeon entrance under the normal known-room travel rules. Escaping from there completes the Quest and the expedition.
 
 The exact result bands are proposed for playtesting.
 
