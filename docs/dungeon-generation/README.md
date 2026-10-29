@@ -346,7 +346,9 @@ Treat each generated room as a staged group of cards rather than exposing every 
 3. The players state an approach, commit tools and an attribute, and roll only if the outcome is uncertain.
 4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the cards earned on conquest. In a physical solo card, print this section upside down or conceal it until the action is committed.
 5. Durably resolve the Challenge and mark the room conquered. The onward passage becomes usable.
-6. Turn over the earned **Quest** and **Loot or discovery cards**. Their identities remain hidden before conquest, though immediately visible quest omens may appear in the Room's read-aloud description.
+6. Turn over the earned **Quest** and **Loot or discovery cards**. Their identities remain hidden before conquest; Quest omens belong on Quest cards rather than in the Room's read-aloud description.
+
+The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append an independent atmosphere or haunting roll, Quest content, Challenge presence, or Monster introduction. Those ideas belong on their respective Challenge, Quest, and Monster cards. Particularly strong haunting concepts should be authored as Challenges instead of being applied as a disconnected prose layer.
 
 Challenge is a broad card type covering ambushes, creatures, obstacles, hazards, traps, puzzles, social confrontations, guardians, setbacks, and Quest Hearts. A Heart is the selected Quest pack's final Challenge card. Conquering it begins extraction rather than revealing a separate Heart card.
 

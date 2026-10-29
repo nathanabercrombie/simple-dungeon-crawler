@@ -287,15 +287,6 @@ window.GAME_DATA = (() => {
     ]
   };
 
-  const hauntedAtmospheres = [
-    ['Dead Lanterns','Your breath fogs and every unattended flame bends toward the room’s oldest remains.'],
-    ['Uninvited Names','Whispers use the adventurers’ names before anyone speaks them aloud.'],
-    ['Restless Objects','Small objects return to ceremonial positions whenever no living person watches them.'],
-    ['The Last Violence','A murder flickers at the edge of sight, always ending just before the victim’s face becomes clear.'],
-    ['Disobedient Reflections','Reflections and shadows complete gestures their owners never made.'],
-    ['The Many-Voiced Dead','Dozens of faint voices breathe one unfinished sentence through cracks in the masonry.']
-  ];
-
   const quests = [
     ['Hunt the sovereign','Spoor, wounded prey, trophies, and hunting lore','The Gravehorn’s feeding crypt and the sovereign beast itself','Find and kill the Gravehorn, an antlered beast feeding on the tomb’s royal dead. Carry one of its black antlers back to the entrance as proof.'],
     ['Recover the relic','Seals, maps, command phrases, and vault keys','Saint Orra’s sealed reliquary and its oathbound guardian','Recover Saint Orra’s silver funeral bell from its sealed reliquary and carry it safely back to the entrance.'],
@@ -385,7 +376,7 @@ window.GAME_DATA = (() => {
 
   return {
     rooms, challenges, opportunities, sceneChallenges, sceneOpportunities,
-    hauntedAtmospheres, quests, questBands, monsters,
+    quests, questBands, monsters,
     gear, armor, pasts, knacks, items, names
   };
 })();

@@ -135,25 +135,6 @@
     return terms.find(([term]) => name.includes(term)) || null;
   }
 
-  function readableCount(value) {
-    return ['zero','one','two','three','four','five','six','seven','eight','nine','ten'][value] || String(value);
-  }
-
-  function occupantProse(enemies) {
-    if (!enemies.length) return '';
-    const groups = enemies.map(enemy => `${readableCount(enemy.units)} ${enemy.name}`);
-    const joined = groups.length === 1 ? groups[0] : `${groups.slice(0,-1).join(', ')}, and ${groups.at(-1)}`;
-    return `You can make out ${joined} in the chamber.`;
-  }
-
-  function playerFacingPresence(presence, hasOccupants) {
-    if (!hasOccupants) return presence;
-    return presence
-      .replace(/^The listed creatures\b/, 'They')
-      .replace(/^The creatures\b/, 'They')
-      .replace(/^A major listed creature\b/, 'One of them');
-  }
-
   function questElementFor(room) {
     const catalog = {
       1: [['The Barbed Antler','A broken antler bears the sovereign beast’s blood and reveals which material pierces its hide.'],['The Last Hunter’s Journal','A dead hunter’s field notes identify the sovereign’s feeding route and blind side.'],['The Scent Chain','A blood-marked chain can draw the sovereign from its lair on chosen ground.']],
@@ -232,10 +213,9 @@
 
   function buildSceneRef(room) {
     return {
-      version: 2,
+      version: 3,
       challengeVariant: stableIndex(room, 'challenge', DATA.sceneChallenges[room.challengeRoll].length),
-      opportunityVariant: stableIndex(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll].length),
-      atmosphereVariant: stableIndex(room, 'atmosphere', DATA.hauntedAtmospheres.length)
+      opportunityVariant: stableIndex(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll].length)
     };
   }
 
@@ -248,25 +228,16 @@
   function buildRoomScene(room, template) {
     const challenge = canonicalVariant(room, 'challengeVariant', DATA.sceneChallenges[room.challengeRoll]);
     const opportunity = canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]);
-    const [atmosphereName, atmosphereProse] = canonicalVariant(room, 'atmosphereVariant', DATA.hauntedAtmospheres);
     const questScene = buildQuestScene(room);
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
-    const occupantIntroduction = occupantProse(liveEnemies);
-    const visiblePresence = room.status === 'conquered'
-      ? 'The chamber is quiet now. The marks left by your earlier actions remain, but its main danger is no longer active.'
-      : playerFacingPresence(challenge.presence, liveEnemies.length > 0);
     const readAloudParts = [
-      { source:`Room roll ${String(template.index).padStart(2,'0')} · ${template.name} · ${template.originalUse}`, text:template.readAloud },
-      { source:`Rolled haunting · ${atmosphereName}`, text:atmosphereProse },
-      room.quest.name === 'Omen' ? { source:`Quest omen · ${questScene.title}`, text:questScene.prose } : null,
-      occupantIntroduction ? { source:'Generated occupants', text:occupantIntroduction } : null,
-      { source:`Visible challenge · ${challenge.title}`, text:visiblePresence }
+      { source:`Room card · ${String(template.index).padStart(2,'0')} · ${template.name} · ${template.originalUse}`, text:template.readAloud }
     ].filter(part => part?.text);
     const readAloud = readAloudParts.map(part => part.text).join(' ');
     return {
-      functionName:template.originalUse, functionDefinition:template.originalUseDefinition, atmosphereName, readAloud, readAloudParts,
-      description: `${template.readAloud} ${atmosphereProse}`,
+      functionName:template.originalUse, functionDefinition:template.originalUseDefinition, readAloud, readAloudParts,
+      description: template.readAloud,
       challenge: { ...challenge, occupants },
       opportunity: { ...opportunity },
       quest: questScene
@@ -336,7 +307,7 @@
       // Prose and mechanics are canonical application data, never save data.
       // Remove copies made by builds before the normalized sceneRef format.
       delete room.scene;
-      if (room.sceneRef?.version !== 2) room.sceneRef = buildSceneRef(room);
+      if (room.sceneRef?.version !== 3) room.sceneRef = buildSceneRef(room);
       roomCardState(room);
       if (isQuestElement(room) && typeof room.quest.claimed !== 'boolean') {
         room.quest.claimed = legacyClaimsRemaining > 0;
@@ -1121,7 +1092,7 @@
           <div class="scene-block challenge-card"><div class="eyebrow">Challenge card · ${esc(challengePack)}</div><h3 class="scene-title">${esc(challengeTitle)}</h3><p>${esc(challengePresence)}</p>
           ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
           <div class="challenge-instruction"><strong>Immediate instruction:</strong> ${esc(immediateInstruction)}</div>
-          ${cards.resolutionRevealed ? `<div class="resolution-panel"><div class="eyebrow">Resolution side · revealed</div><div class="facilitator-heading">${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p><p><strong>Haunting:</strong> ${esc(scene.atmosphereName)}.</p></div><ul class="facilitator-rules"><li><strong>If they stop and examine the situation:</strong> ${esc(scene.challenge.clues)}</li><li><strong>If they interact with or challenge it:</strong> ${esc(scene.challenge.rule)}</li><li><strong>If they trigger it or fail:</strong> ${esc(scene.challenge.consequence)}</li></ul><h4>Possible resolutions</h4><ul>${scene.challenge.resolutions.map(item => `<li>${esc(item)}</li>`).join('')}</ul><small>These approaches are not exhaustive; a credible free-form solution can work.</small><div class="reward-instruction"><strong>On conquest:</strong> ${esc(rewardInstructions)}.</div></div>` : `<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">↻</span><strong>Resolution side hidden</strong><small>State the action and commit to any roll before turning the card.</small></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal resolution</button></div>`}</div>
+          ${cards.resolutionRevealed ? `<div class="resolution-panel"><div class="eyebrow">Resolution side · revealed</div><div class="facilitator-heading">${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p></div><ul class="facilitator-rules"><li><strong>If they stop and examine the situation:</strong> ${esc(scene.challenge.clues)}</li><li><strong>If they interact with or challenge it:</strong> ${esc(scene.challenge.rule)}</li><li><strong>If they trigger it or fail:</strong> ${esc(scene.challenge.consequence)}</li></ul><h4>Possible resolutions</h4><ul>${scene.challenge.resolutions.map(item => `<li>${esc(item)}</li>`).join('')}</ul><small>These approaches are not exhaustive; a credible free-form solution can work.</small><div class="reward-instruction"><strong>On conquest:</strong> ${esc(rewardInstructions)}.</div></div>` : `<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">↻</span><strong>Resolution side hidden</strong><small>State the action and commit to any roll before turning the card.</small></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal resolution</button></div>`}</div>
           ${cards.rewardsRevealed ? `<div class="scene-block opportunity-block"><div class="eyebrow">${esc(opportunityPack)} · ${room.opportunityRoll > 1 ? 'Loot / discovery card' : 'No reward card'}</div><h3 class="scene-title">${esc(scene.opportunity.title)}</h3><p>${esc(scene.opportunity.prose)}</p><div class="effect-line"><strong>Effect:</strong> ${esc(scene.opportunity.effect)}</div></div>` : `<div class="facedown-card rewards-hidden"><div><span class="card-back-mark">✦</span><strong>Loot and discovery cards facedown</strong><small>${room.status === 'conquered' ? 'The Challenge is conquered. Turn over the earned cards.' : 'Conquer the Challenge before revealing these cards.'}</small></div>${room.status === 'conquered' ? '<button class="btn btn-primary" data-action="reveal-rewards">Reveal earned cards</button>' : ''}</div>`}
           <div class="fallback"><strong>Default target:</strong> ${template.danger} ${template.target}. Use it only when the concrete rule or fiction calls for a check.</div>
         </div></div>
