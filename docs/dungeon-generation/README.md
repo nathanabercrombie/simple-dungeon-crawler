@@ -169,7 +169,7 @@ Each site selects or rolls a Quest, then makes a separate escalating Quest roll 
 - `d20 + (E × rooms already generated)` determines whether the room adds an omen, trace, lead, quest element, setback, or Heart.
 - Used numerical Quest results are crossed off and rerolled.
 - Low results retire as the modifier rises, pushing the site toward concrete progress and its Heart.
-- Quest results supplement rather than replace normal Challenge and Opportunity.
+- A Quest result creates a candidate Quest card. It is revealed only when the room's Challenge awards a Quest card.
 - The Heart can be reached before the intended requirements are met, preserving free-form solutions at greater risk.
 - Every selected Quest must state a concrete mission briefing: name the objective or subject, say what the party must do, and state what must be brought, protected, destroyed, proven, or changed.
 - A hidden room exit is an internal secret passage unless its specific fiction explicitly identifies it as a site exit. It does not complete the expedition merely because the map marks it as hidden.
@@ -328,14 +328,14 @@ Once the map model is chosen, each new room can be generated in layers:
 
 These layers should be combined into as few physical rolls as practical. A future prototype may use several differently colored d6s rolled together, with one die assigned to topology, one to challenge, and one to opportunity or complication.
 
-## Accepted content structure: Challenge + Opportunity
+## Accepted content structure: Room + Challenge + one reward
 
-Room contents use two independent axes rolled together:
+Room contents use a Challenge roll and one hidden reward result:
 
 - **d12 Challenge:** establishes the primary problem and potential conquest condition.
-- **d8 Opportunity:** establishes a clue, supply, usable feature, treasure, secret, shortcut, major discovery, or no extra reward.
+- **d8 Opportunity:** supplies a candidate Loot or discovery card when the Challenge awards that card type.
 
-Independent axes allow monster plus treasure, trap plus shortcut, social obstacle plus clue, quiet room plus secret, and other combinations. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
+Each Challenge awards exactly one **Quest card**, one **Loot or discovery card**, or **no additional card**. It never awards both. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot or discovery cards. A Quest Heart is already the Challenge and therefore never reappears as a Quest reward. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
 
 ### Accepted card reveal sequence
 
@@ -344,9 +344,9 @@ Treat each generated room as a staged group of cards rather than exposing every 
 1. Reveal the **Room card** and the player-facing front of its **Challenge card**.
 2. Follow the Challenge's immediate instruction. An Ambush or creature Challenge may reveal one or more **Monster cards** now; other Quest and reward cards remain facedown.
 3. The players state an approach, commit tools and an attribute, and roll only if the outcome is uncertain.
-4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the cards earned on conquest. In a physical solo card, print this section upside down or conceal it until the action is committed.
+4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the card earned on conquest, if any. In a physical solo card, print this section upside down or conceal it until the action is committed.
 5. Durably resolve the Challenge and mark the room conquered. The onward passage becomes usable.
-6. Turn over the earned **Quest** and **Loot or discovery cards**. Their identities remain hidden before conquest; Quest omens belong on Quest cards rather than in the Room's read-aloud description.
+6. Turn over the one earned **Quest card** or **Loot or discovery card**. Some Challenges award no additional card. Its identity remains hidden before conquest; Quest omens belong on Quest cards rather than in the Room's read-aloud description.
 
 The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append an independent atmosphere or haunting roll, Quest content, Challenge presence, or Monster introduction. Those ideas belong on their respective Challenge, Quest, and Monster cards. Particularly strong haunting concepts should be authored as Challenges instead of being applied as a disconnected prose layer.
 

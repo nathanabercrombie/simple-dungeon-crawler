@@ -23,6 +23,12 @@
     resolutionRevealed: room.status === 'conquered',
     rewardsRevealed: room.status === 'conquered'
   });
+  const QUEST_REWARD_CHALLENGES = new Set([1,5,6,7,10]);
+  function challengeRewardType(room) {
+    if (room.quest.name === 'Heart') return room.opportunityRoll > 1 ? 'loot' : 'none';
+    if (QUEST_REWARD_CHALLENGES.has(room.challengeRoll)) return 'quest';
+    return room.opportunityRoll > 1 ? 'loot' : 'none';
+  }
   const CARDINALS = [
     { name:'North', dx:0, dy:-1, arrow:'↑' }, { name:'East', dx:1, dy:0, arrow:'→' },
     { name:'South', dx:0, dy:1, arrow:'↓' }, { name:'West', dx:-1, dy:0, arrow:'←' }
@@ -208,7 +214,13 @@
       ]
     };
     const [title, prose] = stablePick(room, 'quest-detail', options[type] || options.Omen);
-    return { title, prose, effect: `${type}: this information advances “${state.quest.name}” but is not itself an abstract point.` };
+    const effects = {
+      Omen: 'Keep this as foreshadowing. It does not count as a claimed Quest element.',
+      Trace: 'This confirms that the objective or its agents affected this room. It does not count as a claimed Quest element.',
+      Lead: 'This provides actionable information the party may use later. It does not count as a claimed Quest element.',
+      'Guardian or setback': 'Apply this complication now. It does not count as a claimed Quest element.'
+    };
+    return { title, prose, effect: effects[type] || `Use this information while pursuing “${state.quest.name}.”` };
   }
 
   function buildSceneRef(room) {
@@ -600,6 +612,7 @@
       }
     });
     if (room.quest.name === 'Heart' && state.quest.heartFound) state.quest.completed = true;
+    if (challengeRewardType(room) === 'none') room.cardState.rewardsRevealed = true;
     log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token and recovered HP.`);
     render();
   }
@@ -616,7 +629,8 @@
     const room = activeRoom();
     if (room.status !== 'conquered' || roomCardState(room).rewardsRevealed) return;
     room.cardState.rewardsRevealed = true;
-    log(`The earned Quest and reward cards in Room ${room.number} were revealed.`);
+    const rewardType = challengeRewardType(room);
+    log(`The earned ${rewardType === 'quest' ? 'Quest' : 'Loot or discovery'} card in Room ${room.number} was revealed.`);
     render();
   }
 
@@ -654,7 +668,7 @@
 
   function claimOpportunity() {
     const room = activeRoom();
-    if (!roomCardState(room).rewardsRevealed) return;
+    if (!roomCardState(room).rewardsRevealed || challengeRewardType(room) !== 'loot') return;
     if (room.opportunityClaimed || room.opportunityRoll === 1) return;
     ensureStateShape();
     const scene = buildRoomScene(room, templateFor(room));
@@ -672,7 +686,7 @@
 
   function claimQuestElement() {
     const room = activeRoom();
-    if (!roomCardState(room).rewardsRevealed) return;
+    if (!roomCardState(room).rewardsRevealed || challengeRewardType(room) !== 'quest') return;
     if (!isQuestElement(room) || room.quest.claimed) return;
     const scene = buildQuestScene(room);
     room.quest.claimed = true;
@@ -1066,6 +1080,7 @@
     const template = templateFor(room);
     const scene = buildRoomScene(room, template);
     const cards = roomCardState(room);
+    const rewardType = challengeRewardType(room);
     const termDefinition = roomTermDefinition(template.name);
     const darkness = state.light.remaining <= 0 && !room.securedLight;
     const isHeart = room.quest.name === 'Heart';
@@ -1073,9 +1088,9 @@
     const challengePresence = isHeart ? `${scene.quest.prose} ${scene.challenge.presence}` : scene.challenge.presence;
     const challengePack = isHeart ? `${state.quest.name} Quest pack` : room.challengeRoll === 8 ? 'Core set' : 'Haunted Tomb location pack';
     const immediateInstruction = room.challengeRoll >= 7
-      ? `Reveal ${room.enemies.length === 1 ? 'one Monster card' : `${room.enemies.length} Monster cards`}. Use the creature cards shown in the Encounter panel.`
+      ? `Reveal ${room.enemies.length === 1 ? 'one Monster card' : `${room.enemies.length} Monster cards`}. Place each revealed card beside this Challenge.`
       : 'Do not reveal any other cards yet. State an approach and make a check only when the outcome is uncertain.';
-    const rewardInstructions = [`Reveal one Quest card`, room.opportunityRoll > 1 ? 'reveal one Loot or discovery card' : null].filter(Boolean).join(' and ');
+    const rewardInstructions = rewardType === 'quest' ? 'Reveal one Quest card' : rewardType === 'loot' ? 'Reveal one Loot or discovery card' : 'Reveal no additional card';
     const opportunityPack = scene.opportunity.item && ['Medkit','Rope','Fresh torch'].includes(scene.opportunity.item) ? 'Core set' : 'Haunted Tomb location pack';
     return `<main class="pane pane-room">
       <div class="section-head"><h2>Room card</h2><span>Haunted Tomb location pack · template ${template.index}</span></div>
@@ -1093,12 +1108,12 @@
           ${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}
           <div class="challenge-instruction"><strong>Immediate instruction:</strong> ${esc(immediateInstruction)}</div>
           ${cards.resolutionRevealed ? `<div class="resolution-panel"><div class="eyebrow">Resolution side · revealed</div><div class="facilitator-heading">${termDefinition ? `<p><strong>${esc(termDefinition[0])}:</strong> ${esc(termDefinition[1])}.</p>` : ''}<p><strong>Former use:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p></div><ul class="facilitator-rules"><li><strong>If they stop and examine the situation:</strong> ${esc(scene.challenge.clues)}</li><li><strong>If they interact with or challenge it:</strong> ${esc(scene.challenge.rule)}</li><li><strong>If they trigger it or fail:</strong> ${esc(scene.challenge.consequence)}</li></ul><h4>Possible resolutions</h4><ul>${scene.challenge.resolutions.map(item => `<li>${esc(item)}</li>`).join('')}</ul><small>These approaches are not exhaustive; a credible free-form solution can work.</small><div class="reward-instruction"><strong>On conquest:</strong> ${esc(rewardInstructions)}.</div></div>` : `<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">↻</span><strong>Resolution side hidden</strong><small>State the action and commit to any roll before turning the card.</small></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal resolution</button></div>`}</div>
-          ${cards.rewardsRevealed ? `<div class="scene-block opportunity-block"><div class="eyebrow">${esc(opportunityPack)} · ${room.opportunityRoll > 1 ? 'Loot / discovery card' : 'No reward card'}</div><h3 class="scene-title">${esc(scene.opportunity.title)}</h3><p>${esc(scene.opportunity.prose)}</p><div class="effect-line"><strong>Effect:</strong> ${esc(scene.opportunity.effect)}</div></div>` : `<div class="facedown-card rewards-hidden"><div><span class="card-back-mark">✦</span><strong>Loot and discovery cards facedown</strong><small>${room.status === 'conquered' ? 'The Challenge is conquered. Turn over the earned cards.' : 'Conquer the Challenge before revealing these cards.'}</small></div>${room.status === 'conquered' ? '<button class="btn btn-primary" data-action="reveal-rewards">Reveal earned cards</button>' : ''}</div>`}
+          ${rewardType === 'loot' && cards.rewardsRevealed ? `<div class="scene-block opportunity-block"><div class="eyebrow">${esc(opportunityPack)} · Loot / discovery card</div><h3 class="scene-title">${esc(scene.opportunity.title)}</h3><p>${esc(scene.opportunity.prose)}</p><div class="effect-line"><strong>Effect:</strong> ${esc(scene.opportunity.effect)}</div></div>` : rewardType !== 'none' && !cards.rewardsRevealed ? `<div class="facedown-card reward-card-hidden"><div><span class="card-back-mark">${rewardType === 'quest' ? '?' : '✦'}</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Loot or discovery card'} facedown</strong><small>${room.status === 'conquered' ? 'The Challenge is conquered. Turn over the one earned card.' : 'Conquer the Challenge before revealing this card.'}</small></div>${room.status === 'conquered' ? '<button class="btn btn-primary" data-action="reveal-rewards">Reveal earned card</button>' : ''}</div>` : rewardType === 'quest' && cards.rewardsRevealed ? '<div class="reward-revealed-note">Quest card revealed in the Quest panel.</div>' : '<div class="reward-revealed-note">This Challenge awards no additional card.</div>'}
           <div class="fallback"><strong>Default target:</strong> ${template.danger} ${template.target}. Use it only when the concrete rule or fiction calls for a check.</div>
         </div></div>
         <footer class="room-footer"><div class="button-row">
           ${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Light fixtures</button>' : ''}
-          ${cards.rewardsRevealed && room.opportunityRoll > 1 && !room.opportunityClaimed ? '<button class="btn btn-small" data-action="claim">Claim revealed reward</button>' : ''}
+          ${rewardType === 'loot' && cards.rewardsRevealed && !room.opportunityClaimed ? '<button class="btn btn-small" data-action="claim">Claim revealed reward</button>' : ''}
           <button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button>
         </div><textarea class="room-notes" data-action="notes" placeholder="Room rulings, changed terrain, secured ropes, creatures left behind…">${esc(room.notes)}</textarea></footer>
       </article>
@@ -1115,9 +1130,10 @@
     const room = activeRoom();
     const scene = buildRoomScene(room, templateFor(room));
     const cards = roomCardState(room);
+    const rewardType = challengeRewardType(room);
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monster cards</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? live.map(renderEnemy).join('') : '<div class="empty-state">The Challenge has not revealed a Monster card.</div>'}</div></section>
-      <section><div class="subhead">Quest cards</div><div class="quest-list">${cards.rewardsRevealed ? `<article class="quest-card"><div class="eyebrow">Quest generation result ${room.quest.value} · ${esc(state.quest.name)} pack · ${esc(room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p>${scene.quest.placement ? `<p><strong>Where it is:</strong> ${esc(scene.quest.placement)}</p><p><strong>Generation result:</strong> ${room.quest.value}; this selected the card and is not a target number.</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>${state.quest.heartFound ? `<article class="quest-card"><div class="eyebrow">Quest Heart</div><h3>${esc(state.quest.heart)}</h3><p>${state.quest.elementsFound} element${state.quest.elementsFound === 1 ? '' : 's'} claimed. ${state.quest.completed ? 'The Heart is conquered.' : 'It remains unresolved.'}</p></article>` : ''}` : '<div class="facedown-card quest-hidden"><div><span class="card-back-mark">?</span><strong>Quest card facedown</strong><small>Its identity remains hidden until this room’s Challenge is conquered.</small></div></div>'}</div></section></aside>`;
+      <section><div class="subhead">Quest cards</div><div class="quest-list">${rewardType === 'quest' && cards.rewardsRevealed ? `<article class="quest-card"><div class="eyebrow">Quest deck roll ${room.quest.value} · ${esc(state.quest.name)} pack · ${esc(room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3><p>${esc(scene.quest.prose)}</p>${scene.quest.placement ? `<p><strong>Where it is:</strong> ${esc(scene.quest.placement)}</p><p><strong>Deck roll:</strong> ${room.quest.value} selected this card; it is not a check. Use the room target for uncertain actions.</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></article>` : `<div class="empty-state">${rewardType === 'quest' ? 'One Quest card is earned here but remains facedown beside the Challenge.' : 'This Challenge does not award a Quest card.'}</div>`}</div></section></aside>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }

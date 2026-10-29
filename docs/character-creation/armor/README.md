@@ -37,13 +37,13 @@ Results 1–6 assign Agility −2. Results 7–12 assign Mind −2.
 | ---: | --- | --- | --- | --- | --- |
 | 1 | Ironbound | Agility | Black-iron plate | **Reinforced** | Loud, conspicuous, and slow to remove |
 | 2 | Siege-trained | Agility | Tower shield harness | **Guard:** protect yourself or an adjacent ally | Requires a free hand and room to set the shield |
-| 3 | Chain-laden | Agility | Mail, coif, and heavy boots | **Guard:** prevent the first Physical damage each fight | Noisy during stealth and exhausting in deep water |
+| 3 | Chain-laden | Agility | Mail, coif, and heavy boots | Once per fight, prevent 1 damage from a weapon, impact, claw, or other bodily attack | Noisy during stealth and exhausting in deep water |
 | 4 | Stone-backed | Agility | Plates carved from dungeon stone | **Stable** and Reinforced | Extremely heavy and difficult to repair |
 | 5 | Trophy-clad | Agility | Hide or shell from a slain monster | **Resist:** choose one fitting damage tag when created | Marks the wearer as an enemy to related creatures |
-| 6 | Oath-burdened | Agility | Consecrated plate and tabard | **Resist Profane** | The oath is visible and may demand inconvenient conduct |
+| 6 | Oath-burdened | Agility | Consecrated plate and tabard | Once per fight, prevent the first damage from an undead creature or hostile spirit | The oath is visible and may demand inconvenient conduct |
 | 7 | Reckless | Mind | Boiled leather and open helm | After taking damage, reposition nearby | Offers no benefit while trapped or restrained |
 | 8 | Blood-hungry | Mind | Red beast-hide harness | While exposed, successful melee attacks may push the target | Obvious aggression hinders peaceful first impressions |
-| 9 | Haunted | Mind | Charm-stitched leather | **Insulated Profane** | Charms whisper, rattle, or react near spirits |
+| 9 | Haunted | Mind | Charm-stitched leather | A Wound caused by an undead creature or hostile spirit keeps its disadvantage but loses its additional immediate effect | Charms whisper, rattle, or react near spirits |
 | 10 | Superstitious | Mind | Bone-laced coat | Once per expedition, identify a nearby curse or taboo | The wearer must observe a personal prohibition |
 | 11 | Glory-bound | Mind | Bright half-plate | **Reinforced** | Intelligent enemies readily identify and challenge the wearer |
 | 12 | Battle-scarred | Mind | Layered patchwork armor | Ignore a Wound's extra acute effect until the fight ends | Cannot conceal the history and allegiances shown by its pieces |
@@ -54,7 +54,7 @@ Results 1–6 assign Strength −2. Results 7–12 assign Mind −2.
 
 | d12 | Burden | −2 | Protection | Candidate benefit | Fictional constraint |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | Slight | Strength | Quilted coat | **Guard Projectile** | Little protection from close heavy blows |
+| 1 | Slight | Strength | Quilted coat | Once per fight, prevent 1 damage from a projectile | Little protection from close heavy blows |
 | 2 | Sickly | Strength | Waxed plague coat and mask | **Resist Poison or Disease** once per fight | Mask muffles speech and alarms strangers |
 | 3 | Hollow-boned | Strength | Feather-lined cloak | Ignore damage from an ordinary Near-distance fall | Easily torn, burned, or waterlogged |
 | 4 | Starved | Strength | Pocketed scavenger leathers | Conceal and protect two small carried items from an ordinary search or mishap | Food deprivation and frailty remain obvious |
@@ -62,8 +62,8 @@ Results 1–6 assign Strength −2. Results 7–12 assign Mind −2.
 | 6 | Delicate | Strength | Duelist's reinforced coat | **Reinforced** while one hand remains free | Benefit ends while using two-handed gear |
 | 7 | Impulsive | Mind | Light brigandine | After a successful attack, reposition nearby | The character habitually overextends and pursues |
 | 8 | Distrustful | Mind | Hooded mail shirt | Cannot be surprised by an ordinary visible threat while conscious | Hood and posture make trust difficult |
-| 9 | Haunted | Mind | Funerary wraps beneath leather | **Resist Profane** | The dead sometimes recognize the wrapping |
-| 10 | Vain | Mind | Mirror-scale vest | **Guard Arcane** and reflect harmless magical light | Highly visible and difficult to disguise |
+| 9 | Haunted | Mind | Funerary wraps beneath leather | Once per fight, prevent the first damage from an undead creature or hostile spirit | The dead sometimes recognize the wrapping |
+| 10 | Vain | Mind | Mirror-scale vest | Once per fight, prevent 1 damage from a spell or supernatural effect; reflect harmless magical light | Highly visible and difficult to disguise |
 | 11 | Feral | Mind | Scented beast-hide | Gain advantage when tracking by scent | Civilized animals react poorly to the wearer |
 | 12 | Thrill-seeking | Mind | Runner's harness | **Guard:** prevent damage only if the wearer can immediately reposition | Provides nothing while cornered, bound, or protecting a fixed point |
 
@@ -73,18 +73,18 @@ Results 1–6 assign Strength −2. Results 7–12 assign Agility −2.
 
 | d12 | Burden | −2 | Protection | Candidate benefit | Fictional constraint |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | Frail | Strength | Warded robes | **Guard Arcane** | Physically fragile cloth |
-| 2 | Withered | Strength | Gravecloth mantle | **Insulated Profane** | Gives the wearer the scent and chill of a tomb |
+| 1 | Frail | Strength | Warded robes | Once per fight, prevent 1 damage from a spell or supernatural effect | Physically fragile cloth |
+| 2 | Withered | Strength | Gravecloth mantle | A Wound caused by an undead creature or hostile spirit loses its additional immediate effect | Gives the wearer the scent and chill of a tomb |
 | 3 | Sickly | Strength | Beaked mask and alchemical apron | **Resist Poison or Disease** once per fight | Bulky tools and unsettling appearance |
 | 4 | Book-laden | Strength | Scroll coat and reinforced satchel | Keep one stowed spellbook ready to consult without occupying a hand | Vulnerable to fire, water, and theft |
 | 5 | Fasting | Strength | Pilgrim's mantle and prayer cords | **Insulated Fear** | A vow restricts food, comfort, speech, or another ordinary freedom |
-| 6 | Delicate | Strength | Glass-thread robe | **Guard Arcane:** a prevented magical hit flashes back harmlessly | Fragile and difficult to repair without occult materials |
+| 6 | Delicate | Strength | Glass-thread robe | Once per fight, prevent 1 damage from a spell or supernatural effect; the prevented effect flashes back harmlessly | Fragile and difficult to repair without occult materials |
 | 7 | Ritually encumbered | Agility | Ceremonial mail | **Reinforced** | Bells, seals, and layered vestments make stealth difficult |
-| 8 | Reliquary-bearer | Agility | Shrine harness | **Guard Profane:** may protect an adjacent ally | The relic attracts pilgrims, thieves, and supernatural attention |
+| 8 | Reliquary-bearer | Agility | Shrine harness | Once per fight, prevent 1 damage from an undead creature or hostile spirit; may protect an adjacent ally | The relic attracts pilgrims, thieves, and supernatural attention |
 | 9 | Nearsighted | Agility | Rune-carved plate | **Reinforced** | Fine work and distant mundane details are difficult to perceive |
 | 10 | Lead-shrouded | Agility | Lead-lined occultist's coat | **Resist Arcane** | Heavy, hot, and poisonous if damaged |
 | 11 | Earthbound | Agility | Living root armor | **Stable** and Insulated Lightning | Must be watered and cannot pass unnoticed in settlements |
-| 12 | Bell-laden | Agility | Exorcist's mail | Profane creatures cannot surprise the wearer | The wearer cannot move silently while the bells remain active |
+| 12 | Bell-laden | Agility | Exorcist's mail | Undead creatures and hostile spirits cannot surprise the wearer | The wearer cannot move silently while the bells remain active |
 
 ## Additional Burdens for substitution
 

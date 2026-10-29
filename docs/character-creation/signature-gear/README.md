@@ -26,8 +26,8 @@ Crossbows have the **Reload** rule. Firing a crossbow discharges it whether the 
 | ---: | --- | --- | --- |
 | 11 | Arming sword | **Parry:** +1 maximum HP while readied; swapping cannot restore HP | **Lunge (1):** attack a target at Near range |
 | 12 | Greatsword | **Brutal:** deal 2 damage, but attack with disadvantage | **Whirlwind (2):** one check against the highest adjacent Defense; deal 1 damage to every adjacent enemy on success |
-| 13 | Maul | **Shattering:** deal 2 damage to Brittle creatures such as skeletons | **Concuss (1):** after a successful hit, the next attack against the target has advantage |
-| 14 | Battleaxe | **Cleave:** defeating a target deals 1 damage to an adjacent Fragile enemy | **Wide Arc (2):** attack up to three adjacent enemies with one check against the highest Defense |
+| 13 | Maul | **Shattering:** deal 2 damage to skeletons, objects, and other obviously brittle targets | **Concuss (1):** after a successful hit, the next attack against the target has advantage |
+| 14 | Battleaxe | **Cleave:** defeating a target deals 1 damage to an adjacent enemy with 1 maximum HP | **Wide Arc (2):** attack up to three adjacent enemies with one check against the highest Defense |
 | 15 | Spear | **Reach:** attack across an ally or obstacle and before shorter weapons can reach | **Brace (1):** deal 1 damage to an enemy that closes with you before it completes its action |
 | 16 | Mace | **Crushing:** reduce an Armored target's Defense by one step for this attack | **Stagger (1):** after a hit, the next attack against the target has advantage |
 | 21 | Halberd | **Long Reach:** threaten Near targets, but attacks while closely engaged have disadvantage | **Sweep (1):** on a hit, reposition the target or knock it prone instead of dealing damage |
@@ -47,7 +47,7 @@ Crossbows have the **Reload** rule. Firing a crossbow discharges it whether the 
 | 34 | Rapier | **Single Combat:** gain advantage against an adjacent enemy with no adjacent allies of its own | **Feint (1):** reduce the target's Defense by one step for the next attack |
 | 35 | Crossbow | **Loaded Shot:** a hit deals 2 damage; firing discharges it and uses **Reload** | **Deadeye (1):** ignore cover and attack at Extreme range |
 | 36 | Sling | **Unassuming:** ranged, concealable, and ammunition is easy to improvise | **Ricochet (1):** attack a target behind ordinary cover |
-| 41 | Throwing knives | **Flexible:** attack adjacent or Near targets and conceal several knives | **Fan of Steel (1):** one check against the higher Defense of two Fragile targets; deal 1 damage to each |
+| 41 | Throwing knives | **Flexible:** attack adjacent or Near targets and conceal several knives | **Fan of Steel (1):** one check against the higher Defense of two adjacent targets with 1 maximum HP; deal 1 damage to each |
 | 42 | Net and trident | **Capture:** forgo damage to restrain a suitable adjacent or Near target | **Skewer (1):** deal +1 damage to a target restrained by you |
 | 43 | Sabre | **Mobile:** after a successful attack, reposition to a nearby unoccupied place | **Passing Cut (1):** move through an enemy's reach and attack without exposing yourself to its immediate reaction |
 | 44 | Blowgun | **Silent:** Near attack that does not raise alert; ineffective against rigid armor | **Venom Dart (1):** apply one carried poison without consuming it on a failed attack |
@@ -62,12 +62,12 @@ Mind gear either makes a basic ranged or melee attack using Mind, or clearly nam
 | ---: | --- | --- | --- |
 | 51 | Wand | **Arcane Bolt:** ranged Mind attack | **Cure Wounds (3):** remove one active Wound without a Scar and restore full HP |
 | 52 | Rune staff | **Runic Strike:** adjacent or Near Mind attack | **Warding Rune (1):** give yourself or an ally +1 maximum and current HP for this fight |
-| 53 | Sacred relic | **Radiance:** Near Mind attack; deal 2 damage to Profane spirits and undead | **Banish (2):** force an eligible supernatural creature to flee or become unable to approach |
+| 53 | Sacred relic | **Radiance:** Near Mind attack; deal 2 damage to undead creatures and hostile spirits | **Banish (2):** force an eligible supernatural creature to flee or become unable to approach |
 | 54 | Spirit bell | **Resonance:** Near sonic Mind attack that can affect incorporeal creatures | **Discord (1):** after a hit, reduce the target's Defense by one step until it acts |
 | 55 | Alchemist's satchel | **Concoction:** ranged Mind attack; choose acid, fire, frost, or smoke when preparing for an expedition | **Smoke Bomb (1):** fill a nearby area with concealment and permit immediate repositioning |
 | 56 | Hexing focus | **Malison:** Near Mind attack expressed as a minor curse | **Ill Omen (1):** after a hit, give the target disadvantage on its next check, if it makes one, or reduce its next effect |
 | 61 | Bound familiar | **Proxy:** make a Mind attack from the familiar's position; it can scout where it can physically travel | **Intercede (2):** prevent 1 damage to an ally the familiar can reach; the familiar vanishes until the fight ends |
-| 62 | Silver censer | **Choking Fumes:** Near Mind attack; especially effective against creatures that breathe | **Sanctuary (2):** create a nearby ward that ordinary Profane creatures cannot cross until the adventurers attack through it |
+| 62 | Silver censer | **Choking Fumes:** Near Mind attack; especially effective against creatures that breathe | **Sanctuary (2):** create a nearby ward that ordinary undead creatures and hostile spirits cannot cross until the adventurers attack through it |
 | 63 | Crystal lens | **Burning Ray:** ranged Mind attack that ignores dim light and ordinary concealment | **Reveal (1):** expose an invisible creature, illusion, magical writing, or hidden aura |
 | 64 | Bone flute | **Dread Note:** Near sonic Mind attack | **Lullaby (2):** calm ordinary creatures that have not yet been harmed by the party |
 | 65 | Witch's athame | **Ritual Edge:** adjacent Mind attack that can cut incorporeal and magical things | **Sever (1):** end a minor curse, binding, or ongoing magical connection within reach |
