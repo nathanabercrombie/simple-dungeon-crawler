@@ -10,9 +10,13 @@
 - The same procedure must support a GM-led group and a solo player using an oracle.
 - The tabletop procedure must work with physical dice even when the local web app automates it.
 
-## Accepted known-room travel procedure
+## Accepted Light and known-room travel procedure
 
-Spend one exploration turn to move through up to three connected conquered rooms. Active light sources lose one turn of duration.
+Each fresh torch begins with **12 Light tokens**. Light is an expedition currency rather than an automatic per-turn countdown. Unless the party's current room is permanently illuminated, spend 1 Light to enter a new room, move to one adjacent known room, rest and recover HP, search a conquered room, illuminate permanent fixtures, treat a Wound, or perform another activity that explicitly costs Light.
+
+These actions spend no portable Light while the party is in a room with secured Fixture or Inherent lighting. Ordinary combat actions and checks do not spend Light unless a rule or consequence says otherwise. At 0 Light, ordinary checks in an unlit room have disadvantage, and actions that explicitly cost Light cannot begin there.
+
+The app may route a click through several known rooms for convenience, but resolve it as one adjacent move and one possible Light cost per connection. A move beginning in a permanently illuminated room is free.
 
 For each conquered room entered during this movement, roll a d6. On a 1, wandering enemies arrive and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not grant its conquest Skill Tokens again.
 
@@ -22,11 +26,11 @@ Movement also stops when the party reaches an unconquered room or a room that is
 
 Living hostile creatures in the party's current room also block ordinary departure. The party must defeat or drive them off, or establish through the fiction how it sneaks, bargains, distracts, flees, or otherwise bypasses them. Make a room-target check when that bypass is uncertain; failure gives the dungeon its normal action. Bypassed creatures remain in their room unless their Instinct and the fiction cause them to pursue.
 
-The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent features. Do not charge an additional turn merely because the new room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
+The Light spent entering and generating a new room includes the first necessary traversal of its persistent features. Do not charge an additional Light merely because the new room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
 
-Conquest does not erase those features. On a later visit, a conquered room with persistent traversal cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, reduce active light by one turn, and make its normal conquered-room danger roll. Roll a traversal check only if the crossing remains uncertain and failure would have a meaningful consequence.
+Conquest does not erase those features. On a later visit, crossing the room is part of its adjacent movement cost. Roll a traversal check only if the crossing remains uncertain and failure would have a meaningful consequence. A specific feature may state an additional Light cost for sustained work.
 
-A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the recurring cost and allows the room to be included in ordinary fast travel when appropriate. The three-room allowance and 1-in-6 danger chance are accepted for initial playtesting.
+A durable improvement such as a secured rope, lowered bridge, drained channel, cleared route, or opened shortcut removes the fictional obstacle. The 1-in-6 danger chance remains accepted for initial playtesting.
 
 ### Wandering Enemy tables
 
@@ -40,13 +44,21 @@ Escaped wanderers remain in the dungeon. Record their location and let their Ins
 
 Do not roll independently to determine whether a room is Lightable. Every room template specifies one of three Lighting states according to its architecture and terrain:
 
-- **Fixtures:** persistent room-wide lights can be ignited with a flame and no exploration turn;
+- **Fixtures:** persistent room-wide lights can be ignited by spending 1 Light;
 - **Inherent:** furnaces, lava, or another built-in source illuminate the room unless its generated state suppresses them;
 - **None:** only portable or newly introduced light is available.
 
 Fixture and Inherent lighting create **secured light**. Secured light removes darkness disadvantage inside the room and prevents wandering enemies from entering or being generated there. Portable light does not suppress wandering enemies. Domain, Theme, and room state explain the fixtures and may explicitly damage, extinguish, or disable them without changing the template's normal state.
 
-Room Supply and loot results can provide portable torches. A found torch is fresh and lasts six exploration turns unless the specific result says it is partly burned, damaged, unusual, or bundled with additional torches.
+Room Supply and Loot results can provide portable torches. A found torch is fresh and receives 12 Light tokens when lit unless the card says it is partly burned, damaged, unusual, or bundled with additional torches.
+
+### Rest and room search
+
+Conquest does not restore HP. In a conquered room with no active threat, the party may rest: spend 1 Light and restore every living adventurer to full HP. Wounds and Scars remain. Rest costs no portable Light in a permanently illuminated room.
+
+Every conquered room with no active threat can be searched once. Choose an adventurer and a narratively applicable attribute, spend 1 Light, and check against the room target. Success reveals one Loot or discovery card; failure reveals nothing. Mark the room searched either way. A permanently illuminated room waives the Light cost but not the check.
+
+A Challenge's guaranteed card is separate from room search. Conquering the Challenge immediately reveals its one Quest card or Loot/discovery card, if any, without a search, check, or Light cost. The room can still be searched once for an additional Loot card.
 
 ## Accepted normal monster attack
 
@@ -346,7 +358,8 @@ Treat each generated room as a staged group of cards rather than exposing every 
 3. The players state an approach, commit tools and an attribute, and roll only if the outcome is uncertain.
 4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the card earned on conquest, if any. In a physical solo card, print this section upside down or conceal it until the action is committed.
 5. Durably resolve the Challenge and mark the room conquered. The onward passage becomes usable.
-6. Turn over the one earned **Quest card** or **Loot or discovery card**. Some Challenges award no additional card. Its identity remains hidden before conquest; Quest omens belong on Quest cards rather than in the Room's read-aloud description.
+6. Immediately turn over the one guaranteed **Quest card** or **Loot or discovery card**. Some Challenges award no card. This reveal costs no Light and does not count as searching the room.
+7. The conquered room can now be searched once. Spend 1 Light unless it is permanently illuminated, choose a narratively applicable attribute, and check against the room target. Success reveals one additional Loot/discovery card; failure exhausts the search with no card.
 
 The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append an independent atmosphere or haunting roll, Quest content, Challenge presence, or Monster introduction. Those ideas belong on their respective Challenge, Quest, and Monster cards. Particularly strong haunting concepts should be authored as Challenges instead of being applied as a disconnected prose layer.
 

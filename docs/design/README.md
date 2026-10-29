@@ -79,7 +79,7 @@ Entering and generating a new room always consumes one exploration turn. Lengthy
 
 ### Light and darkness
 
-Each expedition begins with **one torch** shared by the party. A torch burns for six exploration turns. Reduce its remaining duration whenever an exploration turn passes; discard it when its duration reaches 0. Additional torches can be chosen as extra items or found as Supply or loot in rooms. Unless a result specifies otherwise, each found torch is fresh and provides six turns of portable light.
+Each expedition begins with **one torch** shared by the party. Put 12 Light tokens on it. Light is spent by named expedition actions rather than every ordinary turn: moving to an adjacent room, entering a new room, resting, searching, treating a Wound, and permanently illuminating suitable fixtures each cost 1 Light. These actions cost no portable Light while the party is in a permanently illuminated room. Additional torches can be chosen as extra items or found as Supply or Loot; each fresh torch receives 12 Light unless its card says otherwise.
 
 A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or any other equipment requiring both hands. Another adventurer may carry the torch. A lone adventurer must set it down, secure it nearby, or accept darkness to use two-handed equipment. Position and the fiction determine whether a placed torch remains useful, becomes inaccessible, or can be extinguished.
 
@@ -87,7 +87,7 @@ Without sufficient light, every adventurer check has disadvantage. Automatic mon
 
 Every room template has an authored **Lighting** entry based on its architecture and terrain:
 
-- **Fixtures:** the layout contains sconces, braziers, lamps, fireplaces, or similar room-wide lighting. A flame can light accessible fixtures without consuming an exploration turn.
+- **Fixtures:** the layout contains sconces, braziers, lamps, fireplaces, or similar room-wide lighting. Spend 1 Light to ignite accessible fixtures permanently.
 - **Inherent:** the layout contains an active light source such as furnaces or lava and begins illuminated unless its generated state explicitly suppresses that source.
 - **None:** the layout has no persistent room-wide light. Portable light still works normally.
 
@@ -97,7 +97,7 @@ A carried or placed torch illuminates the immediate situation but does not count
 
 ### Travel through known rooms
 
-Spend one exploration turn to move through up to three connected conquered rooms. Reduce the remaining duration of active light sources by one turn as normal.
+Move through known rooms one connection at a time. Each adjacent move costs 1 Light unless it begins in a permanently illuminated room. The app may resolve a longer selected route as several consecutive adjacent moves.
 
 Roll a d6 each time the party enters a conquered room during this movement. On a 1, wandering enemies arrive in the room and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not award its conquest Skill Tokens again.
 
@@ -211,7 +211,7 @@ This makes every risky roll an initiative decision. Adventurers can maintain mom
 
 The handoff is the default systemic cost of failure. Do not automatically add an unrelated penalty before the dungeon acts. Some actions still have inherent stakes—a failed leap may cause a fall—but a failed attempt should not be punished twice merely because a roll occurred.
 
-A natural 1 is the explicit exception: its additional exploration turn is part of the critical-failure rule and depletes light like any other exploration turn.
+A natural 1 is the explicit exception: its additional exploration turn is part of the critical-failure rule. It does not automatically spend Light unless the action or consequence names a Light cost.
 
 The attribute and skill ranges remain to be defined. The target ladder is an initial playtest value and may be recalibrated after those ranges are known.
 
@@ -226,8 +226,8 @@ Character creation will use a few linked random tables. The current proposal rol
 **HP means Hit Protection**, not a literal measure of blood or bodily integrity. It represents the adventurer's ability to turn a dangerous hit into a near miss, glancing blow, last-second guard, or expenditure of stamina.
 
 - Damage reduces HP, to a minimum of 0.
-- HP replenishes fully when a fight or immediate danger is genuinely over.
-- Reaching safety between hostile waves is not the same as ending the fight; the fiction determines when HP returns.
+- HP does not replenish automatically when a fight or Challenge ends.
+- In a conquered room with no active threat, the party may rest. Spend 1 Light and restore every living adventurer to full HP; permanent room lighting waives the Light cost.
 - An adventurer at 0 HP is **exposed**.
 - Damage never spills through HP. A hit that reduces HP to 0 causes no lasting harm by itself.
 - A later hit received while already exposed causes a **Wound** determined by the attacker or hazard.
@@ -253,7 +253,7 @@ For example, treating a Bleeding Wound from a sword might leave a Strength −1 
 
 Scars are not active Wounds, so a scarred adventurer does not die merely from receiving one later Wound.
 
-A **medkit** is a single-use treatment item. Spend one exploration turn and consume the medkit to convert one Wound into its Scar. No check is required when the adventurer has enough safety and time to work.
+A **medkit** is a single-use treatment item. Spend 1 Light unless the room is permanently illuminated, spend one exploration turn, and consume the medkit to convert one Wound into its Scar. No check is required when the adventurer has enough safety and time to work.
 
 Attempting treatment during immediate danger requires an appropriate check and still consumes one exploration turn. On success, consume the medkit and convert the Wound. On failure, the Wound remains and control passes to the dungeon; the medkit is not consumed unless the fiction specifically causes it to be lost or ruined. A lone adventurer may treat their own Wound.
 

@@ -1058,3 +1058,17 @@ A full crossbow deals 2 damage on a hit. A hand crossbow and buckler deals the n
 **Result:** Both adventurers extracted after conquering four rooms in fifteen exploration turns. Four bone scuttlers inflicted a Gnawed Wound that treatment converted into a permanent Strength Scar. The pair carried one starting torch and selected one additional torch; both expired before Room 5, where darkness caused two failures and retreat. No wandering enemies appeared across eight eligible rolls.
 
 **Consequences:** Two-adventurer opposition scaling produced a natural Wound without a death. Light pressure and darkness worked, while a Lightable room without a remaining flame offered no safety. A highly relevant Past resolved three major challenges and consumed most of one adventurer's Skill Tokens; the other repeatedly reached the token cap. Terrain, lanterns, group checks, special monster actions, content breadth, recovery, oracle rules, and campaign systems remain incomplete. The full fixture is recorded in [Playtest 006: Two Lights Before Darkness](../playtests/006-two-adventurers/README.md).
+
+## 2026-10-29 - Replace automatic torch countdown with Light-token actions
+
+**Status:** Accepted for implementation and playtesting
+
+**Decision:** A fresh torch holds 12 Light tokens. Light no longer decreases after every ordinary exploration turn. Instead, spend 1 Light to move to an adjacent room, enter a new room, rest and recover HP, search a conquered room, treat a Wound, or permanently illuminate suitable fixtures. These actions cost no portable Light while the party is in a permanently illuminated room. Ordinary checks in an unlit room still have disadvantage at 0 Light.
+
+Conquest no longer restores HP. It immediately reveals the Challenge's one guaranteed Quest or Loot/discovery card, if any, without a check, search, or Light cost.
+
+Every conquered room without an active threat may also be searched once. Spend 1 Light, choose a narratively applicable attribute, and check against the room target. Success reveals one additional Loot/discovery card; failure spends the Light and exhausts the room without Loot. Permanent room lighting waives the Light cost but not the check. A guaranteed Challenge reward does not count as the room's search and does not prevent an additional searched-for Loot card.
+
+**Rationale:** Automatic depletion made missing torch drops create a predictable death spiral. Named costs turn Light into a visible push-your-luck currency: players choose between depth, healing, permanent safe rooms, and optional Loot. Guaranteed rewards remain reliable incentives for conquering danger, while room searches become explicit gambles.
+
+**Consequences:** Known-room travel is priced per connection instead of bundling three rooms into one turn. The app can still resolve a selected longer route as consecutive adjacent moves. Fixture rooms become strategic bases. The 12-token capacity, search success rate, Loot volume, and frequency of permanent lighting require a new extended playtest.

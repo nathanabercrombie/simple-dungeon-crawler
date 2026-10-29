@@ -219,9 +219,9 @@ After receiving the gear supplied by character creation, each adventurer gains o
 
 There is no numerical carrying capacity, slot inventory, or encumbrance total. Adventurers can keep useful items found during play, subject to ordinary fictional limits for enormous, bulky, or awkward objects. Consumables are crossed off after use; durable items remain until lost, broken, spent, or abandoned.
 
-A medkit is single-use. Treating a Wound takes one exploration turn and consumes the medkit on success. Treatment in safety requires no check; treatment during immediate danger does. A failed dangerous treatment leaves the Wound and medkit intact unless the fiction specifically ruins the supply, and control passes to the dungeon normally.
+A medkit is single-use. Treating a Wound takes one exploration turn, spends 1 Light unless the room is permanently illuminated, and consumes the medkit on success. Treatment in safety requires no check; treatment during immediate danger does. A failed dangerous treatment leaves the Wound and medkit intact unless the fiction specifically ruins the supply, and control passes to the dungeon normally.
 
-The party begins each expedition with one shared torch lasting six exploration turns. The torch is expedition equipment rather than an adventurer's additional item. Additional torches, lanterns, or oil can be selected as additional items or found during play.
+The party begins each expedition with one shared torch holding 12 Light tokens. The torch is expedition equipment rather than an adventurer's additional item. Spend 1 Light to move to an adjacent room, enter a new room, rest, search, treat a Wound, or permanently illuminate suitable fixtures. These actions spend no portable Light in a permanently illuminated room. Additional torches, lanterns, or oil can be selected as additional items or found during play.
 
 The burning torch occupies one hand. Its bearer cannot use a bow or other two-handed equipment until another adventurer takes the torch or it is placed somewhere that continues to illuminate the situation.
 
