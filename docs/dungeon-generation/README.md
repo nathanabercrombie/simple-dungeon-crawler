@@ -337,6 +337,21 @@ Room contents use two independent axes rolled together:
 
 Independent axes allow monster plus treasure, trap plus shortcut, social obstacle plus clue, quiet room plus secret, and other combinations. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
 
+### Accepted card reveal sequence
+
+Treat each generated room as a staged group of cards rather than exposing every result at once:
+
+1. Reveal the **Room card** and the player-facing front of its **Challenge card**.
+2. Follow the Challenge's immediate instruction. An Ambush or creature Challenge may reveal one or more **Monster cards** now; other Quest and reward cards remain facedown.
+3. The players state an approach, commit tools and an attribute, and roll only if the outcome is uncertain.
+4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the cards earned on conquest. In a physical solo card, print this section upside down or conceal it until the action is committed.
+5. Durably resolve the Challenge and mark the room conquered. The onward passage becomes usable.
+6. Turn over the earned **Quest** and **Loot or discovery cards**. Their identities remain hidden before conquest, though immediately visible quest omens may appear in the Room's read-aloud description.
+
+Challenge is a broad card type covering ambushes, creatures, obstacles, hazards, traps, puzzles, social confrontations, guardians, setbacks, and Quest Hearts. A Heart is the selected Quest pack's final Challenge card. Conquering it begins extraction rather than revealing a separate Heart card.
+
+Cards identify both their type and source set. The Core set supplies reusable Challenges and ordinary Loot; a Location pack supplies its Rooms, most Monsters, themed Challenges, and discoveries; the selected Quest pack supplies its mission, Quest cards, setbacks, and Heart Challenge. A hidden passage is a room-state change or reward instruction, not a separate card type.
+
 ## Accepted site identity: Domain + Theme
 
 Every site has one **Domain** and one **Theme**.

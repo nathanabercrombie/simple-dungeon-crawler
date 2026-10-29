@@ -211,6 +211,15 @@ button.map-cell:hover { border-color: var(--gold-soft); }
 .scene-block h4 { margin: 13px 0 6px; color:var(--muted); font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
 .scene-block ul { margin: 0 0 7px; padding-left: 20px; color:#d2c9b6; font: 14px/1.5 var(--serif); }
 .scene-block small { color:var(--dim); font-size:10px; }
+.challenge-card { padding:18px; border:1px solid var(--line-bright); background:linear-gradient(145deg,#202119,#181914); }
+.challenge-instruction, .reward-instruction { margin-top:14px; padding:10px 12px; border-left:2px solid var(--gold); background:#171812; color:#d5ccb8; font-size:11px; line-height:1.5; }
+.resolution-panel { margin-top:16px; padding-top:16px; border-top:1px dashed var(--line-bright); }
+.facedown-card { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; margin-top:16px; padding:16px; border:1px solid var(--line-bright); background:repeating-linear-gradient(135deg,#1a1b16,#1a1b16 8px,#202119 8px,#202119 16px); }
+.facedown-card > div { display:grid; gap:4px; }
+.facedown-card strong { font:600 15px var(--serif); }
+.facedown-card small { color:var(--muted); font-size:10px; line-height:1.4; }
+.card-back-mark { color:var(--gold); font:600 22px var(--serif); }
+.quest-hidden { margin-top:0; }
 .facilitator-rules { display:grid; gap:7px; margin:12px 0 15px !important; padding:0 !important; list-style:none; font:12px/1.5 var(--sans) !important; }
 .facilitator-rules li { padding:9px 11px; border-left:2px solid var(--line-bright); background:#1a1b16; color:#c9c2b2; }
 .facilitator-rules li:nth-child(1) { border-left-color:var(--blue); }
