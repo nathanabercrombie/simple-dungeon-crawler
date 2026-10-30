@@ -192,47 +192,102 @@
     }[room.challengeRoll] || 'It occupies the challenge’s central position. Durably resolving or bypassing that challenge grants access.';
   }
 
+  const questProgressProfiles = {
+    1:{ object:'the Gravehorn', location:'the Gravehorn’s feeding crypt', opposition:'the hunting beast', threat:'it is drawn to blood and wounded prey', sign:'Deep antler gouges cross a royal coffin, and coarse black hair is caught in the splinters.', trace:'Half-eaten burial wrappings and fresh hoofprints continue deeper into the tomb.', lead:'A hunter’s mark identifies the beast’s blind side and the downwind approach to its feeding crypt.', use:'The first concealed attack against the Gravehorn has advantage.', setback:'The Gravehorn has caught the party’s scent. At the Heart, it acts first unless the party presents bait or masks its scent.' },
+    2:{ object:'Saint Orra’s silver funeral bell', location:'Saint Orra’s sealed reliquary', opposition:'the oathbound guardian', threat:'breaking the reliquary seal wakes its guardian', sign:'A wall relief names Saint Orra’s silver funeral bell and shows an armored guardian kneeling beside its sealed case.', trace:'Silver polish and flakes of old sealing wax mark the route used to inspect the reliquary.', lead:'A copied command phrase orders the oathbound guardian to lower its weapon for one petitioner.', use:'Speak the command phrase to prevent the guardian’s first dungeon action.', setback:'The reliquary’s outer seal has been disturbed. Its guardian begins the Heart alert and cannot be surprised.' },
+    3:{ object:'Elian Voss', location:'Elian Voss’s prison', opposition:'his gaoler', threat:'the gaoler moves him whenever rescuers approach openly', sign:'A fresh prison tally names Elian Voss and marks him alive, isolated, and under continual watch.', trace:'A strip torn from an archivist’s coat is knotted around a route marker leading deeper into the cells.', lead:'A smuggled note gives Elian’s safe signal and warns that the outer cell key does not open his restraint.', use:'Give the safe signal to prevent Elian from resisting or alerting his gaoler during the rescue.', setback:'The gaoler knows someone is searching for Elian. The first failed rescue action moves Elian behind another restraint.' },
+    4:{ object:'the Royal Revenant', location:'the false royal burial', opposition:'the dead sustained by the borrowed name', threat:'the false burial lets the Revenant return after defeat', sign:'A royal portrait bears two names: the king’s title in gold and another person’s name scratched beneath it.', trace:'Spectral footprints leave the official procession and converge on the false royal grave.', lead:'A burial clause states that the dead lose royal authority when the corpse’s true name is spoken.', use:'Speaking the true name at the Heart prevents the Royal Revenant from returning after defeat.', setback:'The false burial has consumed another name. The first failed action at the Heart deals 1 damage to the speaker.' },
+    5:{ object:'the Mirror Wound', location:'the breach beneath the tomb', opposition:'the Pale Court', threat:'each broken ward lets another part of the Pale Court enter', sign:'A polished slab depicts a crack in empty air labeled “Mirror Wound” and four ward plates around it.', trace:'Mirror-bright dust and inward-facing footprints lead toward the lower breach.', lead:'A ward diagram identifies the one quarter of the seal that must be restored first.', use:'Restore the first quarter of the final seal without a check.', setback:'One ward has failed completely. The first failed sealing action allows a Pale Court creature to act.' },
+    6:{ object:'the unaltered burial record', location:'the hidden royal archive', opposition:'the witness guarding the record', threat:'altered copies falsely support Chancellor Vale', sign:'Two burial summaries name different corpses, but both bear Chancellor Vale’s authorization mark.', trace:'Scraps of unaltered register paper lead from a burned archive cabinet toward a concealed record room.', lead:'A witness list identifies the one official whose testimony can authenticate the original record.', use:'Present this lead to make the first attempt to persuade or expose the witness succeed without a check.', setback:'Someone has begun destroying the archive. The first failed action at the Heart destroys one supporting clue.' },
+    7:{ object:'Queen Mereth’s erased name', location:'Queen Mereth’s nameless grave', opposition:'the restless household dead', threat:'the dead attack anyone who repeats the false name', sign:'A queen’s epitaph has been carefully erased, but the surviving title identifies the grave as Mereth’s.', trace:'Loose name tiles and scraps of funeral cloth lead toward the household’s nameless grave.', lead:'A rite tablet gives the exact order: restore the name, return the remains, then ring the funeral bell.', use:'Follow the recorded order to complete the first step of the final rite without a check.', setback:'The household dead have mistaken another body for Mereth. The remains must be identified before the rite can finish.' },
+    8:{ object:'the Mortuary Engine', location:'the engine chamber', opposition:'the intelligence directing the engine', threat:'the engine restarts unless its governor is locked', sign:'A maintenance slate names the Mortuary Engine and records another cycle beginning without an operator.', trace:'Fresh grease, dragged corpses, and rhythmic impacts mark the route toward the engine chamber.', lead:'A cooling diagram identifies the pressure line that can halt the engine without causing an explosion.', use:'Disable the cooling line to remove the Engine’s first defensive action.', setback:'The controlling intelligence has sealed the manual controls. The first attempt to reach them is made with disadvantage.' },
+    9:{ object:'the Widow-King’s Crown', location:'the royal treasury', opposition:'the oathbound treasury keeper', threat:'the keeper watches the crown and tests every claimant’s authority', sign:'A wall inventory names the Widow-King’s black-gold funeral crown and depicts it beneath the treasury keeper’s hands.', trace:'Tiny black-gold flakes and a scrape from the crown’s casket continue toward the royal treasury.', lead:'A treasury duty slate records the keeper’s unobserved interval and the command used when the watch changes.', use:'Use the watch interval to make the first check to enter or cross the royal treasury with advantage.', setback:'The keeper has found a disturbed seal and moved the Crown into its inner casket. The first failed action at the Heart gives the keeper an immediate dungeon action.' },
+    10:{ object:'the bone-moth queen', location:'the brood chamber', opposition:'the corpse-swollen queen and her brood', threat:'heat can spread the brood unless it reaches the lethal temperature quickly', sign:'A preserved specimen is labeled as a juvenile bone moth and warns that the queen nests inside royal remains.', trace:'Powdered bone, shed wings, and dragged corpse fragments thicken toward the brood chamber.', lead:'An embalmer’s test records the exact heat that kills eggs without releasing their spores.', use:'Apply the recorded heat to destroy one brood clutch without a check.', setback:'A viable clutch has been moved outside the brood chamber. It must be destroyed before extraction.' },
+    11:{ object:'Captain Ysra’s expedition', location:'Captain Ysra’s final camp', opposition:'the threat trapping the survivors', threat:'ordinary calls draw the threat before they reach survivors', sign:'A route marker bears Captain Ysra’s crest and a tally showing that several expedition members survived this far.', trace:'Survey chalk and abandoned equipment mark the company’s retreat toward a defensible final camp.', lead:'A coded whistle pattern will receive an answer from survivors without alerting the thing trapping them.', use:'Use the coded signal to locate the final camp without a check.', setback:'The trapped company has split. Rescuing the survivors and recovering the route journal now require two separate actions.' },
+    12:{ object:'Lady Vey’s binding agreement', location:'Lady Vey’s funeral court', opposition:'the factions disputing her authority', threat:'an unsupported promise is treated as another insult', sign:'A court record names Lady Vey and lists the grievance that ended safe passage through her domain.', trace:'Offerings and faction seals become more numerous along the processional route toward her funeral court.', lead:'Signed testimony proves that a third party caused one of Lady Vey’s central grievances.', use:'Present the testimony to remove one grievance from the final negotiation without a check.', setback:'A rival faction has accused the party of acting in bad faith. The final parley begins with one additional demand.' }
+  };
+
+  function questProgressFor(room, type) {
+    const profile = questProgressProfiles[state.quest.index] || questProgressProfiles[4];
+    const variants = {
+      Omen:[
+        [`Warning: ${profile.object}`, profile.sign],
+        [`The Named Objective`, `A carved inventory explicitly names ${profile.object} and depicts this danger: ${profile.threat}.`]
+      ],
+      Trace:[
+        [`Trail of ${profile.object}`, profile.trace],
+        [`Restricted Movement Record`, `A movement ledger records ${profile.object} being taken toward ${profile.location} through a restricted route.`]
+      ],
+      Lead:[
+        [`Access to ${profile.location}`, profile.lead],
+        [`Weakness of ${profile.opposition}`, `A security note identifies a lapse in ${profile.opposition}’s protection of ${profile.object}.`]
+      ],
+      'Guardian or setback':[
+        [`The Quest Tightens`, profile.setback],
+        [`Opposition Alerted`, `Fresh warning marks show ${profile.opposition} is now alert to intruders seeking ${profile.object}. ${profile.setback}`]
+      ]
+    };
+    const [title, prose] = stablePick(room, `quest-${type}`, variants[type] || variants.Omen);
+    const effects = {
+      Omen:`This confirms the objective is ${profile.object}. Danger: ${profile.threat}.`,
+      Trace:`The next check made to track or locate ${profile.object} has advantage.`,
+      Lead:profile.use,
+      'Guardian or setback':profile.setback
+    };
+    return { title, prose, effect:effects[type], subtype:type };
+  }
+
+  const questElementUses = {
+    'The Barbed Antler':'Use it to deal +1 damage on one successful attack against the Gravehorn.',
+    'The Last Hunter’s Journal':'The first attack from concealment against the Gravehorn has advantage.',
+    'The Scent Chain':'Choose where the Gravehorn begins the final encounter.',
+    'The Brass Vault Key':'Open the reliquary’s inner housing without a check.',
+    'The Command Phrase':'Prevent the oathbound guardian’s first dungeon action.',
+    'The Reliquary Map':'Reach the reliquary’s inner chamber without searching for its false wall.',
+    'The Gaoler’s Key':'Open Elian Voss’s restraint without a check.',
+    'The Captor’s Ledger':'Choose the moment when Elian’s gaoler is alone.',
+    'The Smuggled Message':'Signal Elian without alerting his gaoler.',
+    'The Murder Weapon':'Return or destroy it to end the murder reenactment.',
+    'The Broken Oath':'Speak its release clause to end the guard’s pursuit.',
+    'The Stolen Name':'Speak the corpse’s true name to silence the mass haunting.',
+    'The North Ward':'Restore one quarter of the Mirror Wound’s seal without a check.',
+    'Salt of the Threshold':'Draw the final ritual boundary without spending another resource.',
+    'The Exile Formula':'Complete the final line of the sealing rite.',
+    'The Witness Tablet':'Use it as direct testimony against Chancellor Vale.',
+    'The Unaltered Register':'Use it as the decisive physical evidence of the substituted corpse.',
+    'The Signet Impression':'Prove which official authorized the false burial.',
+    'The Unattended Remains':'Return these remains to complete one step of Queen Mereth’s rite.',
+    'The Funeral Bell':'Call the household dead back to the proper grave.',
+    'The Last Name':'Restore Queen Mereth’s erased identity.',
+    'The Governor Key':'Lock the Mortuary Engine so it cannot restart.',
+    'The Cooling Diagram':'Disable the Engine safely instead of causing an explosion.',
+    'The Blind Control':'Operate the Engine once without the directing intelligence interfering.',
+    'The Assayer’s Token':'Pass the treasury’s first identity test without a check.',
+    'The Shift Record':'Approach the Widow-King’s Crown during the unobserved interval; the first treasury stealth check has advantage.',
+    'The Inner Casket Key':'Open the Crown’s inner casket without damaging it or making a check.',
+    'The Sterile Egg':'Identify the heat that destroys a brood clutch without spreading spores.',
+    'The Survivor’s Map':'Reach the queen’s feeding tunnel without a tracking check.',
+    'The Bitter Smoke':'Divide the final swarm before the first action.',
+    'The Cartographer’s Reel':'Identify the route to Captain Ysra’s final camp.',
+    'The Captain’s Whistle':'Signal surviving expedition members without drawing the trapping threat.',
+    'The Abandoned Pack':'Identify the threat that forced the company to abandon its route.',
+    'The Funeral Gift':'Remove one grievance from Lady Vey’s final negotiation.',
+    'The Grievance Record':'Prove that a third party caused one of Lady Vey’s complaints.',
+    'The Faction Seal':'Make one binding promise that Lady Vey’s court will recognize.'
+  };
+
   function buildQuestScene(room) {
     const type = room.quest.name;
     if (type === 'Quest element' || type === 'Major quest element' || type === 'Heart advantage') {
       const [title, prose] = questElementFor(room);
       return {
         title, prose,
-        effect: type === 'Major quest element' ? 'This major element states exactly how one defensive layer of the Heart is removed.' : 'This is a concrete Quest element; record it and apply its stated effect at the Heart.',
-        placement: questElementPlacement(room)
+        effect: questElementUses[title] || `Use this to remove one obstacle protecting ${state.quest.heart}.`,
+        claim: questElementPlacement(room), subtype:type
       };
     }
-    if (type === 'Heart') return { title: state.quest.heart, prose:`The objective of “${state.quest.name}” is physically present in this room. It is accessible now, with ${state.quest.elementsFound} concrete element${state.quest.elementsFound === 1 ? '' : 's'} already discovered.`, effect:'Conquering this Heart completes the site’s primary objective; extraction is still required.' };
-    const options = {
-      Omen: [
-        ['The Empty Face','Every portrait in the room has the same face scratched away with a narrow blade. The damage is old, deliberate, and limited to one identity.'],
-        ['The Repeated Last Words','The room’s faint voices all stop their separate prayers to say, “It was buried under a borrowed name.”'],
-        ['The Unopened Funeral','Dusty mourners’ tracks circle an untouched bier, but no tracks approach or leave it.']
-      ],
-      Trace: [
-        ['Resin on the Wrong Door','Fresh-looking embalming resin marks a door never intended for bodies, proving the Quest’s agents used this route.'],
-        ['The Dragged Regalia','A line through the dust shows a heavy royal object was dragged toward one specific exit.'],
-        ['A Second Set of Footprints','One set of spectral prints repeats the official procession; another cuts across it toward a hidden destination.']
-      ],
-      Lead: [
-        ['The Embalmer’s Index','A preparation number matches a lower-level chamber mark and identifies the route used for the substituted corpse.'],
-        ['The Guard Rotation','A wall slate names the one threshold where the ancient oath changes wording and becomes vulnerable.'],
-        ['The Split Epitaph','Two halves of an epitaph name different people as the same royal dead, pointing toward the record that can settle the identity.']
-      ],
-      'Guardian or setback': [
-        ['The Loyal Lie','A risen lieutenant has destroyed part of the evidence and moved the surviving piece behind the room’s active challenge.'],
-        ['The False Confession','A plausible record accuses the wrong person; physical details in this room expose one contradiction.'],
-        ['The Pursuing Witness','A frightened spirit takes the needed fact and flees toward a connected room when approached openly.']
-      ]
-    };
-    const [title, prose] = stablePick(room, 'quest-detail', options[type] || options.Omen);
-    const effects = {
-      Omen: 'Keep this as foreshadowing. It does not count as a claimed Quest element.',
-      Trace: 'This confirms that the objective or its agents affected this room. It does not count as a claimed Quest element.',
-      Lead: 'This provides actionable information the party may use later. It does not count as a claimed Quest element.',
-      'Guardian or setback': 'Apply this complication now. It does not count as a claimed Quest element.'
-    };
-    return { title, prose, effect: effects[type] || `Use this information while pursuing “${state.quest.name}.”` };
+    if (type === 'Heart') return { title: state.quest.heart, prose:`The objective is here: ${state.quest.objective}`, effect:'Conquer this Heart to complete the objective. The party must still return to the entrance.', subtype:type };
+    return questProgressFor(room, type);
   }
 
   function buildSceneRef(room) {
@@ -265,7 +320,8 @@
           : '',
       pressure:sourceChallenge.title === 'The Grave Frost' ? 'After each failed action in this Room, the acting adventurer takes 1 damage from the cold.' : '',
       detail:room.challengeRoll === 1 ? sourceChallenge.rule : '',
-      revelation:room.challengeRoll === 1 ? '' : sourceChallenge.title === 'The Grave Frost' ? 'Ordinary warmth does not stop it.' : sourceChallenge.rule,
+      revelation:room.challengeRoll === 1 ? '' : sourceChallenge.title === 'The Grave Frost' ? 'Ordinary warmth does not stop it.' : sourceChallenge.title === 'The False Sarcophagus' ? 'Moving the coffin compresses hidden floor bellows connected to the carved mouths.' : '',
+      rule:room.challengeRoll === 1 ? '' : sourceChallenge.title === 'The Grave Frost' ? '' : sourceChallenge.title === 'The False Sarcophagus' ? 'Seal the carved mouths or disarm the bellows with a room-target Mind check.' : sourceChallenge.rule,
       failure:room.challengeRoll === 1 || sourceChallenge.title === 'The Grave Frost' ? '' : sourceChallenge.consequence,
       active:sourceChallenge.title === 'The Grave Frost' ? sourceChallenge.consequence : ''
     };
@@ -1314,6 +1370,7 @@
     };
     const responseRows = [
       scene.challenge.revelation && `<li><strong>Revelation:</strong> ${esc(scene.challenge.revelation)}</li>`,
+      scene.challenge.rule && `<li><strong>Rule:</strong> ${esc(scene.challenge.rule)}</li>`,
       scene.challenge.failure && `<li><strong>Failure:</strong> ${esc(scene.challenge.failure)}</li>`,
       scene.challenge.active && `<li><strong>While active:</strong> ${esc(scene.challenge.active)}</li>`,
       scene.challenge.endsWhen && `<li><strong>Ends when:</strong> ${esc(scene.challenge.endsWhen)}</li>`
@@ -1361,7 +1418,7 @@
     const rewardType = challengeRewardType(room);
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     const questCard = rewardType === 'quest' && cards.rewardsRevealed
-      ? `<article class="game-card compact-game-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} pack · ${esc(scene.quest.subtype || room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder quest-art"><span>Quest artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(scene.quest.prose)}</p>${isQuestElement(room) ? `<p><strong>Claim:</strong> ${esc(scene.quest.claim || questElementPlacement(room))}</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>${room.quest.name === 'Omen' ? 'Meaning' : room.quest.name === 'Heart' ? 'Claim' : 'Use'}:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest card</footer></article>`
+      ? `<article class="game-card compact-game-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} pack · ${esc(scene.quest.subtype || room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder quest-art"><span>Quest artwork</span><small>Placeholder</small></div><div class="card-text"><p><strong>Objective:</strong> ${esc(state.quest.objective)}</p><p>${esc(scene.quest.prose)}</p>${isQuestElement(room) ? `<p><strong>Claim:</strong> ${esc(scene.quest.claim || questElementPlacement(room))}</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>${room.quest.name === 'Omen' ? 'Meaning' : room.quest.name === 'Heart' ? 'Claim' : 'Use'}:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest card</footer></article>`
       : `<div class="empty-state">${rewardType === 'quest' ? 'The guaranteed Quest card remains facedown until conquest.' : 'This card does not guarantee a Quest card.'}</div>`;
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monster cards</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? live.map(renderEnemyCard).join('') : '<div class="empty-state">No active Monster card.</div>'}</div></section><section><div class="subhead">Quest cards</div><div class="quest-list">${questCard}</div></section></aside>`;
   }

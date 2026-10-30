@@ -1096,3 +1096,15 @@ Remove Evidence, Feature, Route, Relic, and the broad Discovery card type. Infor
 **Rationale:** Every revealed reward should produce obvious game value. The previous broad Discovery deck frequently produced bookkeeping or fictional permissions instead of supplies, score, or character improvement.
 
 **Consequences:** Loot Challenges always produce Loot, successful searches reveal additional Loot, and the expedition tracks a visible Gold score. The d8 Loot roll is split evenly: Supply on 1–4 and Treasure on 5–8.
+
+## 2026-10-30 - Require visible dependencies and quest-specific progress
+
+**Status:** Accepted
+
+**Decision:** A Challenge front must establish every physical object or sequence required by its Response unless discovering that dependency is explicitly the Revelation. Every Quest card must restate the selected objective and directly name its target, location, opposition, or usable advantage. Generic cards written for another storyline are prohibited.
+
+Quest Elements must state an exact Use at the Heart. Omens identify the actual objective and danger; Traces provide a tracking advantage; Leads provide a concrete benefit; Setbacks state their exact complication.
+
+**Rationale:** Players cannot make an informed commitment when a required third bowl, ritual sequence, or anchor exists only on the hidden Response. Likewise, a false-burial clue has no comprehensible value while pursuing the Widow-King’s Crown.
+
+**Consequences:** Challenge copy requires a dependency audit. Each Quest pack supplies objective-specific progress language, and every visible Quest card repeats the mission objective so its relevance is immediately clear.

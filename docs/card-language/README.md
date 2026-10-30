@@ -24,7 +24,7 @@ A quiet aftermath, clue tableau, or other situation without active opposition is
 
 Front: Title; sensory, immediately perceptible situation; Immediate instruction; guaranteed reward icon, if any.
 
-Response: **Revelation**, **Failure**, optional **While Active**, and **Ends When** only if the universal conquest boundary is ambiguous.
+Response: optional **Revelation**, the card-specific **Rule**, **Failure**, optional **While Active**, and **Ends When** only if the universal conquest boundary is ambiguous. Use Revelation only for information genuinely learned after commitment; do not label an ordinary procedure as a Revelation.
 
 Do not print Examine, Engage, Possible Resolutions, or a bespoke Conquer field. Do not hide evidence that a person in the Room can already see, hear, smell, or feel.
 
@@ -71,9 +71,11 @@ Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A To
 ## Writing rules
 
 - Put visible facts on the front and hidden consequences on the Response side.
+- If a Response refers to an object, opening, sequence, creature, or other physical dependency, establish it on the front unless discovering it is itself the Revelation.
 - State triggers first: “When…”, “After…”, or “While…”.
 - Use exact nouns and verbs. Avoid “eligible,” “qualifying,” “appropriate,” “may justify,” and undefined supernatural categories.
 - Never list preferred solutions. State the obstacle, pressure, and consequences precisely enough for free-form solutions to be judged.
 - Do not repeat universal rules on individual cards.
 - Do not print random-generation metadata on play-facing cards.
 - Every Challenge is authored with exactly one reward type: Quest or Loot. Searching is a separate optional gamble that can reveal one additional Loot card.
+- Every Quest card names or restates the selected objective and explains how its Finding changes the attempt to reach or resolve that objective. Never reuse storyline-specific filler across unrelated Quest packs.
