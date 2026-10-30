@@ -1072,3 +1072,15 @@ Every conquered room without an active threat may also be searched once. Spend 1
 **Rationale:** Automatic depletion made missing torch drops create a predictable death spiral. Named costs turn Light into a visible push-your-luck currency: players choose between depth, healing, permanent safe rooms, and optional Loot. Guaranteed rewards remain reliable incentives for conquering danger, while room searches become explicit gambles.
 
 **Consequences:** Known-room travel is priced per connection instead of bundling three rooms into one turn. The app can still resolve a selected longer route as consecutive adjacent moves. Fixture rooms become strategic bases. The 12-token capacity, search success rate, Loot volume, and frequency of permanent lighting require a new extended playtest.
+
+## 2026-10-29 - Standardize cards around front, Response, and universal conquest
+
+**Status:** Accepted
+
+**Decision:** Challenge fronts contain every immediately perceptible fact and an Immediate instruction. After a player commits to an approach, reveal a hidden Response side containing only Revelation, Failure, While Active, and an exceptional Ends When field. Remove Examine actions, Engage sections, Possible Resolutions, and bespoke conquest clauses.
+
+Conquest always means the Challenge durably stops applying to the party's use of the Room. Temporary bypasses do not qualify. Quiet aftermaths are Scenes whose Rooms begin conquered and grant no Skill Token. Rename the broad reward type Discovery; Loot is its portable subset. Remove generation metadata from play-facing cards.
+
+**Rationale:** A one-flip physical card cannot support a privileged Examine action without making it the automatic best opening. Visible evidence belongs before commitment, while consequences belong after it. Universal card cleanup preserves free-form problem solving and makes expansion cards interoperable.
+
+**Consequences:** Every pack follows the schemas and terminology in [Card language and lifecycle](../card-language/README.md). Challenge cards reveal at most one guaranteed Quest or Discovery card; optional Room search remains separate.

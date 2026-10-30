@@ -353,13 +353,17 @@ Each Challenge awards exactly one **Quest card**, one **Loot or discovery card**
 
 Treat each generated room as a staged group of cards rather than exposing every result at once:
 
-1. Reveal the **Room card** and the player-facing front of its **Challenge card**.
-2. Follow the Challenge's immediate instruction. An Ambush or creature Challenge may reveal one or more **Monster cards** now; other Quest and reward cards remain facedown.
-3. The players state an approach, commit tools and an attribute, and roll only if the outcome is uncertain.
-4. Reveal the Challenge's hidden resolution side. It supplies facilitator clues, rules, failure consequences, possible resolutions, and the card earned on conquest, if any. In a physical solo card, print this section upside down or conceal it until the action is committed.
-5. Durably resolve the Challenge and mark the room conquered. The onward passage becomes usable.
-6. Immediately turn over the one guaranteed **Quest card** or **Loot or discovery card**. Some Challenges award no card. This reveal costs no Light and does not count as searching the room.
-7. The conquered room can now be searched once. Spend 1 Light unless it is permanently illuminated, choose a narratively applicable attribute, and check against the room target. Success reveals one additional Loot/discovery card; failure exhausts the search with no card.
+1. Reveal the **Room card** and the player-facing front of its **Challenge card**. Put every immediately perceptible fact on that front.
+2. Follow the Challenge's Immediate instruction. A creature Challenge may reveal one or more **Monster cards** now; Quest and Discovery cards remain facedown.
+3. The players commit to an approach that could make the Challenge stop applying. Ask ordinary clarifying questions freely; make a check only when outcome is uncertain and failure matters.
+4. Reveal the hidden **Response side** before resolving that uncertain check. It contains only Revelation, Failure, While Active, and—when genuinely unclear—Ends When rules. Do not print solution lists.
+5. When the Challenge durably stops applying to the party's use of the Room, conquer it. A temporary bypass does not qualify if the card will apply again on return.
+6. Every active adventurer gains one Skill Token. Immediately turn over the one guaranteed **Quest card** or **Discovery card**, if any. This costs no Light and does not count as searching.
+7. The conquered Room can now be searched once. Spend 1 Light unless it is permanently illuminated, choose a narratively applicable attribute, and check against the Room target. Success reveals one additional Discovery card; failure exhausts the search with no card.
+
+A quiet result is a **Scene**, not a Challenge. Its Room begins conquered, it has no Response side, and it grants no Skill Token. Follow its immediate reveal, if any, and allow the normal optional search.
+
+The complete schemas, vocabulary, and writing rules are in the [card-language standard](../card-language/README.md).
 
 The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append an independent atmosphere or haunting roll, Quest content, Challenge presence, or Monster introduction. Those ideas belong on their respective Challenge, Quest, and Monster cards. Particularly strong haunting concepts should be authored as Challenges instead of being applied as a disconnected prose layer.
 
