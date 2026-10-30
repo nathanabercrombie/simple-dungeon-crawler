@@ -1306,7 +1306,7 @@
     const title = isHeart ? scene.quest.title : scene.challenge.title;
     const front = isHeart ? `${scene.quest.prose} ${scene.challenge.front}` : scene.challenge.front;
     const pack = isHeart ? `${state.quest.name} Quest pack` : room.challengeRoll === 8 ? 'Core set' : 'Haunted Tomb location pack';
-    const rewardText = rewardType === 'quest' ? 'reveal one Quest card' : rewardType === 'loot' ? 'reveal one Discovery card' : 'reveal no additional card';
+    const rewardText = rewardType === 'quest' ? 'One Quest card' : rewardType === 'loot' ? 'One Discovery card' : 'No additional card';
     const search = roomSearchState(room);
     const searchDiscovery = search.success ? buildSearchLoot(room) : null;
     const discoveryCard = (discovery, searched = false) => {
@@ -1323,9 +1323,9 @@
     ].filter(Boolean).join('');
     const roomDefinition = roomTermDefinition(template.name);
     const challengeBody = isScene
-      ? `<div class="resolution-panel"><p>${esc(scene.challenge.detail || '')}</p><div class="reward-instruction"><strong>Scene:</strong> The Room is already conquered. ${esc(rewardText)} immediately; gain no Skill Token.</div></div>`
+      ? `<div class="resolution-panel"><p>${esc(scene.challenge.detail || '')}</p><div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)}. Gain no Skill Token.</div></div>`
       : cards.resolutionRevealed
-        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}<div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)} immediately upon conquest.</div></div>`
+        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}<div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)}.</div></div>`
         : '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>';
     return `<main class="pane pane-room"><div class="section-head"><h2>Cards in play</h2><span>Room ${room.number} · ${esc(template.name)}</span></div><div class="card-table">
       <article class="game-card room-card card-room"><header class="card-titlebar room-header"><div><div class="eyebrow">Room ${room.number} · Haunted Tomb</div><h2>${esc(template.name)}</h2></div><strong>${template.target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><div class="room-meta"><span class="tag danger-${template.danger.toLowerCase()}">${template.danger}</span><span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? 'Permanently lit' : template.lighting}</span>${darkness ? '<span class="tag danger-hard">Darkness</span>' : ''}${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div><section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud</div><div class="read-aloud-parts">${scene.readAloudParts.map(part => `<div class="read-aloud-part"><span class="prose-source">${esc(part.source)}</span><p><em>${esc(part.text)}</em></p></div>`).join('')}</div></section><p><strong>Built as:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p>${roomDefinition ? `<p><strong>${esc(roomDefinition[0])}:</strong> ${esc(roomDefinition[1])}.</p>` : ''}</div><footer class="card-footer">Room ${room.number} · template ${template.index}</footer></article>
