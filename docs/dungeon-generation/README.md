@@ -56,9 +56,9 @@ Room Supply and Loot results can provide portable torches. A found torch is fres
 
 Conquest does not restore HP. In a conquered room with no active threat, the party may rest: spend 1 Light and restore every living adventurer to full HP. Wounds and Scars remain. Rest costs no portable Light in a permanently illuminated room.
 
-Every conquered room with no active threat can be searched once. Choose an adventurer and a narratively applicable attribute, spend 1 Light, and check against the room target. Success reveals one Loot or discovery card; failure reveals nothing. Mark the room searched either way. A permanently illuminated room waives the Light cost but not the check.
+Every conquered room with no active threat can be searched once. Choose an adventurer and a narratively applicable attribute, spend 1 Light, and check against the room target. Success reveals one Loot card; failure reveals nothing. Mark the room searched either way. A permanently illuminated room waives the Light cost but not the check.
 
-A Challenge's guaranteed card is separate from room search. Conquering the Challenge immediately reveals its one Quest card or Loot/discovery card, if any, without a search, check, or Light cost. The room can still be searched once for an additional Loot card.
+A Challenge's assigned card is separate from room search. Conquering the Challenge reveals its Quest or Loot card without a search, check, or Light cost. The room can still be searched once for an additional Loot card.
 
 ## Accepted normal monster attack
 
@@ -345,21 +345,26 @@ These layers should be combined into as few physical rolls as practical. A futur
 Room contents use a Challenge roll and one hidden reward result:
 
 - **d12 Challenge:** establishes the primary problem and potential conquest condition.
-- **d8 Opportunity:** supplies a candidate Loot or discovery card when the Challenge awards that card type.
+- **d8 Loot:** selects Supply on 1–4 or Treasure on 5–8 when the Challenge awards Loot.
 
-Each Challenge awards exactly one **Quest card**, one **Loot or discovery card**, or **no additional card**. It never awards both. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot or discovery cards. A Quest Heart is already the Challenge and therefore never reappears as a Quest reward. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
+Each Challenge is explicitly assigned exactly one **Quest card** or one **Loot card**. It never awards both and never has an empty reward. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot. A Quest Heart is already the Challenge and awards Loot rather than another Quest card. Loot is always either Supply or Treasure. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
+
+The current d12 assignments are fixed:
+
+- **Quest:** 1 Quiet Scene, 5 Puzzle, 6 Social Obstacle, 7 Uncertain Creature, 10 Creature + Theme.
+- **Loot:** 2 Domain Obstacle, 3 Theme Hazard, 4 Trap, 8 Hostile Creature, 9 Creature + Domain, 11 Compound Challenge, 12 Major Threat, and every Quest Heart.
 
 ### Accepted card reveal sequence
 
 Treat each generated room as a staged group of cards rather than exposing every result at once:
 
 1. Reveal the **Room card** and the player-facing front of its **Challenge card**. Put every immediately perceptible fact on that front.
-2. Follow the Challenge's Immediate instruction. A creature Challenge may reveal one or more **Monster cards** now; Quest and Discovery cards remain facedown.
+2. Follow the Challenge's Immediate instruction. A creature Challenge may reveal one or more **Monster cards** now; Quest and Loot cards remain facedown.
 3. The players commit to an approach that could make the Challenge stop applying. Ask ordinary clarifying questions freely; make a check only when outcome is uncertain and failure matters.
 4. Reveal the hidden **Response side** before resolving that uncertain check. It contains only Revelation, Failure, While Active, and—when genuinely unclear—Ends When rules. Do not print solution lists.
 5. When the Challenge durably stops applying to the party's use of the Room, conquer it. A temporary bypass does not qualify if the card will apply again on return.
-6. Every active adventurer gains one Skill Token. Immediately turn over the one guaranteed **Quest card** or **Discovery card**, if any. This costs no Light and does not count as searching.
-7. The conquered Room can now be searched once. Spend 1 Light unless it is permanently illuminated, choose a narratively applicable attribute, and check against the Room target. Success reveals one additional Discovery card; failure exhausts the search with no card.
+6. Every active adventurer gains one Skill Token. Turn over the Challenge's assigned **Quest card** or **Loot card**. This costs no Light and does not count as searching.
+7. The conquered Room can now be searched once. Spend 1 Light unless it is permanently illuminated, choose a narratively applicable attribute, and check against the Room target. Success reveals one additional Loot card; failure exhausts the search with no card.
 
 A quiet result is a **Scene**, not a Challenge. Its Room begins conquered, it has no Response side, and it grants no Skill Token. Follow its immediate reveal, if any, and allow the normal optional search.
 

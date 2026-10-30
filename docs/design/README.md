@@ -143,7 +143,7 @@ These are initial design bands rather than complete balance rules. Individual ab
 
 A room is **conquered** when its primary Challenge durably stops applying to the party's use of that Room. Defeating enemies, negotiating a settlement, solving a puzzle, neutralizing a trap, or establishing a durable bypass can all qualify. A temporary distraction, stealthy passage, flight, or postponement does not qualify if the Challenge will apply again on return. Violence is never required solely to earn the reward.
 
-Conquest is universal card cleanup: the Challenge card no longer applies, every active adventurer gains one Skill Token, and its one guaranteed Quest or Discovery card is revealed. Quiet aftermaths are Scenes: their Rooms begin conquered and grant no Skill Token.
+Conquest is universal card cleanup: the Challenge card no longer applies, every active adventurer gains one Skill Token, and its assigned Quest or Loot card is revealed. Quiet aftermaths are Scenes: their Rooms begin conquered and grant no Skill Token.
 
 Still unresolved:
 

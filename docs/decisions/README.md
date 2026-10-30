@@ -1084,3 +1084,15 @@ Conquest always means the Challenge durably stops applying to the party's use of
 **Rationale:** A one-flip physical card cannot support a privileged Examine action without making it the automatic best opening. Visible evidence belongs before commitment, while consequences belong after it. Universal card cleanup preserves free-form problem solving and makes expansion cards interoperable.
 
 **Consequences:** Every pack follows the schemas and terminology in [Card language and lifecycle](../card-language/README.md). Challenge cards reveal at most one guaranteed Quest or Discovery card; optional Room search remains separate.
+
+## 2026-10-30 - Reduce rewards to Quest or Loot
+
+**Status:** Accepted
+
+**Decision:** Assign every Challenge exactly one reward type: Quest or Loot. Remove empty Challenge rewards. Loot has only two subtypes: Supply and Treasure. Supply provides practical items and consumables. Treasure provides printed Gold for the expedition score or a concrete exceptional item, including permanent attribute-enhancing equipment.
+
+Remove Evidence, Feature, Route, Relic, and the broad Discovery card type. Information belongs on Quest cards; useful terrain belongs to Rooms and Challenges.
+
+**Rationale:** Every revealed reward should produce obvious game value. The previous broad Discovery deck frequently produced bookkeeping or fictional permissions instead of supplies, score, or character improvement.
+
+**Consequences:** Loot Challenges always produce Loot, successful searches reveal additional Loot, and the expedition tracks a visible Gold score. The d8 Loot roll is split evenly: Supply on 1–4 and Treasure on 5–8.

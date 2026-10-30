@@ -10,7 +10,7 @@ This is the authoring standard for every card set. Cards describe game state and
 4. Reveal the hidden **Response side** before resolving that uncertain check.
 5. Apply its Revelation, Failure, and While Active rules.
 6. When the Challenge durably stops applying to the party's use of the Room, **conquer the Room**. A temporary distraction, stealthy passage, or escape does not conquer it if the Challenge will apply again on return.
-7. On conquest, every active adventurer gains one Skill Token and the Challenge immediately reveals its one guaranteed Quest or Discovery card, if any. Rest, search, and onward exploration become available.
+7. On conquest, every active adventurer gains one Skill Token and the Challenge reveals its assigned Quest or Loot card. Rest, search, and onward exploration become available.
 
 Conquest has no bespoke card text. It always means that the Challenge card no longer applies. An **Ends When** field appears only when that boundary would otherwise be genuinely unclear.
 
@@ -40,17 +40,14 @@ A Monster card contains Signs, HP, Defense, Instinct, optional Special text, and
 
 A Quest card contains its Finding, Meaning or Use, and Claim instruction when it is a concrete element. Generation rolls, table bands, and debugging metadata never appear on a play-facing card.
 
-### Discovery
+### Loot
 
-**Discovery** is the broad reward-card type. **Loot** means only a portable Discovery. Subtypes are Item, Supply, Treasure, Evidence, Feature, and Route.
+Every Loot card is either **Supply** or **Treasure**.
 
-Use an exact handling verb:
+- **Supply** is practical equipment or a consumable, such as a torch, bandages, rope, oil, or a medkit.
+- **Treasure** either adds its printed Gold value to the expedition score or gives an adventurer a concrete exceptional item. Attribute items state their exact bonus, such as “+1 Mind.”
 
-- **Take:** add a portable card to an adventurer or the party.
-- **Spend:** discard or mark a finite use.
-- **Attach:** leave a Feature with its Room.
-- **Map:** draw or establish a Route connection.
-- **Record:** retain Evidence as a fact that can support later action.
+Loot always uses **Take**. Portable clues, routes, and room features are not separate reward-card types; useful information belongs on Quest cards, and usable terrain remains part of its Room or Challenge.
 
 ### Gear and armor
 
@@ -79,4 +76,4 @@ Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A To
 - Never list preferred solutions. State the obstacle, pressure, and consequences precisely enough for free-form solutions to be judged.
 - Do not repeat universal rules on individual cards.
 - Do not print random-generation metadata on play-facing cards.
-- One Challenge reveals at most one guaranteed reward card. Searching is a separate optional gamble.
+- Every Challenge is authored with exactly one reward type: Quest or Loot. Searching is a separate optional gamble that can reveal one additional Loot card.

@@ -25,16 +25,16 @@
   });
   const QUEST_REWARD_CHALLENGES = new Set([1,5,6,7,10]);
   function challengeRewardType(room) {
-    if (room.quest.name === 'Heart') return room.opportunityRoll > 1 ? 'loot' : 'none';
+    if (room.quest.name === 'Heart') return 'loot';
     if (QUEST_REWARD_CHALLENGES.has(room.challengeRoll)) return 'quest';
-    return room.opportunityRoll > 1 ? 'loot' : 'none';
+    return 'loot';
   }
   const TORCH_CAPACITY = 12;
   const roomSearchState = room => room.searchState || (room.searchState = {
     attempted: false,
     success: false,
     claimed: false,
-    opportunityRoll: 2 + stableIndex(room, 'search-opportunity-roll', 7),
+    opportunityRoll: 1 + stableIndex(room, 'search-opportunity-roll', 8),
     opportunityVariant: 0
   });
   const CARDINALS = [
@@ -237,7 +237,7 @@
 
   function buildSceneRef(room) {
     return {
-      version: 3,
+      version: 4,
       challengeVariant: stableIndex(room, 'challenge', DATA.sceneChallenges[room.challengeRoll].length),
       opportunityVariant: stableIndex(room, 'opportunity', DATA.sceneOpportunities[room.opportunityRoll].length)
     };
@@ -249,23 +249,8 @@
     return collection[index % collection.length];
   }
 
-  function normalizeDiscovery(card, roll) {
-    const kinds = { 2:'Evidence', 3:'Supply', 4:'Feature', 5:'Treasure', 6:'Evidence', 7:'Route', 8:'Relic' };
-    const actions = { Evidence:'Record', Supply:'Take', Feature:'Attach', Treasure:'Take', Route:'Map', Relic:'Take' };
-    const kind = card.kind || kinds[roll] || 'Feature';
-    const clearerEffects = {
-      "A Guard's Final Scratching":'Record this evidence: a true name can end the oath.',
-      'The Bier Counterweight':'Attach this Feature to the Room. Spend it once to create cover, block a route, or move one heavy object without a check.',
-      'Commandable Funeral Lamps':'Attach this Feature to the Room. Use it to illuminate one area or deny ordinary sight in one area.',
-      "The Mourner's Silver":'Take this portable funeral silver.',
-      'Votive Ruby':'Take this portable funerary treasure.',
-      'The False Niche':'Attach this Route to the Room. When its destination is established, connect it on the map.',
-      'The Erased Confession':'Record the named witness as evidence of the false burial.',
-      'The Ossuary Crawlway':'Attach this Route to the Room. When its destination is established, connect the shortcut on the map.',
-      'The Corpse Lift':'Attach this Route to the Room. Record that it connects to a lower preparation level.',
-      'The Last Vigil Seal':'Take this royal seal. It is evidence of who held authority when the tomb closed.'
-    };
-    return { ...card, kind, action:card.action || actions[kind] || 'Claim', effect:clearerEffects[card.title] || card.effect };
+  function normalizeLoot(card, roll) {
+    return { ...card, kind:card.kind || (roll <= 4 ? 'Supply' : 'Treasure'), action:'Take' };
   }
 
   function buildRoomScene(room, template) {
@@ -284,7 +269,7 @@
       failure:room.challengeRoll === 1 || sourceChallenge.title === 'The Grave Frost' ? '' : sourceChallenge.consequence,
       active:sourceChallenge.title === 'The Grave Frost' ? sourceChallenge.consequence : ''
     };
-    const opportunity = normalizeDiscovery(canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]), room.opportunityRoll);
+    const opportunity = normalizeLoot(canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]), room.opportunityRoll);
     const questScene = buildQuestScene(room);
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
@@ -307,7 +292,7 @@
     let variant = Number.isInteger(search.opportunityVariant) ? search.opportunityVariant : stableIndex(room, 'search-opportunity', collection.length);
     const guaranteed = buildRoomScene(room, templateFor(room)).opportunity;
     if (challengeRewardType(room) === 'loot' && collection.length > 1 && collection[variant % collection.length].title === guaranteed.title) variant += 1;
-    return normalizeDiscovery(collection[variant % collection.length], search.opportunityRoll);
+    return normalizeLoot(collection[variant % collection.length], search.opportunityRoll);
   }
 
   function ensureRouteGeometry() {
@@ -331,6 +316,7 @@
 
   function ensureStateShape() {
     if (!state) return;
+    if (!Number.isFinite(state.gold)) state.gold = 0;
     const canonicalQuest = DATA.quests.find(quest => quest.index === state.quest?.index);
     if (canonicalQuest) {
       state.quest.elements = canonicalQuest.elements;
@@ -377,7 +363,7 @@
       // Prose and mechanics are canonical application data, never save data.
       // Remove copies made by builds before the normalized sceneRef format.
       delete room.scene;
-      if (room.sceneRef?.version !== 3) room.sceneRef = buildSceneRef(room);
+      if (room.sceneRef?.version !== 4) room.sceneRef = buildSceneRef(room);
       roomCardState(room);
       roomSearchState(room);
       if (room.challengeRoll === 1) {
@@ -469,7 +455,7 @@
       rngState: hashSeed(seed), size, escalation: Number(form.escalation || 3),
       domain: 'Tomb', theme: 'Haunted', quest: null,
       turn: 0, light: { remaining: TORCH_CAPACITY, capacity: TORCH_CAPACITY, reserve: 0, holderId: null }, usedTemplates: [], usedQuestRolls: [],
-      rooms: [], activeRoomId: null, party: [], log: [], savedAt: null
+      rooms: [], activeRoomId: null, party: [], gold: 0, log: [], savedAt: null
     };
     const quest = form.quest === 'random' ? pick(DATA.quests) : DATA.quests.find(q => q.index === Number(form.quest));
     state.quest = { ...quest, elementsFound: 0, heartFound: false, completed: false };
@@ -563,7 +549,7 @@
       searchState: { attempted:false, success:false, claimed:false, opportunityRoll:0, opportunityVariant:0 },
       cardState: { resolutionRevealed:challengeRoll === 1, rewardsRevealed:challengeRoll === 1 }
     };
-    room.searchState.opportunityRoll = 2 + stableIndex(room, 'search-opportunity-roll', 7);
+    room.searchState.opportunityRoll = 1 + stableIndex(room, 'search-opportunity-roll', 8);
     room.searchState.opportunityVariant = stableIndex(room, 'search-opportunity', DATA.sceneOpportunities[room.searchState.opportunityRoll].length);
     if (parent) {
       const entry = templateRoutes(template).find(route => route.glyph === 'E');
@@ -689,7 +675,7 @@
     if (room.quest.name === 'Heart' && state.quest.heartFound) state.quest.completed = true;
     room.cardState.rewardsRevealed = true;
     const rewardType = challengeRewardType(room);
-    log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token.${rewardType === 'none' ? ' The Challenge awarded no card.' : ` Its guaranteed ${rewardType === 'quest' ? 'Quest' : 'Discovery'} card was revealed immediately.`}`);
+    log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token. Its guaranteed ${rewardType === 'quest' ? 'Quest' : 'Loot'} card was revealed.`);
     render();
   }
 
@@ -706,7 +692,7 @@
     if (room.status !== 'conquered' || roomCardState(room).rewardsRevealed) return;
     room.cardState.rewardsRevealed = true;
     const rewardType = challengeRewardType(room);
-    log(`The earned ${rewardType === 'quest' ? 'Quest' : 'Discovery'} card in Room ${room.number} was revealed.`);
+    log(`The earned ${rewardType === 'quest' ? 'Quest' : 'Loot'} card in Room ${room.number} was revealed.`);
     render();
   }
 
@@ -743,34 +729,40 @@
     render();
   }
 
-  function grantLoot(room, loot, source) {
+  function grantLoot(room, loot, source, heroId = null) {
     let result = loot.title;
     const item = loot.item;
-    if (item) {
-      state.party[0].items.push(item);
-      if (item === 'Fresh torch') state.light.reserve += 1;
-      result = `${item} added to ${state.party[0].name}`;
+    if (loot.gold) {
+      state.gold += loot.gold;
+      result = `${loot.gold} Gold added to the expedition score`;
     }
-    log(`Claimed ${source} Discovery in Room ${room.number}: ${result}.`);
+    if (item) {
+      const hero = state.party.find(candidate => candidate.id === heroId && !candidate.dead) || state.party.find(candidate => !candidate.dead) || state.party[0];
+      hero.items.push(item);
+      if (item === 'Fresh torch') state.light.reserve += 1;
+      if (loot.attributeBonus) hero.attributes[loot.attributeBonus] += 1;
+      result = `${item} added to ${hero.name}${loot.attributeBonus ? `; ${hero.name} gained +1 ${loot.attributeBonus}` : ''}`;
+    }
+    log(`Claimed ${source} Loot in Room ${room.number}: ${result}.`);
   }
 
-  function claimOpportunity() {
+  function claimOpportunity(heroId = null) {
     const room = activeRoom();
     if (!roomCardState(room).rewardsRevealed || challengeRewardType(room) !== 'loot') return;
-    if (room.opportunityClaimed || room.opportunityRoll === 1) return;
+    if (room.opportunityClaimed) return;
     ensureStateShape();
     const scene = buildRoomScene(room, templateFor(room));
     room.opportunityClaimed = true;
-    grantLoot(room, scene.opportunity, 'guaranteed Challenge');
+    grantLoot(room, scene.opportunity, 'guaranteed Challenge', heroId);
     render();
   }
 
-  function claimSearchLoot() {
+  function claimSearchLoot(heroId = null) {
     const room = activeRoom();
     const search = roomSearchState(room);
     if (!search.success || search.claimed) return;
     search.claimed = true;
-    grantLoot(room, buildSearchLoot(room), 'searched-for');
+    grantLoot(room, buildSearchLoot(room), 'searched-for', heroId);
     render();
   }
 
@@ -808,8 +800,8 @@
     const success = kept === 20 || (kept !== 1 && total >= target);
     search.attempted = true;
     search.success = success;
-    log(`${hero.name} searched Room ${room.number} with ${attribute}: ${dice.join(' and ')}${wounded ? `, keeping ${kept}` : ''} ${signed(bonus)} = ${total} vs ${target}. ${success ? 'One additional Discovery card was revealed.' : 'The search found no Discovery.'}`, success ? 'success' : 'event');
-    modal = { type:'discoveryResult', searchResult:{ hero, attribute, dice, kept, bonus, total, target, success } };
+    log(`${hero.name} searched Room ${room.number} with ${attribute}: ${dice.join(' and ')}${wounded ? `, keeping ${kept}` : ''} ${signed(bonus)} = ${total} vs ${target}. ${success ? 'One additional Loot card was revealed.' : 'The search found no Loot.'}`, success ? 'success' : 'event');
+    modal = { type:'lootResult', searchResult:{ hero, attribute, dice, kept, bonus, total, target, success } };
     render();
     renderModal();
   }
@@ -1306,14 +1298,19 @@
     const title = isHeart ? scene.quest.title : scene.challenge.title;
     const front = isHeart ? `${scene.quest.prose} ${scene.challenge.front}` : scene.challenge.front;
     const pack = isHeart ? `${state.quest.name} Quest pack` : room.challengeRoll === 8 ? 'Core set' : 'Haunted Tomb location pack';
-    const rewardText = rewardType === 'quest' ? 'One Quest card' : rewardType === 'loot' ? 'One Discovery card' : 'No additional card';
+    const rewardText = rewardType === 'quest' ? 'One Quest card' : 'One Loot card';
     const search = roomSearchState(room);
-    const searchDiscovery = search.success ? buildSearchLoot(room) : null;
-    const discoveryCard = (discovery, searched = false) => {
-      const core = discovery.item && ['Medkit','Rope','Fresh torch'].includes(discovery.item);
-      const packName = core ? 'Core set' : 'Haunted Tomb location pack';
+    const searchedLoot = search.success ? buildSearchLoot(room) : null;
+    const lootCard = (loot, searched = false) => {
+      const packName = loot.kind === 'Supply' ? 'Core set' : 'Haunted Tomb location pack';
       const claimed = searched ? search.claimed : room.opportunityClaimed;
-      return `<article class="game-card loot-card ${searched ? 'search-loot-card' : 'opportunity-block'}"><header class="card-titlebar"><div><div class="eyebrow">Discovery · ${esc(discovery.kind || (discovery.item ? 'Item' : 'Feature'))} · ${esc(packName)}</div><h3>${esc(discovery.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder loot-art"><span>Discovery artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(discovery.prose)}</p><div class="effect-line"><strong>${esc(discovery.action || 'Claim')}:</strong> ${esc(discovery.effect)}</div>${claimed ? '<span class="tag lit">✓ Claimed</span>' : `<button class="btn btn-small btn-primary" data-action="${searched ? 'claim-search' : 'claim'}">Claim Discovery</button>`}</div><footer class="card-footer">${searched ? `Found by searching Room ${room.number}` : `${isScene ? 'Revealed by the Scene' : 'Guaranteed by the Challenge'} · no search required`}</footer></article>`;
+      const action = searched ? 'claim-search' : 'claim';
+      const claimControls = claimed
+        ? '<span class="tag lit">✓ Claimed</span>'
+        : loot.item
+          ? `<div class="card-actions">${state.party.filter(hero => !hero.dead).map(hero => `<button class="btn btn-small btn-primary" data-action="${action}" data-hero-id="${hero.id}">Give to ${esc(hero.name)}</button>`).join('')}</div>`
+          : `<button class="btn btn-small btn-primary" data-action="${action}">Take Loot</button>`;
+      return `<article class="game-card loot-card ${searched ? 'search-loot-card' : 'opportunity-block'}"><header class="card-titlebar"><div><div class="eyebrow">Loot · ${esc(loot.kind)} · ${esc(packName)}</div><h3>${esc(loot.title)}</h3></div><strong>${loot.gold ? `${loot.gold}g` : '?'}</strong></header><div class="card-art card-art-placeholder loot-art"><span>Loot artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(loot.prose)}</p><div class="effect-line"><strong>Take:</strong> ${esc(loot.effect)}</div>${claimControls}</div><footer class="card-footer">${searched ? `Found by searching Room ${room.number}` : `${isScene ? 'Revealed by the Scene' : 'Guaranteed by the Challenge'} · no search required`}</footer></article>`;
     };
     const responseRows = [
       scene.challenge.revelation && `<li><strong>Revelation:</strong> ${esc(scene.challenge.revelation)}</li>`,
@@ -1330,9 +1327,9 @@
     return `<main class="pane pane-room"><div class="section-head"><h2>Cards in play</h2><span>Room ${room.number} · ${esc(template.name)}</span></div><div class="card-table">
       <article class="game-card room-card card-room"><header class="card-titlebar room-header"><div><div class="eyebrow">Room ${room.number} · Haunted Tomb</div><h2>${esc(template.name)}</h2></div><strong>${template.target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><div class="room-meta"><span class="tag danger-${template.danger.toLowerCase()}">${template.danger}</span><span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? 'Permanently lit' : template.lighting}</span>${darkness ? '<span class="tag danger-hard">Darkness</span>' : ''}${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div><section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud</div><div class="read-aloud-parts">${scene.readAloudParts.map(part => `<div class="read-aloud-part"><span class="prose-source">${esc(part.source)}</span><p><em>${esc(part.text)}</em></p></div>`).join('')}</div></section><p><strong>Built as:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p>${roomDefinition ? `<p><strong>${esc(roomDefinition[0])}:</strong> ${esc(roomDefinition[1])}.</p>` : ''}</div><footer class="card-footer">Room ${room.number} · template ${template.index}</footer></article>
       <article class="game-card challenge-card card-challenge"><header class="card-titlebar"><div><div class="eyebrow">${isScene ? 'Scene' : 'Challenge'} · ${esc(pack)}</div><h3>${esc(title)}</h3></div><strong>${isScene ? '—' : template.target}</strong></header><div class="card-art card-art-placeholder"><span>${isScene ? 'Scene' : 'Challenge'} artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(front)}</p>${scene.challenge.pressure ? `<p><strong>Pressure:</strong> ${esc(scene.challenge.pressure)}</p>` : ''}${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}${scene.challenge.immediate ? `<div class="challenge-instruction"><strong>Immediate:</strong> ${esc(scene.challenge.immediate)}</div>` : ''}${challengeBody}</div><footer class="card-footer">${isScene ? 'Quiet scene · no conquest reward' : `${template.danger} · default target ${template.target}`}</footer></article>
-      ${rewardType !== 'none' && !cards.rewardsRevealed ? `<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Discovery card'} facedown</strong><small>The Challenge reveals this card immediately upon conquest.</small></div><footer class="card-footer">Guaranteed Challenge reward</footer></article>` : ''}
-      ${rewardType === 'loot' && cards.rewardsRevealed ? discoveryCard(scene.opportunity) : ''}${searchDiscovery ? discoveryCard(searchDiscovery, true) : ''}</div>
-      <section class="room-controls"><div class="button-row">${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Spend 1 Light · illuminate permanently</button>' : ''}${room.status === 'conquered' && !search.attempted ? `<button class="btn btn-small" data-action="search-room">${room.securedLight ? 'Search room · no Light' : 'Spend 1 Light · search room'}</button>` : ''}<button class="btn btn-small" data-action="rest">${room.securedLight ? 'Rest and heal · no Light' : 'Spend 1 Light · rest and heal'}</button><button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button></div>${search.attempted && !search.success ? '<p class="search-status">This room was searched, but no Discovery was found.</p>' : ''}<textarea class="room-notes" data-action="notes" placeholder="Room rulings, changed terrain, secured ropes, creatures left behind.">${esc(room.notes)}</textarea></section></main>`;
+      ${!cards.rewardsRevealed ? `<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Loot card'} facedown</strong></div><footer class="card-footer">Guaranteed Challenge reward</footer></article>` : ''}
+      ${rewardType === 'loot' && cards.rewardsRevealed ? lootCard(scene.opportunity) : ''}${searchedLoot ? lootCard(searchedLoot, true) : ''}</div>
+      <section class="room-controls"><div class="button-row">${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Spend 1 Light · illuminate permanently</button>' : ''}${room.status === 'conquered' && !search.attempted ? `<button class="btn btn-small" data-action="search-room">${room.securedLight ? 'Search room · no Light' : 'Spend 1 Light · search room'}</button>` : ''}<button class="btn btn-small" data-action="rest">${room.securedLight ? 'Rest and heal · no Light' : 'Spend 1 Light · rest and heal'}</button><button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button></div>${search.attempted && !search.success ? '<p class="search-status">This room was searched, but no Loot was found.</p>' : ''}<textarea class="room-notes" data-action="notes" placeholder="Room rulings, changed terrain, secured ropes, creatures left behind.">${esc(room.notes)}</textarea></section></main>`;
   }
 
   function renderEnemy(enemy) {
@@ -1387,7 +1384,12 @@
       'Flask of oil':'Fuel, burn, lubricate, or prepare a surface when the fiction permits.',
       Lantern:'A reusable light housing; it still requires suitable fuel.',
       'Chalk and spikes':'Mark routes, wedge mechanisms, or anchor a lightweight setup.',
-      'Small mirror':'Look around corners, redirect light, or inspect something without direct exposure.'
+      'Small mirror':'Look around corners, redirect light, or inspect something without direct exposure.',
+      'Circlet of Mind':'+1 Mind while owned. This bonus is already included in the adventurer’s attribute.',
+      'Gauntlets of Might':'+1 Strength while owned. This bonus is already included in the adventurer’s attribute.',
+      'Boots of Celerity':'+1 Agility while owned. This bonus is already included in the adventurer’s attribute.',
+      'Graveglass Edge':'Once while a Challenge is active, one successful attack with this one-handed blade deals +1 damage.',
+      'Bell of the Unburied Name':'When rung, nearby incorporeal spirits become visible.'
     };
     return rules[item] || 'Use this item whenever its ordinary fictional properties apply.';
   }
@@ -1421,12 +1423,18 @@
     app.innerHTML = `<main class="welcome"><section class="welcome-card"><div class="welcome-hero"><div class="eyebrow">Expedition complete · ${esc(state.domain)} · ${esc(state.theme)}</div><h1>You escaped the dungeon</h1><p>${esc(state.quest.objective)}</p></div><div class="welcome-body"><div class="resume-box"><strong>Congratulations — ${esc(state.quest.name)} succeeded.</strong><p>${survivors.length} of ${state.party.length} adventurer${state.party.length === 1 ? '' : 's'} escaped after ${state.turn} turns and ${state.rooms.length} discovered room${state.rooms.length === 1 ? '' : 's'}.</p></div><div class="button-row"><button class="btn" data-action="export">Export completed expedition</button><button class="btn btn-primary" data-action="setup">Begin another expedition</button></div><div class="build-badge">Delvekeeper build ${esc(BUILD)}</div></div></section></main>`;
   }
 
+  function renderVictoryWithScore() {
+    renderVictory();
+    const summary = $('.resume-box');
+    if (summary) summary.insertAdjacentHTML('beforeend', `<p><strong>Gold score: ${state.gold}</strong></p>`);
+  }
+
   function render() {
     if (!state) return renderWelcome();
     const previousMapViewport = $('.dungeon-overview-wrap');
     const mapScroll = previousMapViewport ? { left:previousMapViewport.scrollLeft, top:previousMapViewport.scrollTop } : null;
     ensureStateShape();
-    if (state.escaped) return renderVictory();
+    if (state.escaped) return renderVictoryWithScore();
     const room = activeRoom();
     const template = templateFor(room);
     const cards = roomCardState(room);
@@ -1438,7 +1446,7 @@
     const escapeButton = state.quest.completed && room.number === 1 ? `<button class="btn btn-primary" data-action="escape">${enemiesPresent ? 'Escape past creatures…' : 'Escape dungeon'}</button>` : '';
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
-      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${esc(template.danger)} room · default check target"><small>Room check</small><strong>${template.target}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Rooms found</small><strong>${state.rooms.length}</strong></div></div>
+      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${esc(template.danger)} room · default check target"><small>Room check</small><strong>${template.target}</strong></div><div class="resource"><small>Gold</small><strong>${state.gold}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Rooms found</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoomCards()}${renderEncounterCards()}${renderParty()}</div>
       <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button>${conquerButton}${escapeButton}${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
@@ -1508,9 +1516,9 @@
     } else if (modal.type === 'search') {
       const room = activeRoom(), template = templateFor(room);
       root.innerHTML = `<form class="modal" id="search-form"><div class="modal-head"><div class="eyebrow">Room search</div><h2>Search Room ${room.number}</h2><p>Choose how an adventurer searches. The attempt ${room.securedLight ? 'uses the room’s permanent light' : 'spends 1 Light'} and succeeds against ${template.danger} ${template.target}. The room is exhausted either way.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Adventurer</label><select name="heroId">${state.party.filter(hero => !hero.dead).map(hero => `<option value="${hero.id}">${esc(hero.name)}</option>`).join('')}</select></div><div class="field full"><label>Narratively applicable attribute</label><select name="attribute"><option value="Strength">Strength · move, break, or lift</option><option value="Agility">Agility · reach, climb, or handle carefully</option><option value="Mind">Mind · inspect, interpret, or deduce</option></select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-primary" type="submit">Search · target ${template.target}</button></div></form>`;
-    } else if (modal.type === 'discoveryResult') {
+    } else if (modal.type === 'lootResult') {
       const result = modal.searchResult;
-      root.innerHTML = modalShell(result.success ? 'Discovery found' : 'Nothing found', result.success ? 'One additional Discovery card has been revealed.' : 'The Room is now marked searched.', `<div class="roll-result"><strong>${result.total}</strong><span>${esc(result.hero.name)} · ${esc(result.attribute)} ${signed(result.bonus)} · rolled ${result.dice.join(' / ')} · target ${result.target}</span></div>`, result.success ? '<button class="btn btn-primary" data-action="close-modal">View Discovery card</button>' : '');
+      root.innerHTML = modalShell(result.success ? 'Loot found' : 'Nothing found', result.success ? 'One additional Loot card has been revealed.' : 'The Room is now marked searched.', `<div class="roll-result"><strong>${result.total}</strong><span>${esc(result.hero.name)} · ${esc(result.attribute)} ${signed(result.bonus)} · rolled ${result.dice.join(' / ')} · target ${result.target}</span></div>`, result.success ? '<button class="btn btn-primary" data-action="close-modal">View Loot card</button>' : '');
     } else if (modal.type === 'searchResult') {
       const result = modal.searchResult;
       root.innerHTML = modalShell(result.success ? 'Loot found' : 'Nothing found', result.success ? 'One additional Loot card has been revealed.' : 'The room is now marked searched.', `<div class="roll-result"><strong>${result.total}</strong><span>${esc(result.hero.name)} · ${esc(result.attribute)} ${signed(result.bonus)} · rolled ${result.dice.join(' / ')} · target ${result.target}</span></div>`, result.success ? '<button class="btn btn-primary" data-action="close-modal">View Loot card</button>' : '');
@@ -1610,9 +1618,9 @@
     else if (action === 'light-fixtures') lightFixtures();
     else if (action === 'light-torch') lightTorch();
     else if (action === 'pass-torch') passTorch();
-    else if (action === 'claim') claimOpportunity();
+    else if (action === 'claim') claimOpportunity(target.dataset.heroId);
     else if (action === 'claim-quest-element') claimQuestElement();
-    else if (action === 'claim-search') claimSearchLoot();
+    else if (action === 'claim-search') claimSearchLoot(target.dataset.heroId);
     else if (action === 'search-room') beginRoomSearch();
     else if (action === 'rest') restParty();
     else if (action === 'pass-turn') { if (spendLight('spend one exploration turn')) render(); }
@@ -1630,7 +1638,7 @@
     else if (action === 'hero-hp') { const h=state.party.find(h=>h.id===target.dataset.id); h.hp=clamp(h.hp+Number(target.dataset.delta),0,h.maxHp); render(); }
     else if (action === 'hero-token') { const h=state.party.find(h=>h.id===target.dataset.id); h.tokens=clamp(h.tokens+Number(target.dataset.delta),0,3); render(); }
     else if (action === 'add-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=prompt('Item name'); if(item){h.items.push(item); if(item.toLowerCase().includes('torch')) state.light.reserve++; render();} }
-    else if (action === 'remove-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=h.items[Number(target.dataset.index)]; if(confirm(`Consume or remove ${item}?`)){h.items.splice(Number(target.dataset.index),1); if(item==='Fresh torch') state.light.reserve=Math.max(0,state.light.reserve-1); render();} }
+    else if (action === 'remove-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=h.items[Number(target.dataset.index)]; if(confirm(`Consume or remove ${item}?`)){h.items.splice(Number(target.dataset.index),1); if(item==='Fresh torch') state.light.reserve=Math.max(0,state.light.reserve-1); const bonus={ 'Circlet of Mind':'Mind', 'Gauntlets of Might':'Strength', 'Boots of Celerity':'Agility' }[item]; if(bonus) h.attributes[bonus]-=1; render();} }
     else if (action === 'treat') {
       const h=state.party.find(h=>h.id===target.dataset.id);
       const kitHolder=state.party.find(p=>p.items.includes('Medkit'));

@@ -193,14 +193,14 @@ window.GAME_DATA = (() => {
   ];
 
   const opportunities = [
-    ['None','Passage and any conquest Skill Token are the only gains.'],
-    ['Clue','An epitaph, reenactment, family record, disturbed remains, or confession reveals useful truth.'],
-    ['Supply','Find a useful consumable: torch, medkit, bandages, oil, incense, salts, or tools.'],
-    ['Usable feature','A counterweight, bier, lift, movable statue, offering mechanism, or defensible position can be exploited.'],
-    ['Treasure','Funeral coins, jewelry, regalia, sacred oil, relic bones, or grave goods.'],
-    ['Secret','A false niche, erased name, decoy coffin, hidden passage, or concealed mechanism.'],
-    ['Shortcut','A funeral lift, ossuary crawlway, ghost path, royal stair, or route around danger.'],
-    ['Major discovery','A relic weapon, spellbook, proof of lineage, named remains, royal seal, or haunting anchor.']
+    ['Supply','Practical equipment or a consumable.'],
+    ['Supply','Practical equipment or a consumable.'],
+    ['Supply','Practical equipment or a consumable.'],
+    ['Supply','Practical equipment or a consumable.'],
+    ['Treasure','Gold, an enhanced weapon, or a magical item.'],
+    ['Treasure','Gold, an enhanced weapon, or a magical item.'],
+    ['Treasure','Gold, an enhanced weapon, or a magical item.'],
+    ['Treasure','Gold, an enhanced weapon, or a magical item.']
   ];
 
   const sceneChallenges = {
@@ -254,37 +254,35 @@ window.GAME_DATA = (() => {
     ]
   };
 
+  const supplyLoot = [
+    { title:'Sealed Medkit', kind:'Supply', prose:'A leather surgeon’s roll contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Take one Medkit.', item:'Medkit' },
+    { title:'Fresh Funeral Torch', kind:'Supply', prose:'A pitch-soaked ceremonial torch remains wrapped in waxed cloth.', effect:'Take one Fresh torch. When lit, put 12 Light tokens on its Torch card.', item:'Fresh torch' },
+    { title:'Coil of Burial Rope', kind:'Supply', prose:'Twelve metres of strong cord hangs from an intact wall peg.', effect:'Take one Rope.', item:'Rope' },
+    { title:'Clean Bandages', kind:'Supply', prose:'A sealed clay jar protects several rolls of clean linen.', effect:'Take Bandages.', item:'Bandages' },
+    { title:'Embalmer’s Crowbar', kind:'Supply', prose:'A short iron bar rests beside a stone coffin whose lid was never fitted.', effect:'Take one Crowbar.', item:'Crowbar' },
+    { title:'Coffin-Lowering Tackle', kind:'Supply', prose:'Hooks, spikes, and compact pulleys remain bundled in an oilskin wrap.', effect:'Take Climbing tools.', item:'Climbing tools' },
+    { title:'Flask of Funeral Oil', kind:'Supply', prose:'A stoppered bronze flask holds clear, slow-burning ceremonial oil.', effect:'Take one Flask of oil.', item:'Flask of oil' },
+    { title:'Tomb-Warden’s Lantern', kind:'Supply', prose:'A shuttered bronze lantern hangs from a peg beside the doorway.', effect:'Take one Lantern.', item:'Lantern' },
+    { title:'Chalk and Iron Spikes', kind:'Supply', prose:'A surveyor’s pouch contains white chalk and six narrow iron spikes.', effect:'Take Chalk and spikes.', item:'Chalk and spikes' },
+    { title:'Polished Burial Mirror', kind:'Supply', prose:'A palm-sized silvered mirror lies face-down beneath a folded shroud.', effect:'Take one Small mirror.', item:'Small mirror' }
+  ];
+
+  const treasureLoot = [
+    { title:'The Mourner’s Silver', kind:'Treasure', prose:'A sealed bowl contains blackened funeral coins stamped with a deposed royal face.', effect:'Gain 30 Gold.', gold:30 },
+    { title:'Votive Ruby', kind:'Treasure', prose:'One statue’s stone tear is a thumb-sized ruby held by old wax.', effect:'Gain 75 Gold.', gold:75 },
+    { title:'Silver Death Mask', kind:'Treasure', prose:'A thin silver mask preserves the calm face of a forgotten noble.', effect:'Gain 50 Gold.', gold:50 },
+    { title:'Royal Grave Goods', kind:'Treasure', prose:'Gold clasps, rings, and miniature royal seals fill a cedar casket.', effect:'Gain 100 Gold.', gold:100 },
+    { title:'Jade Scarab', kind:'Treasure', prose:'A green stone scarab is carved with the royal household’s burial mark.', effect:'Gain 40 Gold.', gold:40 },
+    { title:'Circlet of Mind', kind:'Treasure', prose:'A narrow silver circlet hums with remembered names when placed near the brow.', effect:'Give this to an adventurer. They gain +1 Mind.', item:'Circlet of Mind', attributeBonus:'Mind' },
+    { title:'Gauntlets of Might', kind:'Treasure', prose:'These black-iron gauntlets tighten around the wearer’s hands without buckles.', effect:'Give these to an adventurer. They gain +1 Strength.', item:'Gauntlets of Might', attributeBonus:'Strength' },
+    { title:'Boots of Celerity', kind:'Treasure', prose:'Dust slides away from these soft black boots before they touch the leather.', effect:'Give these to an adventurer. They gain +1 Agility.', item:'Boots of Celerity', attributeBonus:'Agility' },
+    { title:'Graveglass Edge', kind:'Treasure', prose:'A translucent black blade is set into a one-handed funerary hilt.', effect:'Give this to an adventurer. Once while a Challenge is active, one successful one-handed bladed attack deals +1 damage.', item:'Graveglass Edge' },
+    { title:'Bell of the Unburied Name', kind:'Treasure', prose:'This palm-sized silver bell makes nearby incorporeal spirits visible when rung.', effect:'Give this to an adventurer.', item:'Bell of the Unburied Name' }
+  ];
+
   const sceneOpportunities = {
-    1: [{ title:'No Additional Card', prose:'Nothing useful remains beyond what the Challenge itself revealed.', effect:'This Challenge awards no additional card.' }],
-    2: [
-      { title:'The Embalmer’s Margin Note', prose:'A waterproof strip of linen records that the royal corpse arrived after its public funeral.', effect:'Record this as evidence about the site’s central wrong.' },
-      { title:'A Guard’s Final Scratching', prose:'A dying guard carved the words “THE OATH ENDS AT THE TRUE NAME” behind a loose stone.', effect:'This clue may justify a future solution involving names or oaths.' }
-    ],
-    3: [
-      { title:'Sealed Medkit', prose:'A leather surgeon’s roll still contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Add one Medkit to the party.', item:'Medkit' },
-      { title:'Fresh Funeral Torch', prose:'A pitch-soaked ceremonial torch remains wrapped in waxed cloth.', effect:'Add one fresh torch to the party. When lit, put 12 Light tokens on its Torch card.', item:'Fresh torch' },
-      { title:'Coil of Burial Rope', prose:'Twelve metres of strong cord once used to lower stone coffins hangs from an intact wall peg.', effect:'Add Rope to the party.', item:'Rope' }
-    ],
-    4: [
-      { title:'The Bier Counterweight', prose:'A wheeled stone bier is linked to a ceiling counterweight and can be released from either side of the room.', effect:'Use it once to create cover, block a route, or move a heavy object without a check.' },
-      { title:'Commandable Funeral Lamps', prose:'A bronze valve redirects oil between the room’s fixtures, creating sudden light or darkness in one area.', effect:'Use it to expose a hidden thing or deny ordinary sight to a creature.' }
-    ],
-    5: [
-      { title:'The Mourner’s Silver', prose:'A sealed bowl contains thirty blackened funeral coins stamped with a deposed royal face.', effect:'Record valuable funeral silver.' },
-      { title:'Votive Ruby', prose:'One statue’s stone tear is a thumb-sized ruby held by old wax rather than mortar.', effect:'Record a portable valuable with obvious funerary provenance.' }
-    ],
-    6: [
-      { title:'The False Niche', prose:'Pressure on a blank name plaque opens a person-wide cavity behind the burial wall.', effect:'Add a hidden connection from this room when its destination is established.' },
-      { title:'The Erased Confession', prose:'Writing beneath flaked plaster names the witness who approved the false royal burial.', effect:'Record the witness’s identity as actionable evidence.' }
-    ],
-    7: [
-      { title:'The Ossuary Crawlway', prose:'A narrow maintenance passage bypasses the formal processional route and opens toward another sector.', effect:'When its destination becomes known, draw this shortcut on the dungeon map.' },
-      { title:'The Corpse Lift', prose:'A hand-cranked platform still travels between this chamber and a lower preparation level.', effect:'Record a vertical shortcut that can improve extraction.' }
-    ],
-    8: [
-      { title:'Bell of the Unburied Name', prose:'This palm-sized silver bell forces a nearby incorporeal spirit to become visible when rung.', effect:'Add the exceptional Bell of the Unburied Name to an adventurer.', item:'Bell of the Unburied Name' },
-      { title:'The Last Vigil Seal', prose:'An intact royal seal proves who possessed authority when the tomb was closed.', effect:'Record a major discovery; it counts as strong evidence in royal or oath-bound disputes.' }
-    ]
+    1:supplyLoot, 2:supplyLoot, 3:supplyLoot, 4:supplyLoot,
+    5:treasureLoot, 6:treasureLoot, 7:treasureLoot, 8:treasureLoot
   };
 
   const quests = [
