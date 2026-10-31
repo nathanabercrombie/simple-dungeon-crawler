@@ -32,7 +32,9 @@ A **Heart Challenge** is the final Quest objective and is the one exception to t
 
 ### Room
 
-A Room card contains the floorplan, architecture, lighting, visible fixed terrain, former function, tags, and read-aloud prose. It does not repeat universal search rules or reveal Quest, Challenge, or Monster information.
+A Room card contains the floorplan, architecture, lighting, visible fixed terrain, former function, tags, read-aloud prose, and exact rules for persistent **Room features** such as bridges, water, rubble, balconies, gates, or cover. It does not repeat universal search rules or reveal Quest, Challenge, or Monster information.
+
+A Challenge may reference fixed architecture only through explicit compatibility requirements satisfied by the Room. It may introduce small temporary props, but cannot silently invent a structural gate, pit, altar, mechanism, or body of water.
 
 ### Monster
 
@@ -81,3 +83,6 @@ Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A To
 - Do not print random-generation metadata on play-facing cards.
 - Every ordinary Challenge is authored with exactly one reward type: Quest or Loot. A Heart completes its Quest instead. Searching is a separate optional gamble that can reveal one additional Loot card.
 - Every Quest card names or restates the selected objective and explains how its Finding changes the attempt to reach or resolve that objective. Never reuse storyline-specific filler across unrelated Quest packs.
+- Every card has a stable namespaced ID and explicit source pack. Do not infer ownership or identity from titles, array positions, or renderer logic.
+
+The complete ownership and compatibility rules are in [Content packs and compatibility contract](../content-packs/README.md).

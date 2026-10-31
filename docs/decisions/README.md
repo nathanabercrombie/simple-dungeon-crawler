@@ -1118,3 +1118,15 @@ Quest Elements must state an exact Use at the Heart. Omens identify the actual o
 **Rationale:** An adventurer may steal, rescue, seal, or otherwise secure the objective without defeating every defender. Quest success and control of the surrounding Room are different fictional outcomes and must be tracked separately.
 
 **Consequences:** The party can bypass surviving defenders and extract with a completed objective while leaving the Heart Room dangerous. Conquering that Room still requires its active threats to be defeated, negotiated with, or durably removed.
+
+## 2026-10-31 - Reset content around Core and Classics sets
+
+**Status:** Accepted for implementation and playtesting
+
+**Decision:** Preserve the expedition engine and place the authored Haunted Tomb content on hold. The app combines reusable Core cards with a selected Adventure Set, beginning with Classics: a practical dungeon of goblins, ogres, traps, prisoners, treasure, skeletons, zombies, beasts, and rival delvers.
+
+Room cards own all fixed architecture and print rules for persistent terrain. Challenges declare required Room capabilities before selection. Monsters are bound by stable IDs or explicit capability tags. Each Quest owns its named cast, progress cards, Heart action, defenders, and compatible finale Rooms. Every card declares a stable namespaced ID and source pack.
+
+**Rationale:** Independent prose rolls produced individually interesting cards that contradicted one another when combined. Enforced ownership keeps each card in its lane without sacrificing procedural variety or free-form player solutions.
+
+**Consequences:** The former Haunted Tomb dataset is archived but inactive. Structural validation checks every active card for a legal Room, valid references, valid generic Monster bindings, and satisfiable Heart placement. Editorial review still judges whether legal combinations are interesting and clearly written.

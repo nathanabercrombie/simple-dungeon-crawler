@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Delvekeeper is a dependency-free single-page guided tabletop for the current Haunted Tomb vertical slice. It generates and presents the game as cards while leaving narrative intent and unusual rulings with the players.
+Delvekeeper is a dependency-free single-page guided tabletop for modular dungeon card sets. It currently combines the Core Set with the Classics Adventure Set while leaving narrative intent and unusual rulings with the players.
 
 ## Run it
 
@@ -18,11 +18,11 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 
 ## Current capabilities
 
-- seeded, reproducible Haunted Tomb expeditions;
+- selectable, seeded Adventure Sets, beginning with Classics;
 - compact, standard, and sprawling macro-grids with E1–E3 escalation;
-- all fifty authored room templates, including graphical terrain maps and template-based lighting;
+- thirty coherent Classics Room cards with graphical terrain maps, authored lighting, and explicit Room-feature rules;
 - concrete, named Challenges with visible evidence, exact rules, consequences, and suggested resolutions;
-- room-specific prose combining architecture, original function, haunting, terrain, and lighting;
+- Room-specific prose combining architecture, function, terrain, and lighting without leaking Challenge or Quest facts;
 - exact Opportunities and escalating Quest discoveries rather than unresolved category prompts;
 - scaled creature and wandering-enemy cards with Instincts and Wounds;
 - room conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
@@ -38,7 +38,7 @@ The application deliberately permits manual adjustment. Current rules still requ
 
 - `index.html` is the single page and application mount.
 - `styles.css` contains the responsive card-and-tabletop interface.
-- `data.js` contains the rules-facing room, quest, monster, character, and item data.
+- `data.js` contains active Core and Classics module data; `haunted-tomb-data.js` preserves the inactive legacy slice.
 - `app.js` contains seeded generation, expedition state, persistence, and interaction logic.
 
 There is no build step and no third-party runtime dependency.
@@ -47,7 +47,7 @@ The deployed app displays a manually advanced build number. A network-only servi
 
 Saved rooms contain generation references (`sceneRef`) rather than copied prose or rules. Rendering resolves those references against the current canonical content, so wording corrections apply to existing expeditions.
 
-Each room-template roll is one complete architectural result. The template owns its unique Tomb function, footprint, terrain, lighting, and sensory prose; these are not rolled from independent tables. Theme manifestations, occupants, challenges, opportunities, and Quest results are layered onto that coherent room.
+Each Room draw is one complete architectural result. The Room owns its function, footprint, fixed terrain, lighting, sensory prose, and persistent feature rule. Challenges are filtered by declared Room requirements before being drawn. Quests own their complete progression, Heart action, defenders, and compatible finale Rooms. See the [content-pack contract](../docs/content-packs/README.md).
 
 ## Constraints
 

@@ -342,18 +342,16 @@ These layers should be combined into as few physical rolls as practical. A futur
 
 ## Accepted content structure: Room + Challenge + one reward
 
-Room contents use a Challenge roll and one hidden reward result:
+Room contents use a compatible Challenge draw and one hidden reward result:
 
-- **d12 Challenge:** establishes the primary problem and potential conquest condition.
+- **Compatible Challenge deck:** establishes the primary problem and potential conquest condition after filtering against capabilities actually published by the Room.
 - **d8 Loot:** selects Supply on 1–4 or Treasure on 5–8 when the Challenge awards Loot.
 
 Each ordinary Challenge is explicitly assigned exactly one **Quest card** or one **Loot card**. It never awards both and never has an empty reward. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot. A Quest Heart is the final objective rather than an ordinary reward-bearing Challenge: it names the action that completes the Quest and awards no Quest or Loot card. Loot is always either Supply or Treasure. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
 
-The current d12 assignments are fixed:
+Scenes, puzzles, social obstacles, and information-rich creature situations generally award Quest cards. Physical obstacles, traps, ambushes, and major threats generally award Loot. Every Quest Heart is an objective card, reveals its named defenders, and awards neither ordinary reward type.
 
-- **Quest:** 1 Quiet Scene, 5 Puzzle, 6 Social Obstacle, 7 Uncertain Creature, 10 Creature + Theme.
-- **Loot:** 2 Domain Obstacle, 3 Theme Hazard, 4 Trap, 8 Hostile Creature, 9 Creature + Domain, 11 Compound Challenge, and 12 Major Threat.
-- **Objective:** every Quest Heart. A Heart reveals multiple Quest-appropriate defenders. Completing its named objective does not remove those Monster cards or conquer the Room.
+The active application selects Quest progress before the Room. A first Heart therefore draws only from that Quest's compatible finale Rooms. Ordinary Challenges then draw only from cards whose requirements are satisfied by the chosen Room. The full contract and validation procedure are in [Content packs and compatibility contract](../content-packs/README.md).
 
 ### Accepted card reveal sequence
 
@@ -371,11 +369,13 @@ A quiet result is a **Scene**, not a Challenge. Its Room begins conquered, it ha
 
 The complete schemas, vocabulary, and writing rules are in the [card-language standard](../card-language/README.md).
 
-The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append an independent atmosphere or haunting roll, Quest content, Challenge presence, or Monster introduction. Those ideas belong on their respective Challenge, Quest, and Monster cards. Particularly strong haunting concepts should be authored as Challenges instead of being applied as a disconnected prose layer.
+The Room card's read-aloud text contains only the room itself: its architecture, layout, lighting, and immediately visible physical details. Do not append Quest content, Challenge presence, or Monster introductions. The Room also prints exact rules for persistent terrain shown by its floorplan.
 
 Challenge is a broad card type covering ambushes, creatures, obstacles, hazards, traps, puzzles, social confrontations, guardians, setbacks, and Quest Hearts. A Heart is the selected Quest pack's final Challenge card. Conquering it begins extraction rather than revealing a separate Heart card.
 
-Cards identify both their type and source set. The Core set supplies reusable Challenges and ordinary Loot; a Location pack supplies its Rooms, most Monsters, themed Challenges, and discoveries; the selected Quest pack supplies its mission, Quest cards, setbacks, and Heart Challenge. A hidden passage is a room-state change or reward instruction, not a separate card type.
+Cards identify both their type and source set. The Core Set supplies procedures, reusable Challenges, character content, and ordinary Loot. The selected Adventure Set supplies Rooms, Monsters, additional Challenges, themed Loot, and complete Quest packs. A hidden passage is a Room-state change, not a separate card type.
+
+**Current implementation:** Core + Classics. The Domain + Theme system below remains design history and a possible future authoring layer; the active Classics Set deliberately uses a single practical dungeon identity instead of an independent Theme overlay.
 
 ## Accepted site identity: Domain + Theme
 
