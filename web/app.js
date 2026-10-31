@@ -17,8 +17,8 @@
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const roomById = id => state.rooms.find(room => room.id === id);
   const activeRoom = () => roomById(state.activeRoomId);
-  const templateFor = room => DATA.rooms[room.templateIndex - 1];
-  const challengeFor = room => DATA.challenges.find(card => card.id === room.challengeId) || DATA.challenges[0];
+  const templateFor = room => DATA.allScenes.find(scene => scene.id === room.sceneId) || DATA.scenes[room.templateIndex - 1];
+  const challengeFor = room => templateFor(room);
   const questDefinition = () => DATA.quests.find(quest => quest.id === state.quest?.id || quest.index === state.quest?.index) || DATA.quests[0];
   const liveEnemies = room => room.enemies.filter(enemy => enemy.hp > 0);
   const roomCardState = room => room.cardState || (room.cardState = {
@@ -27,8 +27,9 @@
   });
   function challengeRewardType(room) {
     if (room.quest.name === 'Heart') return 'heart';
-    return challengeFor(room).reward;
+    return templateFor(room).reward;
   }
+  const passiveScene = scene => ['opportunity','quiet'].includes(scene.kind);
   const TORCH_CAPACITY = 12;
   const roomSearchState = room => room.searchState || (room.searchState = {
     attempted: false,
@@ -136,6 +137,15 @@
     return list[stableIndex(room, salt, list.length)];
   }
 
+  function shuffle(list) {
+    const result = [...list];
+    for (let index=result.length-1; index>0; index--) {
+      const other = Math.floor(random() * (index + 1));
+      [result[index],result[other]] = [result[other],result[index]];
+    }
+    return result;
+  }
+
   function activateModule(moduleId = 'classics') {
     DATA = window.GAME_MODULES?.[moduleId] || window.GAME_MODULES.classics;
     window.GAME_DATA = DATA;
@@ -180,9 +190,9 @@
   }
 
   function questElementPlacement(room) {
-    if (challengeFor(room).scene) return 'Claim this from the quiet Scene.';
+    if (passiveScene(challengeFor(room))) return 'Claim this from the opportunity Scene.';
     if (challengeFor(room).kind === 'social') return 'Claim this as part of the resolved agreement.';
-    return 'Claim this now that the Challenge no longer controls the Room.';
+    return 'Claim this when the Scene is conquered.';
     /* Legacy placement text remains below only to migrate old generated records. */
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     if (liveEnemies.length) {
@@ -300,7 +310,8 @@
   function buildQuestScene(room) {
     const type = room.quest.name;
     if (type === 'Quest element' || type === 'Major quest element' || type === 'Heart advantage') {
-      const card = stablePick(room, 'quest-element', questDefinition().elementCards);
+      const cards = questDefinition().elementCards;
+      const card = cards[room.quest.elementIndex % cards.length] || cards[0];
       const { title, prose } = card;
       return {
         title, prose,
@@ -340,12 +351,16 @@
     const sourceChallenge = challengeFor(room);
     const challenge = {
       ...sourceChallenge,
-      immediate:sourceChallenge.scene
-        ? 'This is a Scene, not a Challenge. The Room is already conquered and grants no Skill Token.'
-        : room.enemies.length
-          ? `Reveal ${room.enemies.length === 1 ? 'one Monster card' : `${room.enemies.length} Monster cards`}. Place each beside this card.`
-          : sourceChallenge.immediate || '',
-      detail:sourceChallenge.scene ? sourceChallenge.rule : '',
+      immediate:passiveScene(sourceChallenge)
+        ? 'This Scene begins conquered and grants no Skill Token.'
+        : sourceChallenge.encounter?.mode === 'random'
+          ? `Draw ${sourceChallenge.encounter.count === 1 ? 'one random Monster card' : `${sourceChallenge.encounter.count} random Monster cards`} and follow the Scene setup.`
+          : sourceChallenge.encounter?.mode === 'boss'
+            ? `Place the set-aside Boss cards named by this Quest Scene.`
+            : sourceChallenge.encounter?.mode === 'printed'
+              ? 'The listed monsters are printed on this Scene card; do not draw Monster cards for them.'
+              : '',
+      detail:passiveScene(sourceChallenge) ? sourceChallenge.rule : '',
       revelation:sourceChallenge.revelation || '',
       active:sourceChallenge.active || ''
     };
@@ -354,7 +369,7 @@
     const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
     const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
     const readAloudParts = [
-      { source:`Room card · ${String(template.index).padStart(2,'0')} · ${template.name} · ${template.builtAs}`, text:template.readAloud }
+      { source:`Scene card · ${String(template.index).padStart(2,'0')} · ${template.name}`, text:template.readAloud }
     ].filter(part => part?.text);
     const readAloud = readAloudParts.map(part => part.text).join(' ');
     return {
@@ -447,7 +462,7 @@
       if (room.sceneRef?.version !== 5) room.sceneRef = buildSceneRef(room);
       roomCardState(room);
       roomSearchState(room);
-      if (challengeFor(room).scene) {
+      if (passiveScene(challengeFor(room))) {
         room.status = 'conquered';
         room.cardState.resolutionRevealed = true;
         room.cardState.rewardsRevealed = true;
@@ -468,7 +483,7 @@
   function loadSave() {
     try {
       const parsed = JSON.parse(localStorage.getItem(SAVE_KEY));
-      if (!parsed || parsed.version !== 1 || !window.GAME_MODULES?.[parsed.moduleId]) return null;
+      if (!parsed || parsed.version !== 2 || !window.GAME_MODULES?.[parsed.moduleId]) return null;
       activateModule(parsed.moduleId);
       return parsed;
     } catch (_) { return null; }
@@ -539,14 +554,20 @@
     const seed = form.seed || String(new Date().toISOString().slice(0,10).replaceAll('-',''));
     const size = Number(form.size || 3);
     state = {
-      version: 1, moduleId:DATA.id, title: form.title || 'The Broken Crown Dungeon', seed,
+      version: 2, moduleId:DATA.id, title: form.title || 'The Broken Crown Dungeon', seed,
       rngState: hashSeed(seed), size, escalation: Number(form.escalation || 3),
       domain: DATA.domain, theme: DATA.theme, quest: null,
       turn: 0, light: { remaining: TORCH_CAPACITY, capacity: TORCH_CAPACITY, reserve: 0, holderId: null }, usedTemplates: [], usedQuestRolls: [],
+      sceneDeck:[], monsterDeck:[], monsterDiscard:[], questCardsDrawn:0,
       rooms: [], activeRoomId: null, party: [], gold: 0, log: [], savedAt: null
     };
     const quest = form.quest === 'random' ? pick(DATA.quests) : DATA.quests.find(q => q.index === Number(form.quest));
     state.quest = { id:quest.id, index:quest.index, name:quest.name, elements:quest.elements, heart:quest.heart, objective:quest.objective, elementsFound:0, heartFound:false, completed:false };
+    const entranceScene = DATA.scenes[0];
+    state.sceneDeck = [entranceScene.id, ...shuffle(DATA.scenes.slice(1).map(scene => scene.id))];
+    const heartPosition = clamp(6 + die(5) + Math.max(0, 3-state.escalation), 6, state.sceneDeck.length-1);
+    state.sceneDeck.splice(heartPosition, 0, quest.heartSceneId);
+    state.monsterDeck = shuffle([...DATA.randomMonsters.map(monster => monster.id), ...(quest.wanderingAdds || [])]);
     const names = form.names.filter(Boolean);
     for (let i = 0; i < Number(form.partySize); i++) {
       const character = createCharacter(names[i] || DATA.names[i], { mustCarryTorch: i === 0 });
@@ -559,44 +580,38 @@
     render();
   }
 
-  function hasAnyTag(tags, wanted = []) {
-    return wanted.some(tag => tags.includes(tag));
+  function drawSceneCard() {
+    if (!state.sceneDeck.length) {
+      const available = DATA.scenes.filter(scene => !state.usedTemplates.includes(scene.id));
+      state.sceneDeck = shuffle((available.length ? available : DATA.scenes).map(scene => scene.id));
+    }
+    const sceneId = state.sceneDeck.shift();
+    const scene = DATA.allScenes.find(candidate => candidate.id === sceneId) || DATA.scenes[0];
+    state.usedTemplates.push(scene.id);
+    return scene;
   }
 
-  function contentFitsRoom(content, template) {
-    if (content.requiresAny?.length && !hasAnyTag(template.tags, content.requiresAny)) return false;
-    if (content.forbidsAny?.length && hasAnyTag(template.tags, content.forbidsAny)) return false;
-    return true;
+  function drawRandomMonsterId() {
+    if (!state.monsterDeck.length) {
+      state.monsterDeck = shuffle(state.monsterDiscard.length ? state.monsterDiscard : DATA.randomMonsters.map(monster => monster.id));
+      state.monsterDiscard = [];
+    }
+    const monsterId = state.monsterDeck.shift();
+    state.monsterDiscard.push(monsterId);
+    return monsterId;
   }
 
-  function templateRoll(questResult) {
-    const n = state.rooms.length;
-    const unused = DATA.rooms.filter(template => !state.usedTemplates.includes(template.id));
-    const firstHeart = questResult.name === 'Heart' && !state.quest.heartFound;
-    const heartTags = questDefinition().heartRoomTagsAny || [];
-    const unlockedIndex = Math.min(DATA.rooms.length, 10 + state.escalation * n * 2);
-    let pool = unused.filter(template => firstHeart ? hasAnyTag(template.tags, heartTags) : template.index <= unlockedIndex);
-    if (!pool.length) pool = unused.length ? unused : DATA.rooms;
-    const template = pick(pool);
-    state.usedTemplates.push(template.id);
-    return template.index;
-  }
-
-  function chooseChallenge(template) {
-    const compatible = DATA.challenges.filter(card => contentFitsRoom(card, template));
-    return pick(compatible.length ? compatible : DATA.challenges.filter(card => !card.requiresAny?.length));
-  }
-
-  function questRoll() {
-    const n = state.rooms.length;
-    let value, attempts = 0;
-    do {
-      value = die(20) + state.escalation * n;
-      attempts++;
-    } while (state.usedQuestRolls.includes(value) && attempts < 100);
-    state.usedQuestRolls.push(value);
-    const band = DATA.questBands.find(([max]) => value <= max);
-    return { value, name: band[1], description: band[2] };
+  function questResultForScene(scene) {
+    if (scene.questHeart) {
+      state.quest.heartFound = true;
+      return { value:100 + state.quest.index, name:'Heart', description:'The Quest finale Scene.', claimed:false };
+    }
+    if (scene.reward === 'quest') {
+      const elementIndex = state.questCardsDrawn % questDefinition().elementCards.length;
+      state.questCardsDrawn += 1;
+      return { value:elementIndex + 1, elementIndex, name:'Quest element', description:'Draw the next card from the selected Quest pack.', claimed:false };
+    }
+    return { value:0, name:'None', description:'This Scene does not reveal a Quest card.', claimed:false };
   }
 
   function enemyScale(source) {
@@ -605,27 +620,24 @@
     return { units, total: source.unitHp * units };
   }
 
-  function makeEnemy(template, major = false, wandering = false, monsterRef = null, manuallyAdded = Number.isInteger(monsterRef)) {
+  function makeEnemy(template, major = false, wandering = false, monsterRef = null, manuallyAdded = Number.isInteger(monsterRef), origin = wandering ? 'random' : 'printed') {
     let source;
     if (Number.isInteger(monsterRef)) source = DATA.monsters[monsterRef];
     else if (typeof monsterRef === 'string') source = DATA.monsters.find(monster => monster.id === monsterRef);
-    else {
-      const candidates = DATA.monsters.filter(monster => !monster.questOnly && (!wandering || monster.wandering) && contentFitsRoom(monster, template));
-      source = major ? [...candidates].sort((a,b) => b.unitHp*b.baseUnits - a.unitHp*a.baseUnits)[0] : pick(candidates);
-    }
+    else source = DATA.monsters.find(monster => monster.id === drawRandomMonsterId());
     if (!source) source = DATA.monsters[0];
     const { units, total } = enemyScale(source);
     return {
       id: uid('enemy'), name: source.name, hp: total, maxHp: total, units,
       defense: template.target, behavior: source.behavior, instinct: source.instinct,
-      wound: source.wound, pack:source.pack || DATA.pack, monsterId:source.id, wandering, manuallyAdded
+      wound: source.wound, pack:source.pack || DATA.pack, monsterId:source.id, wandering, manuallyAdded, origin
     };
   }
 
   function addEncounter(monsterIndex = null) {
     const room = activeRoom();
     const random = !Number.isInteger(monsterIndex);
-    const enemy = makeEnemy(templateFor(room), false, random, monsterIndex);
+    const enemy = makeEnemy(templateFor(room), false, random, monsterIndex, Number.isInteger(monsterIndex), random ? 'random' : 'added');
     room.enemies.push(enemy);
     room.status = 'dangerous';
     log(`${enemy.name} ${random ? 'were rolled as a random encounter' : 'were added to the encounter'} in Room ${room.number}.`);
@@ -639,23 +651,20 @@
       return openModal('bypass', { movement:'explore' });
     }
     if (!spendLight('enter a new room', sourceRoom, { advance:false })) return null;
-    const quest = questRoll();
-    const index = templateRoll(quest);
-    const template = DATA.rooms[index - 1];
+    const template = drawSceneCard();
+    const quest = questResultForScene(template);
+    const index = template.index;
     const parent = fromId ? roomById(fromId) : null;
     const rotation = parent ? rotationToward(parent.x-x, parent.y-y) : 0;
-    const challenge = chooseChallenge(template);
     const opportunityRoll = die(8);
-    quest.claimed = false;
     const room = {
-      id: uid('room'), number: state.rooms.length + 1, templateIndex: index, x, y,
-      challengeId:challenge.id,
+      id: uid('room'), number: state.rooms.length + 1, templateIndex: index, sceneId:template.id, x, y,
       opportunityRoll,
-      quest, status: challenge.scene ? 'conquered' : 'dangerous', securedLight: template.lighting === 'Inherent',
+      quest, status: passiveScene(template) ? 'conquered' : 'dangerous', securedLight: template.lighting === 'Inherent',
       notes: '', connections: fromId ? [fromId] : [], remainingExits: template.exits,
       rotation, routeAssignments: {}, enemies: [], opportunityClaimed: false,
       searchState: { attempted:false, success:false, claimed:false, opportunityRoll:0, opportunityVariant:0 },
-      cardState: { resolutionRevealed:Boolean(challenge.scene), rewardsRevealed:Boolean(challenge.scene) }
+      cardState: { resolutionRevealed:passiveScene(template), rewardsRevealed:passiveScene(template) }
     };
     room.searchState.opportunityRoll = 1 + stableIndex(room, 'search-opportunity-roll', 8);
     room.searchState.opportunityVariant = stableIndex(room, 'search-opportunity', DATA.sceneOpportunities[room.searchState.opportunityRoll].length);
@@ -663,28 +672,12 @@
       const entry = templateRoutes(template).find(route => route.glyph === 'E');
       if (entry) room.routeAssignments[parent.id] = entry.key;
     }
-    if (quest.name === 'Heart') {
-      if (state.quest.heartFound) {
-        room.quest.name = 'Heart advantage';
-        room.quest.description = 'The Heart is already known; this supplies a major Heart-specific advantage.';
-      } else {
-        state.quest.heartFound = true;
-        room.status = 'dangerous';
-        room.cardState = { resolutionRevealed:false, rewardsRevealed:false };
-        for (const monsterId of questDefinition().defenderIds || []) {
-          room.enemies.push(makeEnemy(template, false, false, monsterId, false));
-        }
-      }
-    }
-    if (room.quest.name !== 'Heart') {
-      const monsterIds = challenge.monsterIds || [];
-      for (const monsterId of monsterIds) room.enemies.push(makeEnemy(template, challenge.kind === 'major', false, monsterId, false));
-      const remaining = Math.max(0, (challenge.monsterCount || 0) - monsterIds.length);
-      for (let i=0; i<remaining; i++) {
-        const candidates = DATA.monsters.filter(monster => !monster.questOnly && contentFitsRoom(monster, template) && (!challenge.monsterTagsAny?.length || hasAnyTag(monster.tags, challenge.monsterTagsAny)));
-        const monster = pick(candidates.length ? candidates : DATA.monsters.filter(candidate => !candidate.questOnly && contentFitsRoom(candidate, template)));
-        room.enemies.push(makeEnemy(template, challenge.kind === 'major', false, monster.id, false));
-      }
+    const encounter = template.encounter || { mode:'none' };
+    if (encounter.mode === 'printed' || encounter.mode === 'boss') {
+      for (const monsterId of encounter.monsterIds || []) room.enemies.push(makeEnemy(template, encounter.mode === 'boss', false, monsterId, false, encounter.mode));
+      for (const monsterId of encounter.printedMonsterIds || []) room.enemies.push(makeEnemy(template, false, false, monsterId, false, 'printed'));
+    } else if (encounter.mode === 'random') {
+      for (let count=0; count<(encounter.count || 1); count++) room.enemies.push(makeEnemy(template, false, true, null, false, 'random'));
     }
     room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
@@ -696,8 +689,8 @@
     }
     state.activeRoomId = room.id;
     advanceTurns(1, false);
-    log(`Entered Room ${room.number}: ${template.name}. Drew Challenge “${challenge.title},” Loot ${opportunityRoll}, and Quest ${quest.value}.`);
-    if (challenge.scene) log('The revealed card is a Scene. The Room is already conquered and grants no Skill Token.');
+    log(`Drew Scene ${room.number}: ${template.name}.${encounter.mode === 'random' ? ' Drew a random Monster card.' : encounter.mode === 'boss' ? ' Placed the set-aside Boss cards.' : ''}`);
+    if (passiveScene(template)) log('This opportunity Scene begins conquered and grants no Skill Token.');
     if (room.securedLight) log(`${template.name} begins with inherent secured light.`);
     persist();
     return room;
@@ -788,7 +781,7 @@
   function conquerRoom() {
     const room = activeRoom();
     if (!room || room.status === 'conquered') return;
-    if (!roomCardState(room).resolutionRevealed) return showToast('Reveal the Challenge resolution before conquering the room.');
+    if (!roomCardState(room).resolutionRevealed) return showToast('Reveal the Scene response before conquering it.');
     if (liveEnemies(room).length) return showToast('Resolve or durably remove every active Monster card before conquering the Room.');
     if (room.quest.name === 'Heart' && !room.quest.claimed) return showToast('Complete the Quest objective before conquering this Room.');
     room.status = 'conquered';
@@ -799,7 +792,7 @@
     });
     room.cardState.rewardsRevealed = true;
     const rewardType = challengeRewardType(room);
-    const rewardMessage = rewardType === 'heart' ? 'The Quest objective was already secured; no reward card was revealed.' : `Its guaranteed ${rewardType === 'quest' ? 'Quest' : 'Loot'} card was revealed.`;
+    const rewardMessage = rewardType === 'heart' ? 'The Quest objective was already secured; no reward card was revealed.' : rewardType ? `Its ${rewardType === 'quest' ? 'Quest' : 'Loot'} card was revealed.` : 'This Scene has no reward card.';
     log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token. ${rewardMessage}`);
     render();
   }
@@ -878,7 +871,7 @@
     ensureStateShape();
     const scene = buildRoomScene(room, templateFor(room));
     room.opportunityClaimed = true;
-    grantLoot(room, scene.opportunity, 'guaranteed Challenge', heroId);
+    grantLoot(room, scene.opportunity, 'Scene reward', heroId);
     render();
   }
 
@@ -1323,7 +1316,7 @@
       const layout = layouts.get(room.id);
       const plan = renderFloorplanSvg(templateFor(room), `overview-${room.id}`, { overview:true, rotation:room.rotation || 0, embeddedX:layout.x*unit, embeddedY:layout.y*unit });
       const stateClass = `${room.id === state.activeRoomId ? ' active' : ''} ${room.status}`;
-      return `<g class="overview-room-node${stateClass}" data-action="travel" data-id="${room.id}" tabindex="0"><title>Room ${room.number}: ${esc(templateFor(room).name)}</title>${plan}<circle class="overview-room-number-bg" cx="${layout.x*unit+14}" cy="${layout.y*unit+14}" r="11"/><text class="overview-room-number" x="${layout.x*unit+14}" y="${layout.y*unit+18}">${room.number}</text><text class="overview-room-icons" x="${(layout.x+layout.width)*unit-6}" y="${layout.y*unit+15}">${statusIcon(room)}</text></g>`;
+      return `<g class="overview-room-node${stateClass}" data-action="travel" data-id="${room.id}" tabindex="0"><title>Scene ${room.number}: ${esc(templateFor(room).name)}</title>${plan}<circle class="overview-room-number-bg" cx="${layout.x*unit+14}" cy="${layout.y*unit+14}" r="11"/><text class="overview-room-number" x="${layout.x*unit+14}" y="${layout.y*unit+18}">${room.number}</text><text class="overview-room-icons" x="${(layout.x+layout.width)*unit-6}" y="${layout.y*unit+15}">${statusIcon(room)}</text></g>`;
     }).join('');
     const displayWidth = totalWidth * 12, displayHeight = totalHeight * 12;
     return `<aside class="pane pane-map"><div class="map-wrap">
@@ -1423,7 +1416,7 @@
     </main>`;
   }
 
-  function renderRoomCards() {
+  function renderRoomCardsLegacy() {
     const room = activeRoom();
     const template = templateFor(room);
     const scene = buildRoomScene(room, template);
@@ -1471,6 +1464,53 @@
       <section class="room-controls"><div class="button-row">${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Spend 1 Light · illuminate permanently</button>' : ''}${room.status === 'conquered' && !search.attempted ? `<button class="btn btn-small" data-action="search-room">${room.securedLight ? 'Search room · no Light' : 'Spend 1 Light · search room'}</button>` : ''}<button class="btn btn-small" data-action="rest">${room.securedLight ? 'Rest and heal · no Light' : 'Spend 1 Light · rest and heal'}</button><button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button></div>${search.attempted && !search.success ? '<p class="search-status">This room was searched, but no Loot was found.</p>' : ''}<textarea class="room-notes" data-action="notes" placeholder="Room rulings, changed terrain, secured ropes, creatures left behind.">${esc(room.notes)}</textarea></section></main>`;
   }
 
+  function renderRoomCards() {
+    const room = activeRoom();
+    const template = templateFor(room);
+    const scene = buildRoomScene(room, template);
+    const cards = roomCardState(room);
+    const rewardType = challengeRewardType(room);
+    const search = roomSearchState(room);
+    const searchedLoot = search.success ? buildSearchLoot(room) : null;
+    const darkness = state.light.remaining <= 0 && !room.securedLight;
+    const isHeart = room.quest.name === 'Heart';
+    const isPassive = passiveScene(template) && !isHeart;
+    const encounterMode = template.encounter?.mode || 'none';
+    const responseRows = [
+      template.revelation && `<li><strong>Revelation:</strong> ${esc(template.revelation)}</li>`,
+      template.rule && `<li><strong>Rule:</strong> ${esc(template.rule)}</li>`,
+      template.failure && `<li><strong>Failure:</strong> ${esc(template.failure)}</li>`
+    ].filter(Boolean).join('');
+    const setupText = encounterMode === 'printed'
+      ? 'Use the monster stat lines printed on this Scene. No Monster card is drawn.'
+      : encounterMode === 'random'
+        ? `Draw ${template.encounter.count === 1 ? 'one random Monster card' : `${template.encounter.count} random Monster cards`} and apply this Scene’s setup to it.`
+        : encounterMode === 'boss'
+          ? `Place the named set-aside Boss card${template.encounter.monsterIds.length === 1 ? '' : 's'}.${template.encounter.printedMonsterIds?.length ? ' Use the other defender stat lines printed on this Scene.' : ''} Do not draw from the random Monster deck.`
+          : 'This Scene does not begin with a monster.';
+    const inlineMonsters = encounterMode === 'printed' || encounterMode === 'boss'
+      ? room.enemies.map(enemy => `<div class="inline-monster"><strong>${esc(enemy.name)}</strong><span>${enemy.units} × ${Math.ceil(enemy.maxHp/enemy.units)} HP · Defense ${enemy.defense} · ${esc(enemy.wound)}</span><small>${esc(enemy.instinct)}</small></div>`).join('')
+      : '';
+    const lootCard = (loot, searched = false) => {
+      const claimed = searched ? search.claimed : room.opportunityClaimed;
+      const action = searched ? 'claim-search' : 'claim';
+      const controls = claimed ? '<span class="tag lit">Claimed</span>' : loot.item
+        ? `<div class="card-actions">${state.party.filter(hero=>!hero.dead).map(hero=>`<button class="btn btn-small btn-primary" data-action="${action}" data-hero-id="${hero.id}">Give to ${esc(hero.name)}</button>`).join('')}</div>`
+        : `<button class="btn btn-small btn-primary" data-action="${action}">Take Loot</button>`;
+      return `<article class="game-card loot-card ${searched ? 'search-loot-card' : ''}"><header class="card-titlebar"><div><div class="eyebrow">Loot · ${esc(loot.kind)} · ${esc(loot.pack || DATA.pack)}</div><h3>${esc(loot.title)}</h3></div><strong>${loot.gold ? `${loot.gold}g` : '?'}</strong></header><div class="card-art card-art-placeholder loot-art"><span>Loot artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(loot.prose)}</p><div class="effect-line"><strong>Take:</strong> ${esc(loot.effect)}</div>${controls}</div></article>`;
+    };
+    const response = isHeart
+      ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div><ul class="facilitator-rules">${responseRows}</ul><div class="reward-instruction"><strong>Objective:</strong> ${esc(heartAction())}.</div><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">Objective secured · Quest complete</span>' : `<button class="btn btn-small btn-primary" data-action="complete-heart">${esc(heartAction())} · complete Quest</button>`}</div><p>Completing the objective does not remove surviving Boss cards or conquer this Scene.</p></div>`
+      : cards.resolutionRevealed
+        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}${rewardType ? `<div class="reward-instruction"><strong>Reward:</strong> ${rewardType === 'quest' ? 'One Quest card' : 'One Loot card'}.</div>` : '<div class="reward-instruction">No reward card.</div>'}</div>`
+        : '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>';
+    return `<main class="pane pane-room"><div class="section-head"><h2>Scene in play</h2><span>Scene ${room.number} · ${esc(template.pack)}</span></div><div class="card-table">
+      <article class="game-card room-card card-scene"><header class="card-titlebar room-header"><div><div class="eyebrow">Scene ${room.number} · ${esc(template.kind)} · ${esc(template.pack)}</div><h2>${esc(template.name)}</h2></div><strong>${template.target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><div class="room-meta"><span class="tag danger-${template.danger.toLowerCase()}">${template.danger}</span><span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? 'Permanently lit' : template.lighting}</span>${darkness ? '<span class="tag danger-hard">Darkness</span>' : ''}</div><section class="read-aloud"><div class="eyebrow">Read aloud</div><p><em>${esc(`${template.readAloud} ${template.front}`)}</em></p></section>${template.feature ? `<div class="challenge-instruction room-feature"><strong>Terrain · ${esc(template.feature.title)}:</strong> ${esc(template.feature.text)}</div>` : ''}<div class="challenge-instruction"><strong>Monster setup:</strong> ${esc(setupText)}</div>${inlineMonsters ? `<div class="inline-monster-list">${inlineMonsters}</div>` : ''}${response}</div><footer class="card-footer">${esc(template.id)} · complete floorplan and situation</footer></article>
+      ${rewardType && rewardType !== 'heart' && !cards.rewardsRevealed ? `<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Loot card'} facedown</strong></div><footer class="card-footer">Scene reward</footer></article>` : ''}
+      ${rewardType === 'loot' && cards.rewardsRevealed ? lootCard(scene.opportunity) : ''}${searchedLoot ? lootCard(searchedLoot,true) : ''}</div>
+      <section class="room-controls"><div class="button-row">${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Spend 1 Light · illuminate permanently</button>' : ''}${room.status === 'conquered' && !search.attempted ? `<button class="btn btn-small" data-action="search-room">${room.securedLight ? 'Search · no Light' : 'Spend 1 Light · search'}</button>` : ''}<button class="btn btn-small" data-action="rest">${room.securedLight ? 'Rest and heal · no Light' : 'Spend 1 Light · rest and heal'}</button><button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button></div>${search.attempted && !search.success ? '<p class="search-status">This Scene was searched, but no Loot was found.</p>' : ''}<textarea class="room-notes" data-action="notes" placeholder="Scene rulings, changed terrain, secured ropes, creatures left behind…">${esc(room.notes)}</textarea></section></main>`;
+  }
+
   function renderEnemyLegacy(enemy) {
     const pips = Array.from({length:enemy.maxHp}, (_, index) => `<button class="pip ${index >= enemy.hp ? 'empty' : ''}" data-action="enemy-hp" data-id="${enemy.id}" data-hp="${index+1}" title="Set HP to ${index+1}"></button>`).join('');
     const encounterType = enemy.manuallyAdded ? 'Added encounter' : enemy.wandering ? 'Wandering enemy' : `${enemy.units} creature${enemy.units === 1 ? '' : 's'}`;
@@ -1496,7 +1536,8 @@
   function renderActiveEnemyCard(enemy) {
     const pips = Array.from({length:enemy.maxHp}, (_, index) => `<button class="pip ${index >= enemy.hp ? 'empty' : ''}" data-action="enemy-hp" data-id="${enemy.id}" data-hp="${index+1}" title="Set HP to ${index+1}"></button>`).join('');
     const encounterType = enemy.manuallyAdded ? 'Added encounter' : enemy.wandering ? 'Wandering enemy' : `${enemy.units} creature${enemy.units === 1 ? '' : 's'}`;
-    return `<article class="game-card compact-game-card enemy-card"><header class="card-titlebar enemy-top"><div><div class="eyebrow">Monster · ${esc(enemy.pack || DATA.pack)}</div><h3>${esc(enemy.name)}</h3></div><strong>${enemy.defense}</strong></header><div class="card-art card-art-placeholder monster-art"><span>Monster artwork</span><small>${esc(encounterType)} · placeholder</small></div><div class="card-text"><div class="hp-pips">${pips}</div><div class="enemy-stats"><span>${enemy.units} × ${Math.ceil(enemy.maxHp / enemy.units)} HP</span><span>${enemy.hp}/${enemy.maxHp} HP</span></div><p><strong>Signs:</strong> ${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="damage-enemy" data-id="${enemy.id}">Deal 1</button><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></div><footer class="card-footer">Defense ${enemy.defense} · ${esc(enemy.pack || DATA.pack)}</footer></article>`;
+    const sourceLabel = enemy.origin === 'printed' ? 'Printed on Scene' : enemy.origin === 'boss' ? 'Set-aside Boss card' : enemy.origin === 'random' ? 'Random Monster card' : 'Added Monster';
+    return `<article class="game-card compact-game-card enemy-card"><header class="card-titlebar enemy-top"><div><div class="eyebrow">${sourceLabel} · ${esc(enemy.pack || DATA.pack)}</div><h3>${esc(enemy.name)}</h3></div><strong>${enemy.defense}</strong></header><div class="card-art card-art-placeholder monster-art"><span>Monster artwork</span><small>${esc(encounterType)} · placeholder</small></div><div class="card-text"><div class="hp-pips">${pips}</div><div class="enemy-stats"><span>${enemy.units} × ${Math.ceil(enemy.maxHp / enemy.units)} HP</span><span>${enemy.hp}/${enemy.maxHp} HP</span></div><p><strong>Signs:</strong> ${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="damage-enemy" data-id="${enemy.id}">Deal 1</button><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></div><footer class="card-footer">Defense ${enemy.defense} · ${sourceLabel}</footer></article>`;
   }
 
   function renderEncounterCards() {
@@ -1507,9 +1548,9 @@
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     const questCard = rewardType === 'quest' && cards.rewardsRevealed
       ? `<article class="game-card compact-game-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} pack · ${esc(scene.quest.subtype || room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder quest-art"><span>Quest artwork</span><small>Placeholder</small></div><div class="card-text"><p><strong>Objective:</strong> ${esc(state.quest.objective)}</p><p>${esc(scene.quest.prose)}</p>${isQuestElement(room) ? `<p><strong>Claim:</strong> ${esc(scene.quest.claim || questElementPlacement(room))}</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>${room.quest.name === 'Omen' ? 'Meaning' : room.quest.name === 'Heart' ? 'Claim' : 'Use'}:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest card</footer></article>`
-      : `<div class="empty-state">${rewardType === 'quest' ? 'The guaranteed Quest card remains facedown until conquest.' : rewardType === 'heart' ? room.quest.claimed ? 'The objective is secured. Surviving Monster cards remain active.' : 'Complete the objective from the Heart Challenge card.' : 'This card does not guarantee a Quest card.'}</div>`;
+      : `<div class="empty-state">${rewardType === 'quest' ? 'The Quest card remains facedown until conquest.' : rewardType === 'heart' ? room.quest.claimed ? 'The objective is secured. Surviving Boss cards remain active.' : 'Complete the objective on the Quest Scene.' : 'This Scene does not reveal a Quest card.'}</div>`;
     const renderedMonsters = live.map(renderActiveEnemyCard).join('');
-    return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monster cards</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? renderedMonsters : '<div class="empty-state">No active Monster card.</div>'}</div></section><section><div class="subhead">Quest cards</div><div class="quest-list">${questCard}</div></section></aside>`;
+    return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monsters in play</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? renderedMonsters : '<div class="empty-state">No active monster.</div>'}</div></section><section><div class="subhead">Quest cards</div><div class="quest-list">${questCard}</div></section></aside>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }
@@ -1534,9 +1575,9 @@
       'Circlet of Mind':'+1 Mind while owned. This bonus is already included in the adventurer’s attribute.',
       'Gauntlets of Might':'+1 Strength while owned. This bonus is already included in the adventurer’s attribute.',
       'Boots of Celerity':'+1 Agility while owned. This bonus is already included in the adventurer’s attribute.',
-      'Ember Edge':'Once per Challenge, one successful attack with this one-handed blade can deal fire damage and +1 damage.',
+      'Ember Edge':'Once per Scene, one successful attack with this one-handed blade can deal fire damage and +1 damage.',
       'Skeleton Key':'Once per Room, open one ordinary lock without a check.',
-      'Graveglass Edge':'Once while a Challenge is active, one successful attack with this one-handed blade deals +1 damage.',
+      'Graveglass Edge':'Once while a Scene is active, one successful attack with this one-handed blade deals +1 damage.',
       'Bell of the Unburied Name':'When rung, nearby incorporeal spirits become visible.'
     };
     return rules[item] || 'Use this item whenever its ordinary fictional properties apply.';
@@ -1545,7 +1586,7 @@
   function renderHero(hero) {
     const bearingTorch = state.light.remaining > 0 && state.light.holderId === hero.id;
     return `<article class="adventurer-card ${hero.dead ? 'dead' : ''}"><div class="adventurer-head"><div><h3>${esc(hero.name)}${hero.dead ? ' — dead' : ''}</h3><p>${esc(hero.past)} · ${esc(hero.knack)}${bearingTorch ? ' · 🔥 Torch bearer' : ''}</p></div><div class="tracker"><button data-action="hero-hp" data-id="${hero.id}" data-delta="-1">−</button><strong>♥ ${hero.hp}/${hero.maxHp}</strong><button data-action="hero-hp" data-id="${hero.id}" data-delta="1">+</button></div></div>
-      <div class="character-row">${Object.entries(hero.attributes).map(([name,value]) => `<button type="button" class="stat" data-action="roll-attribute" data-id="${hero.id}" data-attribute="${esc(name)}" data-bonus="${value}" title="Roll ${esc(name)} against the current room check" ${hero.dead ? 'disabled' : ''}><small>${name}</small><strong>${signed(value)}</strong></button>`).join('')}</div>
+      <div class="character-row">${Object.entries(hero.attributes).map(([name,value]) => `<button type="button" class="stat" data-action="roll-attribute" data-id="${hero.id}" data-attribute="${esc(name)}" data-bonus="${value}" title="Roll ${esc(name)} against the current Scene check" ${hero.dead ? 'disabled' : ''}><small>${name}</small><strong>${signed(value)}</strong></button>`).join('')}</div>
       <div class="gear-line"><button type="button" class="inline-card-trigger"><strong>${esc(hero.gear)} · ${hero.gearHands || '?'} hand${hero.gearHands === 1 ? '' : 's'}:</strong> ${esc(hero.gearRule)}${miniCard('Gear', hero.gear, `<p><strong>Attack:</strong> ${esc(hero.gearRule)}</p><p><strong>${esc(hero.gearTechnique)} (${hero.gearTechniqueCost} Skill Token${hero.gearTechniqueCost === 1 ? '' : 's'}):</strong> ${esc(hero.gearTechniqueRule)}</p>`)}</button></div>
       <div class="gear-line"><strong>${esc(hero.gearTechnique)} · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}:</strong> ${esc(hero.gearTechniqueRule)}</div>
       <div class="gear-line"><button type="button" class="inline-card-trigger"><strong>${esc(hero.armorName)} · ${esc(hero.burden)}:</strong> ${esc(hero.armorRule)}${miniCard('Armor', hero.armorName, `<p><strong>Rule:</strong> ${esc(hero.armorRule)}</p><p><strong>Burden:</strong> ${esc(hero.burden)}</p>`)}</button></div>
@@ -1589,16 +1630,16 @@
     const enemiesPresent = liveEnemies(room).length > 0;
     const exitsRemain = availableExitRoutes(room).length > 0;
     const unconquered = room.status !== 'conquered';
-    const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent || unconquered ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : unconquered ? 'Conquer the active Challenge to reveal the passage' : ''}">${enemiesPresent ? 'Creatures block exploration' : unconquered ? 'Passage not yet revealed' : 'Explore new room'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass creatures…</button>' : ''}`;
+    const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent || unconquered ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : unconquered ? 'Conquer the active Scene to continue' : ''}">${enemiesPresent ? 'Creatures block exploration' : unconquered ? 'Scene not conquered' : 'Draw next Scene'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass creatures…</button>' : ''}`;
     const heartIncomplete = room.quest.name === 'Heart' && !room.quest.claimed;
     const conquestBlocked = !cards.resolutionRevealed || !unconquered || enemiesPresent || heartIncomplete;
-    const conquerLabel = !cards.resolutionRevealed && unconquered ? 'Reveal resolution first' : enemiesPresent ? 'Resolve remaining creatures' : heartIncomplete ? 'Secure objective first' : 'Conquer Room';
-    const conquerTitle = !cards.resolutionRevealed ? 'Reveal the Challenge resolution first' : enemiesPresent ? 'Resolve or durably remove every active Monster card' : heartIncomplete ? 'Complete the Quest objective first' : '';
+    const conquerLabel = !cards.resolutionRevealed && unconquered ? 'Reveal response first' : enemiesPresent ? 'Resolve remaining creatures' : heartIncomplete ? 'Secure objective first' : 'Conquer Scene';
+    const conquerTitle = !cards.resolutionRevealed ? 'Reveal the Scene response first' : enemiesPresent ? 'Resolve or durably remove every active monster' : heartIncomplete ? 'Complete the Quest objective first' : '';
     const conquerButton = `<button class="btn" data-action="conquer" ${conquestBlocked ? 'disabled' : ''} title="${conquerTitle}">${conquerLabel}</button>`;
     const escapeButton = state.quest.completed && room.number === 1 ? `<button class="btn btn-primary" data-action="escape">${enemiesPresent ? 'Escape past creatures…' : 'Escape dungeon'}</button>` : '';
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
-      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${esc(template.danger)} room · default check target"><small>Room check</small><strong>${template.target}</strong></div><div class="resource"><small>Gold</small><strong>${state.gold}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Rooms found</small><strong>${state.rooms.length}</strong></div></div>
+      <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Active torch</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${esc(template.danger)} Scene · default check target"><small>Scene check</small><strong>${template.target}</strong></div><div class="resource"><small>Gold</small><strong>${state.gold}</strong></div><div class="resource"><small>Spare torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Scenes found</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoomCards()}${renderEncounterCards()}${renderParty()}</div>
       <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button>${conquerButton}${escapeButton}${state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : ''}</div><div id="save-state" class="save-state">Saved locally</div></footer>
@@ -1617,7 +1658,7 @@
     modal = { type:'setup' };
     document.body.insertAdjacentHTML('beforeend', `<div id="standalone-modal" class="modal-backdrop"></div>`);
     const root = $('#standalone-modal');
-    root.innerHTML = `<form class="modal" id="setup-form"><div class="modal-head"><div class="eyebrow">New expedition</div><h2>Enter a classic dungeon</h2><p>Choose an adventure set. Core rules and equipment are always included; the selected set supplies Rooms, Challenges, Quests, Monsters, and themed Loot.</p></div><div class="modal-body"><div class="form-grid">
+    root.innerHTML = `<form class="modal" id="setup-form"><div class="modal-head"><div class="eyebrow">New expedition</div><h2>Enter a classic dungeon</h2><p>Shuffle one Scene deck. Every draw supplies its floorplan, terrain, situation, and ordinary occupants. Quest packs can add Scenes, random Monsters, and set-aside Bosses.</p></div><div class="modal-body"><div class="form-grid">
       <div class="field full"><label>Adventure set</label><select name="module"><option value="classics" selected>Classics — goblins, ogres, traps, treasure, skeletons, and zombies</option><option disabled>Haunted Tomb — on hold</option></select></div>
       <div class="field full"><label>Expedition title</label><input name="title" value="The Broken Crown Dungeon"></div>
       <div class="field"><label>Seed</label><input name="seed" value="${today}"></div><div class="field"><label>Quest</label><select name="quest"><option value="random">Random quest</option>${DATA.quests.map(q => `<option value="${q.index}" ${q.index === 1 ? 'selected' : ''}>${q.name}</option>`).join('')}</select></div>
@@ -1687,7 +1728,7 @@
       const r = modal.result;
       const followUps = [];
       if (r.success && r.afterSuccess) followUps.push('<button class="btn btn-primary" data-action="complete-bypass">Continue past the creatures</button>');
-      if (!roomCardState(activeRoom()).resolutionRevealed) followUps.push('<button class="btn btn-primary" data-action="reveal-challenge-from-roll">Reveal Challenge resolution</button>');
+      if (!roomCardState(activeRoom()).resolutionRevealed) followUps.push('<button class="btn btn-primary" data-action="reveal-challenge-from-roll">Reveal Scene response</button>');
       if (!r.success) followUps.push('<button class="btn btn-danger" data-action="open-dungeon-action">Take dungeon action</button>');
       const followUp = followUps.join('');
       root.innerHTML = modalShell(r.success ? 'Success' : 'Failure', r.success ? 'The adventurers retain momentum.' : 'The dungeon receives one meaningful action.', `<div class="roll-result"><strong>${r.total}</strong><span>${r.attribute ? `${esc(r.attribute)} · ` : ''}${r.dice.join(' / ')} · kept ${r.kept} · ${signed(r.bonus)} bonus · target ${r.target}</span></div>`, followUp);
@@ -1735,7 +1776,7 @@
       reader.onload = () => {
         try {
           const parsed = JSON.parse(reader.result);
-          if (parsed.version !== 1 || !Array.isArray(parsed.rooms)) throw new Error('Invalid save');
+          if (parsed.version !== 2 || !Array.isArray(parsed.rooms)) throw new Error('Invalid save');
           state = parsed; closeModal(); render(); showToast('Expedition imported.');
         } catch (_) { showToast('That file is not a valid Delvekeeper save.'); }
       };

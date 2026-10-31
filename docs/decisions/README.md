@@ -1130,3 +1130,15 @@ Room cards own all fixed architecture and print rules for persistent terrain. Ch
 **Rationale:** Independent prose rolls produced individually interesting cards that contradicted one another when combined. Enforced ownership keeps each card in its lane without sacrificing procedural variety or free-form player solutions.
 
 **Consequences:** The former Haunted Tomb dataset is archived but inactive. Structural validation checks every active card for a legal Room, valid references, valid generic Monster bindings, and satisfiable Heart placement. Editorial review still judges whether legal combinations are interesting and clearly written.
+
+## 2026-11-01 - Merge Rooms and Challenges into shuffled Scene cards
+
+**Status:** Accepted for implementation and playtesting; supersedes the Room-tag compatibility model above
+
+**Decision:** A physical draw must be complete without software-only filtering. Merge Room and Challenge into one Scene card that owns its floorplan, terrain, lighting, situation, ordinary occupants, Response, and optional reward. Remove active compatibility tags.
+
+Every Scene uses one Monster instruction: print ordinary monsters on the Scene, draw a random Monster when the premise works with the entire random deck, place named cards from a set-aside Boss pile, or place no monster. Quest packs may add thematic cards to the random Monster deck and insert one authored finale Scene into the later Scene deck.
+
+**Rationale:** A shuffled physical deck cannot ask a hidden rules engine whether separately drawn geometry and situations agree. Authoring both on one card guarantees coherence while random-monster Scenes retain broad procedural surprise.
+
+**Consequences:** The web app now shuffles and persists the same decks used at the table. Floorplans are irregular map fragments rather than uniform room cells. The validator rejects active tags, checks all four Monster instructions, and verifies Quest deck additions and finale Scenes.

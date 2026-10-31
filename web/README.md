@@ -19,12 +19,12 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 ## Current capabilities
 
 - selectable, seeded Adventure Sets, beginning with Classics;
-- compact, standard, and sprawling macro-grids with E1–E3 escalation;
-- thirty coherent Classics Room cards with graphical terrain maps, authored lighting, and explicit Room-feature rules;
-- concrete, named Challenges with visible evidence, exact rules, consequences, and suggested resolutions;
-- Room-specific prose combining architecture, function, terrain, and lighting without leaking Challenge or Quest facts;
-- exact Opportunities and escalating Quest discoveries rather than unresolved category prompts;
-- scaled creature and wandering-enemy cards with Instincts and Wounds;
+- one shuffled thirty-card Classics Scene deck plus eight Quest finale Scenes;
+- complete Scene cards combining irregular floorplans, terrain, lighting, prose, situations, Responses, and rewards;
+- ordinary monsters printed directly on Scenes when their identity matters;
+- random Monster draws for monster-agnostic premises such as sleeping, trapped, hidden, or guarding creatures;
+- Quest setup that adds thematic random Monsters and set-aside Bosses;
+- creature trackers with Instincts and Wounds;
 - room conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
 - the shared torch clock, darkness, fixtures, secured light, and spare torches;
 - known-room travel with persistent traversal costs and danger rolls;
@@ -45,9 +45,9 @@ There is no build step and no third-party runtime dependency.
 
 The deployed app displays a manually advanced build number. A network-only service worker and build-versioned asset URLs prevent stale GitHub Pages assets from masking a deployment; expedition state remains stored separately in `localStorage`.
 
-Saved rooms contain generation references (`sceneRef`) rather than copied prose or rules. Rendering resolves those references against the current canonical content, so wording corrections apply to existing expeditions.
+Saved Scenes contain canonical IDs rather than copied prose or rules. Rendering resolves those references against current content, so wording corrections apply to an expedition created by the same save version.
 
-Each Room draw is one complete architectural result. The Room owns its function, footprint, fixed terrain, lighting, sensory prose, and persistent feature rule. Challenges are filtered by declared Room requirements before being drawn. Quests own their complete progression, Heart action, defenders, and compatible finale Rooms. See the [content-pack contract](../docs/content-packs/README.md).
+Each draw is one complete physical Scene card. No Room/Challenge compatibility engine exists. A Scene either prints its ordinary monsters, draws from the random Monster deck, places set-aside Bosses, or begins without a monster. See [physical card sets](../docs/content-packs/README.md).
 
 ## Constraints
 

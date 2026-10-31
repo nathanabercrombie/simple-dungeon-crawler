@@ -18,7 +18,7 @@ The project will be scoped one piece at a time. Rules text, procedures, and tabl
 - [Design notes](docs/design/README.md)
 - [Procedural character creation](docs/character-creation/README.md)
 - [Dungeon and room generation](docs/dungeon-generation/README.md)
-- [Content packs and compatibility contract](docs/content-packs/README.md)
+- [Physical card sets](docs/content-packs/README.md)
 - [Playtests and dry runs](docs/playtests/README.md)
 - [Inspirations](docs/inspirations/README.md)
 - [Decision log](docs/decisions/README.md)
@@ -28,4 +28,4 @@ The project will be scoped one piece at a time. Rules text, procedures, and tabl
 
 The room-by-room expedition loop, flexible character scale, and success/failure turn-handoff rule have been accepted. Adventurers share a fluid turn; failure grants the dungeon one meaningful action. Core checks use roll-high d20 resolution, target numbers 9/12/15/18, natural-face criticals, a +3/+0/-2 starting attribute array, one free-form Past, one defined Knack, and 2d20 advantage/disadvantage.
 
-The dependency-free guided-tabletop SPA now exercises the Core + Classics card sets and saves expeditions locally. The former Haunted Tomb slice is archived while its content is rewritten against the new compatibility contract. Advancement and the wider setting remain open.
+The dependency-free guided-tabletop SPA now reproduces a physical Scene-deck game: each shuffled Scene owns its floorplan, terrain, situation, ordinary occupants, and reward. Random Monsters and set-aside Quest Bosses use separate decks, with no hidden compatibility tags. The former Haunted Tomb slice remains archived. Advancement and the wider setting remain open.

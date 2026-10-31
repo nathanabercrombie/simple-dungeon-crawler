@@ -417,6 +417,10 @@ textarea { line-height: 1.45; }
 .enemy-card p,.quest-card p { font-size:10px; }
 .enemy-card .hp-pips { justify-content:flex-start; margin-bottom:7px; }
 .enemy-card .enemy-stats { flex-wrap:wrap; margin-top:0; }
+.inline-monster-list { display:grid; gap:7px; margin:9px 0; }
+.inline-monster { display:grid; gap:3px; padding:8px 9px; border:1px solid var(--line); background:rgba(255,255,255,.025); }
+.inline-monster strong { color:var(--gold); }
+.inline-monster span,.inline-monster small { display:block; }
 .room-controls { margin-top:14px; padding:14px; border:1px solid var(--line); background:var(--panel); }
 .room-controls .room-notes { margin-top:12px; }
 .search-status { margin:10px 0 0; color:var(--muted); font-size:11px; }
