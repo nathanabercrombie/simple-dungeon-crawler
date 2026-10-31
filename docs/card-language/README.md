@@ -10,7 +10,7 @@ This is the authoring standard for every card set. Cards describe game state and
 4. Reveal the hidden **Response side** before resolving that uncertain check.
 5. Apply its Revelation, Failure, and While Active rules.
 6. When the Challenge durably stops applying to the party's use of the Room, **conquer the Room**. A temporary distraction, stealthy passage, or escape does not conquer it if the Challenge will apply again on return.
-7. On conquest, every active adventurer gains one Skill Token and the Challenge reveals its assigned Quest or Loot card. Rest, search, and onward exploration become available.
+7. On conquest, every active adventurer gains one Skill Token and an ordinary Challenge reveals its assigned Quest or Loot card. Rest, search, and onward exploration become available.
 
 Conquest has no bespoke card text. It always means that the Challenge card no longer applies. An **Ends When** field appears only when that boundary would otherwise be genuinely unclear.
 
@@ -27,6 +27,8 @@ Front: Title; sensory, immediately perceptible situation; Immediate instruction;
 Response: optional **Revelation**, the card-specific **Rule**, **Failure**, optional **While Active**, and **Ends When** only if the universal conquest boundary is ambiguous. Use Revelation only for information genuinely learned after commitment; do not label an ordinary procedure as a Revelation.
 
 Do not print Examine, Engage, Possible Resolutions, or a bespoke Conquer field. Do not hide evidence that a person in the Room can already see, hear, smell, or feel.
+
+A **Heart Challenge** is the final Quest objective and is the one exception to the ordinary reward icon. Its Response names a concrete action that completes the Quest. Securing that objective does not remove Monster cards, conquer the Room, or award Skill Tokens. Any surviving defenders remain active until defeated, negotiated with, durably bypassed, or otherwise resolved.
 
 ### Room
 
@@ -77,5 +79,5 @@ Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A To
 - Never list preferred solutions. State the obstacle, pressure, and consequences precisely enough for free-form solutions to be judged.
 - Do not repeat universal rules on individual cards.
 - Do not print random-generation metadata on play-facing cards.
-- Every Challenge is authored with exactly one reward type: Quest or Loot. Searching is a separate optional gamble that can reveal one additional Loot card.
+- Every ordinary Challenge is authored with exactly one reward type: Quest or Loot. A Heart completes its Quest instead. Searching is a separate optional gamble that can reveal one additional Loot card.
 - Every Quest card names or restates the selected objective and explains how its Finding changes the attempt to reach or resolve that objective. Never reuse storyline-specific filler across unrelated Quest packs.

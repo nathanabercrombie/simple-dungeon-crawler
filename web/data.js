@@ -319,7 +319,9 @@ window.GAME_DATA = (() => {
     { name:'Royal Revenant', unitHp:5, baseUnits:1, behavior:'A commanding dead sovereign demands obedience to obsolete law.', instinct:'Condemn the bearer of stolen regalia, false claimant, or highest-ranking intruder.', wound:'Death-Marked — treated Scar reduces Mind.' },
     { name:'Grave Rats', unitHp:1, baseUnits:2, behavior:'A hungry pack spills through drains and broken masonry.', instinct:'Swarm whoever carries food, remains, or an active bleeding Wound.', wound:'Fevered Bite — treated Scar reduces Strength.' },
     { name:'Shambling Mourners', unitHp:1, baseUnits:2, behavior:'A slow crowd follows funeral paths that no longer exist.', instinct:'Pursue the nearest living creature without changing targets while reachable.', wound:'Dragged Down — treated Scar reduces Agility.' },
-    { name:'Grave-ogre', unitHp:4, baseUnits:1, behavior:'A huge scavenger forces itself through doors and smashes cover aside.', instinct:'Attack the loudest or most heavily burdened adventurer.', wound:'Pulverized — treated Scar reduces Strength.' }
+    { name:'Grave-ogre', unitHp:4, baseUnits:1, behavior:'A huge scavenger forces itself through doors and smashes cover aside.', instinct:'Attack the loudest or most heavily burdened adventurer.', wound:'Pulverized — treated Scar reduces Strength.' },
+    { name:'Oathbound Treasury Keeper', unitHp:4, baseUnits:1, behavior:'A black-armored keeper stands between the party and the Widow-King’s Crown, testing every claimant’s authority.', instinct:'Attack whoever touches, carries, or moves toward the Crown; pursue that adventurer while reachable.', wound:'Judged a Thief — treated Scar reduces Mind.' },
+    { name:'Gilded Tomb Guards', unitHp:2, baseUnits:2, behavior:'Two gold-masked guards cover opposite approaches to the Crown and move to close every open route.', instinct:'Block the Crown bearer’s nearest exit; if it is already blocked, both guards attack the bearer.', wound:'Hemmed In — treated Scar reduces Agility.' }
   ];
 
   const gear = [

@@ -25,7 +25,7 @@
   });
   const QUEST_REWARD_CHALLENGES = new Set([1,5,6,7,10]);
   function challengeRewardType(room) {
-    if (room.quest.name === 'Heart') return 'loot';
+    if (room.quest.name === 'Heart') return 'heart';
     if (QUEST_REWARD_CHALLENGES.has(room.challengeRoll)) return 'quest';
     return 'loot';
   }
@@ -207,6 +207,19 @@
     12:{ object:'Lady Vey’s binding agreement', location:'Lady Vey’s funeral court', opposition:'the factions disputing her authority', threat:'an unsupported promise is treated as another insult', sign:'A court record names Lady Vey and lists the grievance that ended safe passage through her domain.', trace:'Offerings and faction seals become more numerous along the processional route toward her funeral court.', lead:'Signed testimony proves that a third party caused one of Lady Vey’s central grievances.', use:'Present the testimony to remove one grievance from the final negotiation without a check.', setback:'A rival faction has accused the party of acting in bad faith. The final parley begins with one additional demand.' }
   };
 
+  const heartActions = {
+    1:'Slay the Gravehorn', 2:'Take Saint Orra’s silver funeral bell', 3:'Free Elian Voss',
+    4:'Break the false royal burial', 5:'Seal the Mirror Wound', 6:'Take the unaltered burial record',
+    7:'Complete Queen Mereth’s funeral rite', 8:'Disable the Mortuary Engine',
+    9:'Take the Widow-King’s Crown', 10:'Destroy the bone-moth queen and brood',
+    11:'Secure Captain Ysra’s expedition', 12:'Secure Lady Vey’s binding agreement'
+  };
+  const heartDefenders = {
+    1:[8,6], 2:[2,1], 3:[2,6], 4:[5,1], 5:[1,4], 6:[2,1],
+    7:[1,7], 8:[4,2], 9:[9,10], 10:[6,8], 11:[7,8], 12:[1,2]
+  };
+  const heartAction = () => heartActions[state.quest.index] || `Secure ${questProgressProfiles[state.quest.index]?.object || 'the objective'}`;
+
   function questProgressFor(room, type) {
     const profile = questProgressProfiles[state.quest.index] || questProgressProfiles[4];
     const variants = {
@@ -286,7 +299,7 @@
         claim: questElementPlacement(room), subtype:type
       };
     }
-    if (type === 'Heart') return { title: state.quest.heart, prose:`The objective is here: ${state.quest.objective}`, effect:'Conquer this Heart to complete the objective. The party must still return to the entrance.', subtype:type };
+    if (type === 'Heart') return { title: state.quest.heart, prose:`The objective is here: ${state.quest.objective}`, effect:`${heartAction()} to complete the Quest. This does not remove active Monster cards or conquer the Room. The party must still return to the entrance.`, subtype:type };
     return questProgressFor(room, type);
   }
 
@@ -431,6 +444,10 @@
         room.quest.claimed = legacyClaimsRemaining > 0;
         if (room.quest.claimed) legacyClaimsRemaining -= 1;
       }
+      if (room.quest.name === 'Heart' && state.quest.completed) {
+        room.quest.claimed = true;
+        room.cardState.rewardsRevealed = true;
+      }
     }
     ensureRouteGeometry();
     state.quest.elementsFound = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed).length;
@@ -557,7 +574,7 @@
     return { units, total: source.unitHp * units };
   }
 
-  function makeEnemy(template, major = false, wandering = false, monsterIndex = null) {
+  function makeEnemy(template, major = false, wandering = false, monsterIndex = null, manuallyAdded = Number.isInteger(monsterIndex)) {
     let source;
     if (Number.isInteger(monsterIndex)) source = DATA.monsters[monsterIndex];
     else if (major) source = template.danger === 'Extreme' ? DATA.monsters[5] : DATA.monsters[4];
@@ -566,7 +583,7 @@
     return {
       id: uid('enemy'), name: source.name, hp: total, maxHp: total, units,
       defense: template.target, behavior: source.behavior, instinct: source.instinct,
-      wound: source.wound, wandering, manuallyAdded: Number.isInteger(monsterIndex)
+      wound: source.wound, wandering, manuallyAdded
     };
   }
 
@@ -611,13 +628,20 @@
       const entry = templateRoutes(template).find(route => route.glyph === 'E');
       if (entry) room.routeAssignments[parent.id] = entry.key;
     }
-    if (challengeRoll >= 7) room.enemies.push(makeEnemy(template, challengeRoll === 12));
     if (quest.name === 'Heart') {
       if (state.quest.heartFound) {
         room.quest.name = 'Heart advantage';
         room.quest.description = 'The Heart is already known; this supplies a major Heart-specific advantage.';
-      } else state.quest.heartFound = true;
+      } else {
+        state.quest.heartFound = true;
+        room.status = 'dangerous';
+        room.cardState = { resolutionRevealed:false, rewardsRevealed:false };
+        for (const monsterIndex of heartDefenders[state.quest.index] || [2,1]) {
+          room.enemies.push(makeEnemy(template, false, false, monsterIndex, false));
+        }
+      }
     }
+    if (room.quest.name !== 'Heart' && challengeRoll >= 7) room.enemies.push(makeEnemy(template, challengeRoll === 12));
     room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
     if (parent) {
@@ -721,17 +745,18 @@
     const room = activeRoom();
     if (!room || room.status === 'conquered') return;
     if (!roomCardState(room).resolutionRevealed) return showToast('Reveal the Challenge resolution before conquering the room.');
+    if (liveEnemies(room).length) return showToast('Resolve or durably remove every active Monster card before conquering the Room.');
+    if (room.quest.name === 'Heart' && !room.quest.claimed) return showToast('Complete the Quest objective before conquering this Room.');
     room.status = 'conquered';
-    room.enemies.forEach(enemy => enemy.hp = 0);
     state.party.forEach(hero => {
       if (!hero.dead) {
         hero.tokens = Math.min(3, hero.tokens + 1);
       }
     });
-    if (room.quest.name === 'Heart' && state.quest.heartFound) state.quest.completed = true;
     room.cardState.rewardsRevealed = true;
     const rewardType = challengeRewardType(room);
-    log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token. Its guaranteed ${rewardType === 'quest' ? 'Quest' : 'Loot'} card was revealed.`);
+    const rewardMessage = rewardType === 'heart' ? 'The Quest objective was already secured; no reward card was revealed.' : `Its guaranteed ${rewardType === 'quest' ? 'Quest' : 'Loot'} card was revealed.`;
+    log(`Room ${room.number} was conquered. Each active adventurer gained a Skill Token. ${rewardMessage}`);
     render();
   }
 
@@ -870,6 +895,18 @@
     room.quest.claimed = true;
     state.quest.elementsFound += 1;
     log(`${scene.title} was claimed in Room ${room.number}. The party now has ${state.quest.elementsFound} Quest element${state.quest.elementsFound === 1 ? '' : 's'}.`);
+    render();
+  }
+
+  function completeHeart() {
+    const room = activeRoom();
+    if (!room || room.quest.name !== 'Heart' || room.quest.claimed || state.quest.completed) return;
+    if (!roomCardState(room).resolutionRevealed) return showToast('Reveal the Heart Response before completing the Quest.');
+    room.quest.claimed = true;
+    room.cardState.rewardsRevealed = true;
+    state.quest.completed = true;
+    state.quest.claimedObjective = questProgressProfiles[state.quest.index]?.object || state.quest.heart;
+    log(`${heartAction()} in Room ${room.number}. The Quest is complete; return to the entrance. Active Monster cards remain, and the Room is not conquered.`, 'success');
     render();
   }
 
@@ -1349,12 +1386,12 @@
     const cards = roomCardState(room);
     const rewardType = challengeRewardType(room);
     const darkness = state.light.remaining <= 0 && !room.securedLight;
-    const isScene = room.challengeRoll === 1;
     const isHeart = room.quest.name === 'Heart';
+    const isScene = room.challengeRoll === 1 && !isHeart;
     const title = isHeart ? scene.quest.title : scene.challenge.title;
-    const front = isHeart ? `${scene.quest.prose} ${scene.challenge.front}` : scene.challenge.front;
+    const front = isHeart ? scene.quest.prose : scene.challenge.front;
     const pack = isHeart ? `${state.quest.name} Quest pack` : room.challengeRoll === 8 ? 'Core set' : 'Haunted Tomb location pack';
-    const rewardText = rewardType === 'quest' ? 'One Quest card' : 'One Loot card';
+    const rewardText = rewardType === 'quest' ? 'One Quest card' : rewardType === 'loot' ? 'One Loot card' : 'Complete the Quest objective';
     const search = roomSearchState(room);
     const searchedLoot = search.success ? buildSearchLoot(room) : null;
     const lootCard = (loot, searched = false) => {
@@ -1376,15 +1413,16 @@
       scene.challenge.endsWhen && `<li><strong>Ends when:</strong> ${esc(scene.challenge.endsWhen)}</li>`
     ].filter(Boolean).join('');
     const roomDefinition = roomTermDefinition(template.name);
+    const heartResponse = `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div><ul class="facilitator-rules"><li><strong>Rule:</strong> State how the party secures the objective. Make a room-target check only when the outcome is uncertain.</li><li><strong>Failure:</strong> One active defender takes a dungeon action.</li></ul><div class="reward-instruction"><strong>Objective:</strong> ${esc(heartAction())}.</div><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">Objective secured · Quest complete</span>' : `<button class="btn btn-small btn-primary" data-action="complete-heart">${esc(heartAction())} — complete Quest</button>`}</div><p>This does not remove active Monster cards or conquer the Room.</p></div>`;
     const challengeBody = isScene
       ? `<div class="resolution-panel"><p>${esc(scene.challenge.detail || '')}</p><div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)}. Gain no Skill Token.</div></div>`
       : cards.resolutionRevealed
-        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}<div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)}.</div></div>`
+        ? isHeart ? heartResponse : `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}<div class="reward-instruction"><strong>Reward:</strong> ${esc(rewardText)}.</div></div>`
         : '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>';
     return `<main class="pane pane-room"><div class="section-head"><h2>Cards in play</h2><span>Room ${room.number} · ${esc(template.name)}</span></div><div class="card-table">
       <article class="game-card room-card card-room"><header class="card-titlebar room-header"><div><div class="eyebrow">Room ${room.number} · Haunted Tomb</div><h2>${esc(template.name)}</h2></div><strong>${template.target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><div class="room-meta"><span class="tag danger-${template.danger.toLowerCase()}">${template.danger}</span><span class="tag ${room.securedLight ? 'lit' : ''}">${room.securedLight ? 'Permanently lit' : template.lighting}</span>${darkness ? '<span class="tag danger-hard">Darkness</span>' : ''}${template.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div><section class="read-aloud" data-room-number="${room.number}"><div class="eyebrow">Read aloud</div><div class="read-aloud-parts">${scene.readAloudParts.map(part => `<div class="read-aloud-part"><span class="prose-source">${esc(part.source)}</span><p><em>${esc(part.text)}</em></p></div>`).join('')}</div></section><p><strong>Built as:</strong> ${esc(scene.functionName)} — ${esc(scene.functionDefinition)}.</p>${roomDefinition ? `<p><strong>${esc(roomDefinition[0])}:</strong> ${esc(roomDefinition[1])}.</p>` : ''}</div><footer class="card-footer">Room ${room.number} · template ${template.index}</footer></article>
-      <article class="game-card challenge-card card-challenge"><header class="card-titlebar"><div><div class="eyebrow">${isScene ? 'Scene' : 'Challenge'} · ${esc(pack)}</div><h3>${esc(title)}</h3></div><strong>${isScene ? '—' : template.target}</strong></header><div class="card-art card-art-placeholder"><span>${isScene ? 'Scene' : 'Challenge'} artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(front)}</p>${scene.challenge.pressure ? `<p><strong>Pressure:</strong> ${esc(scene.challenge.pressure)}</p>` : ''}${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}${scene.challenge.immediate ? `<div class="challenge-instruction"><strong>Immediate:</strong> ${esc(scene.challenge.immediate)}</div>` : ''}${challengeBody}</div><footer class="card-footer">${isScene ? 'Quiet scene · no conquest reward' : `${template.danger} · default target ${template.target}`}</footer></article>
-      ${!cards.rewardsRevealed ? `<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Loot card'} facedown</strong></div><footer class="card-footer">Guaranteed Challenge reward</footer></article>` : ''}
+      <article class="game-card challenge-card card-challenge"><header class="card-titlebar"><div><div class="eyebrow">${isScene ? 'Scene' : 'Challenge'} · ${esc(pack)}</div><h3>${esc(title)}</h3></div><strong>${isScene ? '—' : template.target}</strong></header><div class="card-art card-art-placeholder"><span>${isScene ? 'Scene' : 'Challenge'} artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(front)}</p>${!isHeart && scene.challenge.pressure ? `<p><strong>Pressure:</strong> ${esc(scene.challenge.pressure)}</p>` : ''}${scene.challenge.occupants.length ? `<div class="occupant-line"><strong>Present:</strong> ${scene.challenge.occupants.map(esc).join('; ')}</div>` : ''}${isHeart || scene.challenge.immediate ? `<div class="challenge-instruction"><strong>Immediate:</strong> ${esc(isHeart ? `Reveal ${room.enemies.length} Monster cards. They remain active even if the objective is secured.` : scene.challenge.immediate)}</div>` : ''}${challengeBody}</div><footer class="card-footer">${isScene ? 'Quiet scene · no conquest reward' : `${template.danger} · default target ${template.target}`}</footer></article>
+      ${rewardType !== 'heart' && !cards.rewardsRevealed ? `<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>${rewardType === 'quest' ? 'Quest card' : 'Loot card'} facedown</strong></div><footer class="card-footer">Guaranteed Challenge reward</footer></article>` : ''}
       ${rewardType === 'loot' && cards.rewardsRevealed ? lootCard(scene.opportunity) : ''}${searchedLoot ? lootCard(searchedLoot, true) : ''}</div>
       <section class="room-controls"><div class="button-row">${template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn btn-small" data-action="light-fixtures">Spend 1 Light · illuminate permanently</button>' : ''}${room.status === 'conquered' && !search.attempted ? `<button class="btn btn-small" data-action="search-room">${room.securedLight ? 'Search room · no Light' : 'Spend 1 Light · search room'}</button>` : ''}<button class="btn btn-small" data-action="rest">${room.securedLight ? 'Rest and heal · no Light' : 'Spend 1 Light · rest and heal'}</button><button class="btn btn-small" data-action="pass-turn">Pass one exploration turn</button></div>${search.attempted && !search.success ? '<p class="search-status">This room was searched, but no Loot was found.</p>' : ''}<textarea class="room-notes" data-action="notes" placeholder="Room rulings, changed terrain, secured ropes, creatures left behind.">${esc(room.notes)}</textarea></section></main>`;
   }
@@ -1419,7 +1457,7 @@
     const live = room.enemies.filter(enemy => enemy.hp > 0);
     const questCard = rewardType === 'quest' && cards.rewardsRevealed
       ? `<article class="game-card compact-game-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} pack · ${esc(scene.quest.subtype || room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder quest-art"><span>Quest artwork</span><small>Placeholder</small></div><div class="card-text"><p><strong>Objective:</strong> ${esc(state.quest.objective)}</p><p>${esc(scene.quest.prose)}</p>${isQuestElement(room) ? `<p><strong>Claim:</strong> ${esc(scene.quest.claim || questElementPlacement(room))}</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>${room.quest.name === 'Omen' ? 'Meaning' : room.quest.name === 'Heart' ? 'Claim' : 'Use'}:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest card</footer></article>`
-      : `<div class="empty-state">${rewardType === 'quest' ? 'The guaranteed Quest card remains facedown until conquest.' : 'This card does not guarantee a Quest card.'}</div>`;
+      : `<div class="empty-state">${rewardType === 'quest' ? 'The guaranteed Quest card remains facedown until conquest.' : rewardType === 'heart' ? room.quest.claimed ? 'The objective is secured. Surviving Monster cards remain active.' : 'Complete the objective from the Heart Challenge card.' : 'This card does not guarantee a Quest card.'}</div>`;
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monster cards</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? live.map(renderEnemyCard).join('') : '<div class="empty-state">No active Monster card.</div>'}</div></section><section><div class="subhead">Quest cards</div><div class="quest-list">${questCard}</div></section></aside>`;
   }
 
@@ -1499,7 +1537,11 @@
     const exitsRemain = availableExitRoutes(room).length > 0;
     const unconquered = room.status !== 'conquered';
     const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent || unconquered ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : unconquered ? 'Conquer the active Challenge to reveal the passage' : ''}">${enemiesPresent ? 'Creatures block exploration' : unconquered ? 'Passage not yet revealed' : 'Explore new room'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass creatures…</button>' : ''}`;
-    const conquerButton = `<button class="btn" data-action="conquer" ${!cards.resolutionRevealed || !unconquered ? 'disabled' : ''} title="${!cards.resolutionRevealed ? 'Reveal the Challenge resolution first' : ''}">${!cards.resolutionRevealed && unconquered ? 'Reveal resolution first' : 'Conquer challenge'}</button>`;
+    const heartIncomplete = room.quest.name === 'Heart' && !room.quest.claimed;
+    const conquestBlocked = !cards.resolutionRevealed || !unconquered || enemiesPresent || heartIncomplete;
+    const conquerLabel = !cards.resolutionRevealed && unconquered ? 'Reveal resolution first' : enemiesPresent ? 'Resolve remaining creatures' : heartIncomplete ? 'Secure objective first' : 'Conquer Room';
+    const conquerTitle = !cards.resolutionRevealed ? 'Reveal the Challenge resolution first' : enemiesPresent ? 'Resolve or durably remove every active Monster card' : heartIncomplete ? 'Complete the Quest objective first' : '';
+    const conquerButton = `<button class="btn" data-action="conquer" ${conquestBlocked ? 'disabled' : ''} title="${conquerTitle}">${conquerLabel}</button>`;
     const escapeButton = state.quest.completed && room.number === 1 ? `<button class="btn btn-primary" data-action="escape">${enemiesPresent ? 'Escape past creatures…' : 'Escape dungeon'}</button>` : '';
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
@@ -1677,6 +1719,7 @@
     else if (action === 'pass-torch') passTorch();
     else if (action === 'claim') claimOpportunity(target.dataset.heroId);
     else if (action === 'claim-quest-element') claimQuestElement();
+    else if (action === 'complete-heart') completeHeart();
     else if (action === 'claim-search') claimSearchLoot(target.dataset.heroId);
     else if (action === 'search-room') beginRoomSearch();
     else if (action === 'rest') restParty();

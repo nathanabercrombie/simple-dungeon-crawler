@@ -1108,3 +1108,13 @@ Quest Elements must state an exact Use at the Heart. Omens identify the actual o
 **Rationale:** Players cannot make an informed commitment when a required third bowl, ritual sequence, or anchor exists only on the hidden Response. Likewise, a false-burial clue has no comprehensible value while pursuing the Widow-King’s Crown.
 
 **Consequences:** Challenge copy requires a dependency audit. Each Quest pack supplies objective-specific progress language, and every visible Quest card repeats the mission objective so its relevance is immediately clear.
+
+## 2026-10-30 - Separate Heart completion from Room conquest
+
+**Status:** Accepted
+
+**Decision:** A Quest Heart awards neither Quest nor Loot. It names a concrete objective action, such as taking the Widow-King's Crown, that completes the Quest. Completing that action does not remove active Monster cards, conquer the Room, or award Skill Tokens. Hearts reveal multiple Quest-appropriate defenders, and active defenders block ordinary Room conquest.
+
+**Rationale:** An adventurer may steal, rescue, seal, or otherwise secure the objective without defeating every defender. Quest success and control of the surrounding Room are different fictional outcomes and must be tracked separately.
+
+**Consequences:** The party can bypass surviving defenders and extract with a completed objective while leaving the Heart Room dangerous. Conquering that Room still requires its active threats to be defeated, negotiated with, or durably removed.

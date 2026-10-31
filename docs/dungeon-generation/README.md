@@ -58,7 +58,7 @@ Conquest does not restore HP. In a conquered room with no active threat, the par
 
 Every conquered room with no active threat can be searched once. Choose an adventurer and a narratively applicable attribute, spend 1 Light, and check against the room target. Success reveals one Loot card; failure reveals nothing. Mark the room searched either way. A permanently illuminated room waives the Light cost but not the check.
 
-A Challenge's assigned card is separate from room search. Conquering the Challenge reveals its Quest or Loot card without a search, check, or Light cost. The room can still be searched once for an additional Loot card.
+An ordinary Challenge's assigned card is separate from room search. Conquering the Challenge reveals its Quest or Loot card without a search, check, or Light cost. The room can still be searched once for an additional Loot card. A Heart instead completes its Quest objective and has no ordinary reward card.
 
 ## Accepted normal monster attack
 
@@ -169,7 +169,7 @@ A worked [Haunted Tomb objective](examples/haunted-tomb/objective/README.md) dem
 - integrate each Revelation into that sector's normal Opportunity;
 - let Revelations remove specific layers of the Heart's final threat;
 - permit an early direct confrontation rather than enforcing a hard lock;
-- require physical extraction to the entrance after conquering the Heart.
+- require physical extraction to the entrance after securing the Heart objective.
 
 This model is illustrative rather than accepted. Other sites could substitute keys, machine parts, witnesses, faction support, ritual acts, or discovered weaknesses for Revelations.
 
@@ -185,7 +185,7 @@ Each site selects or rolls a Quest, then makes a separate escalating Quest roll 
 - The Heart can be reached before the intended requirements are met, preserving free-form solutions at greater risk.
 - Every selected Quest must state a concrete mission briefing: name the objective or subject, say what the party must do, and state what must be brought, protected, destroyed, proven, or changed.
 - A hidden room exit is an internal secret passage unless its specific fiction explicitly identifies it as a site exit. It does not complete the expedition merely because the map marks it as hidden.
-- After conquering the Heart, the party must physically return to the original dungeon entrance under the normal known-room travel rules. Escaping from there completes the Quest and the expedition.
+- After securing the Heart objective, the party must physically return to the original dungeon entrance under the normal known-room travel rules. The Heart Room may remain dangerous and unconquered if defenders survive. Escaping from the entrance completes the expedition.
 
 The exact result bands are proposed for playtesting.
 
@@ -347,12 +347,13 @@ Room contents use a Challenge roll and one hidden reward result:
 - **d12 Challenge:** establishes the primary problem and potential conquest condition.
 - **d8 Loot:** selects Supply on 1–4 or Treasure on 5–8 when the Challenge awards Loot.
 
-Each Challenge is explicitly assigned exactly one **Quest card** or one **Loot card**. It never awards both and never has an empty reward. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot. A Quest Heart is already the Challenge and awards Loot rather than another Quest card. Loot is always either Supply or Treasure. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
+Each ordinary Challenge is explicitly assigned exactly one **Quest card** or one **Loot card**. It never awards both and never has an empty reward. Investigative, puzzle, social, and supernatural mystery Challenges generally award Quest cards; physical hazards, traps, ambushes, and major creature threats generally award Loot. A Quest Heart is the final objective rather than an ordinary reward-bearing Challenge: it names the action that completes the Quest and awards no Quest or Loot card. Loot is always either Supply or Treasure. See the [room-content prototype](room-content/README.md) for the initial tables and synthesis procedure.
 
 The current d12 assignments are fixed:
 
 - **Quest:** 1 Quiet Scene, 5 Puzzle, 6 Social Obstacle, 7 Uncertain Creature, 10 Creature + Theme.
-- **Loot:** 2 Domain Obstacle, 3 Theme Hazard, 4 Trap, 8 Hostile Creature, 9 Creature + Domain, 11 Compound Challenge, 12 Major Threat, and every Quest Heart.
+- **Loot:** 2 Domain Obstacle, 3 Theme Hazard, 4 Trap, 8 Hostile Creature, 9 Creature + Domain, 11 Compound Challenge, and 12 Major Threat.
+- **Objective:** every Quest Heart. A Heart reveals multiple Quest-appropriate defenders. Completing its named objective does not remove those Monster cards or conquer the Room.
 
 ### Accepted card reveal sequence
 

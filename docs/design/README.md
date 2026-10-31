@@ -143,7 +143,9 @@ These are initial design bands rather than complete balance rules. Individual ab
 
 A room is **conquered** when its primary Challenge durably stops applying to the party's use of that Room. Defeating enemies, negotiating a settlement, solving a puzzle, neutralizing a trap, or establishing a durable bypass can all qualify. A temporary distraction, stealthy passage, flight, or postponement does not qualify if the Challenge will apply again on return. Violence is never required solely to earn the reward.
 
-Conquest is universal card cleanup: the Challenge card no longer applies, every active adventurer gains one Skill Token, and its assigned Quest or Loot card is revealed. Quiet aftermaths are Scenes: their Rooms begin conquered and grant no Skill Token.
+Conquest is universal card cleanup: the Challenge card no longer applies, every active adventurer gains one Skill Token, and an ordinary Challenge's assigned Quest or Loot card is revealed. Quiet aftermaths are Scenes: their Rooms begin conquered and grant no Skill Token.
+
+Completing a Quest Heart and conquering its Room are separate state changes. The Heart names the exact action that secures the objective and completes the Quest. That action does not defeat defenders, remove Monster cards, conquer the Room, or award Skill Tokens. The party may leave a dangerous Heart Room by a temporary bypass and extract with the objective, but the Room remains unconquered while its threats persist.
 
 Still unresolved:
 
