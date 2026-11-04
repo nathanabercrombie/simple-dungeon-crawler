@@ -237,7 +237,30 @@ window.GAME_MODULES = (() => {
     return { ...questCard, heartSceneId:heartScene.id, heartScene, bossIds:heartScene.encounter.mode === 'boss' ? heartScene.encounter.monsterIds : [], wanderingAdds:questDeckAdds[index] };
   });
   const heartScenes = activeQuests.map(questCard => questCard.heartScene);
-  const monsterCards = monsters.map(({ tags:_retiredTags, requiresAny:_retiredPlacementRules, ...monster }) => monster);
+  // P is the number of living adventurers when this Monster card is placed.
+  // Count and HP describe individual creatures, never a combined group HP pool.
+  const monsterScales = {
+    'classics:monster:goblin-skirmishers':{ count:'P*2', hpEach:'1' },
+    'classics:monster:goblin-archers':{ count:'P*2', hpEach:'1' },
+    'classics:monster:goblin-boss':{ count:'1', hpEach:'2+P*1' },
+    'classics:monster:skeleton-guard':{ count:'P*2', hpEach:'1' },
+    'classics:monster:shambling-zombies':{ count:'P*1', hpEach:'2' },
+    'classics:monster:giant-rats':{ count:'P*2', hpEach:'1' },
+    'classics:monster:giant-spider':{ count:'1', hpEach:'1+P*2' },
+    'classics:monster:cave-slime':{ count:'1', hpEach:'1+P*2' },
+    'classics:monster:orc-raiders':{ count:'P*1', hpEach:'2' },
+    'classics:monster:ogre':{ count:'1', hpEach:'2+P*2' },
+    'classics:monster:dire-wolves':{ count:'P*1', hpEach:'2' },
+    'classics:monster:living-statue':{ count:'1', hpEach:'2+P*2' },
+    'classics:monster:mimic':{ count:'1', hpEach:'2+P*2' },
+    'classics:monster:kobold-trappers':{ count:'P*2', hpEach:'1' },
+    'classics:monster:rival-delvers':{ count:'P*1', hpEach:'2' },
+    'classics:monster:cult-acolytes':{ count:'P*1', hpEach:'2' },
+    'classics:monster:gristlemaw':{ count:'1', hpEach:'4+P*2' },
+    'classics:monster:redcap-rusk':{ count:'1', hpEach:'2+P*2' },
+    'classics:monster:necromancer':{ count:'1', hpEach:'3+P*2' }
+  };
+  const monsterCards = monsters.map(({ tags:_retiredTags, requiresAny:_retiredPlacementRules, ...monster }) => ({ ...monster, scale:monsterScales[monster.id] }));
   const randomMonsters = monsterCards.filter(monster => monster.wandering && !monster.questOnly);
   const bosses = monsterCards.filter(monster => monster.questOnly);
 
@@ -252,53 +275,87 @@ window.GAME_MODULES = (() => {
   ];
 
   const gear = [
-    ['Arming sword','Strength','Parry: +1 maximum HP while readied.',1,'Lunge','Attack a target at Near range.',1],
-    ['Greatsword','Strength','Brutal: 2 damage, but attack with disadvantage.',2,'Whirlwind','Make one attack against the highest Defense among adjacent enemies; on success, deal 1 damage to every adjacent enemy.',2],
-    ['Maul','Strength','Shattering: deal 2 damage to skeletons, objects, and other obviously brittle targets.',2,'Concuss','After a successful hit, the next attack against that target has advantage.',1],
-    ['Spear','Strength','Reach: attack across an ally or obstacle.',2,'Brace','Deal 1 damage to an enemy that closes with you before it completes its action.',1],
-    ['Longbow','Agility','Ranged; cannot fire while closely engaged.',2,'Pinning Shot','After a hit, the target cannot reposition during its next dungeon action.',1],
-    ['Dual daggers','Agility','The first attack each fight has advantage.',2,'Twin Strike','Make one check against the higher Defense of two adjacent targets; deal 1 damage to each on success.',1],
-    ['Crossbow','Agility','A loaded hit deals 2 damage; firing discharges it and pressured reload is an Agility check.',2,'Deadeye','Ignore cover and attack at Extreme range.',1],
-    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed.',1,'Fan of Steel','Make one check against the higher Defense of two adjacent targets with 1 maximum HP; deal 1 damage to each on success.',1],
-    ['Wand','Mind','Make a ranged 1-damage Arcane Bolt attack.',1,'Cure Wounds','Remove one active Wound without creating a Scar and restore the target to full HP.',3],
-    ['Hexing focus','Mind','Make a Near 1-damage attack expressed as a curse.',1,'Ill Omen','After a hit, give the target disadvantage on its next check.',1],
-    ['Sacred relic','Mind','Make a Near attack; deal 2 damage to undead creatures and spirits.',1,'Banish','Force one undead or spirit you can see to flee until it takes a dungeon action.',2],
-    ['Spellbook','Mind','Make a ranged 1-damage Arcane Bolt attack.',1,'Counterspell','Cancel one visible magical card effect as it begins.',2]
+    ['Arming sword','Strength','Parry: +1 maximum HP while readied. Drawing or swapping weapons never restores lost HP.',1,'Lunge','Spend before making one attack against a target at Near range. Make the normal attack check; failure grants the dungeon one action.',1],
+    ['Greatsword','Strength','Brutal: deal 2 damage with a normal attack check. On failure, any normal monster attack made during the resulting dungeon action deals 2 damage instead of 1. Guard still applies. This risk does not apply to Whirlwind.',2,'Whirlwind','Spend before rolling one attack against the highest Defense among adjacent enemies. On success, deal 1 damage to each adjacent enemy; on failure, the dungeon takes one ordinary action. Brutal changes neither its damage nor its failure cost.',2],
+    ['Maul','Strength','Shattering: deal 2 damage to skeletons, objects, and other obviously brittle targets; otherwise deal 1 damage.',2,'Concuss','Spend after a successful hit against a surviving target. The next attack against that target before this Scene ends has advantage. No additional check.',1],
+    ['Spear','Strength','Reach: attack across an ally or obstacle. An adjacent ally does not block your attack.',2,'Brace','Spend when an enemy closes within your reach. Deal 1 damage to that enemy before it completes its action, without a check. If defeated, it cannot complete the action. This does not change whose turn follows.',1],
+    ['Longbow','Agility','Ranged; cannot fire while closely engaged.',2,'Pinning Shot','Spend after a successful hit against a surviving target. It cannot reposition during its next dungeon action; it can still attack from its current position. No additional check.',1],
+    ['Dual daggers','Agility','Your first attack with these daggers in each Scene has advantage.',2,'Twin Strike','Spend before rolling one attack against the higher Defense of two distinct adjacent enemies. Deal 1 damage to each on success. On failure, the dungeon takes one action.',1],
+    ['Crossbow','Agility','A loaded hit deals 2 damage. Firing discharges it on a hit or miss. During immediate danger, reload with an Agility check against the Scene target; failure leaves it unloaded and grants the dungeon one action. Reload automatically in safety.',2,'Deadeye','Spend before making one loaded attack. Ignore ordinary cover and extend its range to Extreme for that attack. Roll normally; firing still discharges the crossbow.',1],
+    ['Throwing knives','Agility','Attack adjacent or Near; easily concealed. Ordinary knife attacks do not consume a tracked supply of knives.',1,'Fan of Steel','Spend before rolling one attack against the higher Defense of two distinct enemies within Near range. Deal 1 damage to each on success. On failure, the dungeon takes one action.',2],
+    ['Wand','Mind','Make a ranged 1-damage Arcane Bolt attack.',1,'Cure Wounds','Spend while touching yourself or a willing adjacent ally. Remove one active Wound without creating a Scar and restore the target to full HP. No check, treatment supply, exploration turn, or Light cost.',3],
+    ['Hexing focus','Mind','Make a Near 1-damage attack expressed as a curse.',1,'Ill Omen','Spend after a successful hit against a surviving target. Reduce the damage of its next damaging action by 1, to a minimum of 0; then the omen ends. It also ends when this Scene ends. No additional check.',1],
+    ['Sacred relic','Mind','Make a Near 1-damage attack that can harm incorporeal undead and spirits. Once per Scene, after a successful hit against an undead creature or spirit, deal +1 damage.',1,'Banish','Spend to force one visible undead creature or spirit within Near range to retreat without a check. It must spend its next dungeon action returning and cannot attack during that action. Harming it ends the banishment early. This is a temporary bypass, not defeat or conquest.',2],
+    ['Wand and spellbook','Mind','The wand makes a ranged 1-damage Arcane Bolt attack. The spellbook contains Counterspell; a book alone provides no basic attack.',1,'Counterspell','Spend as a visible magical effect within Near range begins. Cancel that single occurrence without a check, including its damage or immediate condition. This does not remove a creature, destroy a permanent ward, undo an earlier effect, or conquer a Challenge. Turn ownership is unchanged.',2]
   ];
   const armor = [
     { primary:'Strength', weak:'Agility', burden:'Ironbound', name:'Black-iron plate', rule:'Reinforced: +1 maximum HP while worn. Loud, conspicuous, and slow to remove.', reinforced:true },
-    { primary:'Strength', weak:'Agility', burden:'Chain-laden', name:'Mail, coif, and heavy boots', rule:'Guard: once while a Challenge is active, prevent 1 bodily damage. Noisy during stealth and dangerous in deep water.' },
-    { primary:'Strength', weak:'Mind', burden:'Superstitious', name:'Charm-stitched leather', rule:'Spirit ward: ignore the additional immediate effect of one Wound caused by undead or magic.' },
+    { primary:'Strength', weak:'Agility', burden:'Chain-laden', name:'Mail, coif, and heavy boots', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Noisy during stealth and dangerous in deep water.', guard:true },
+    { primary:'Strength', weak:'Mind', burden:'Superstitious', name:'Charm-stitched leather', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The protective charms rattle; observe a personal taboo.', guard:true },
     { primary:'Strength', weak:'Mind', burden:'Glory-bound', name:'Bright half-plate', rule:'Reinforced: +1 maximum HP while worn. Intelligent enemies readily identify and challenge you.', reinforced:true },
-    { primary:'Agility', weak:'Strength', burden:'Slight', name:'Quilted coat', rule:'Projectile guard: once while a Challenge is active, prevent 1 projectile damage.' },
-    { primary:'Agility', weak:'Strength', burden:'Sickly', name:'Waxed plague coat and mask', rule:'Once while a Challenge is active, ignore one Poison or Disease effect.' },
-    { primary:'Agility', weak:'Mind', burden:'Impulsive', name:'Light brigandine', rule:'After a successful attack, you may reposition nearby. You habitually overextend and pursue.' },
-    { primary:'Agility', weak:'Mind', burden:'Marked', name:'Patchwork monster-hide', rule:'Once while a Challenge is active, prevent 1 damage from a beast or giant. Civilized strangers distrust the trophies.' },
-    { primary:'Mind', weak:'Strength', burden:'Frail', name:'Warded robes', rule:'Once while a Challenge is active, prevent 1 damage from a spell or supernatural card effect.' },
-    { primary:'Mind', weak:'Strength', burden:'Distracted', name:'Alchemist’s reinforced coat', rule:'Once while a Challenge is active, ignore one fire, acid, or poison damage. Its many pockets catch on obstacles.' },
+    { primary:'Agility', weak:'Strength', burden:'Slight', name:'Quilted coat', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Thin padding offers little comfort against heavy blows.', guard:true },
+    { primary:'Agility', weak:'Strength', burden:'Sickly', name:'Waxed plague coat and mask', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The mask muffles speech and alarms strangers.', guard:true },
+    { primary:'Agility', weak:'Mind', burden:'Impulsive', name:'Light brigandine', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. You habitually overextend and pursue.', guard:true },
+    { primary:'Agility', weak:'Mind', burden:'Marked', name:'Patchwork monster-hide', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Civilized strangers distrust the trophies.', guard:true },
+    { primary:'Mind', weak:'Strength', burden:'Frail', name:'Warded robes', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The cloth is fragile and visibly marked with occult signs.', guard:true },
+    { primary:'Mind', weak:'Strength', burden:'Distracted', name:'Alchemist’s reinforced coat', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Its many pockets catch on obstacles.', guard:true },
     { primary:'Mind', weak:'Agility', burden:'Ritually encumbered', name:'Ceremonial mail', rule:'Reinforced: +1 maximum HP while worn. Bells and layered vestments make stealth difficult.', reinforced:true },
     { primary:'Mind', weak:'Agility', burden:'Nearsighted', name:'Rune-carved plate', rule:'Reinforced: +1 maximum HP while worn. Fine distant details are difficult to perceive.', reinforced:true }
   ];
   const pasts = ['Former tomb robber','Caravan guard from the salt road','Assistant to a plague surgeon','Condemned mine laborer','Runaway monastery novice','Poacher in the royal forest','Scavenger from a broken siege','Escapee from a hidden cult','Village undertaker','Smuggler through forgotten tunnels','Retainer to a witch hunter','Disgraced duelist','Guide to the city sewers','Standard-bearer from a lost battle','Apprentice to an apothecary','Thief from a temple reliquary','Ferryman on a black river','Keeper of dangerous beasts','Assistant to an obsessive mapmaker','Sole survivor of a failed expedition'];
+  const pastAttributes = {
+    'Former tomb robber':['Agility','Mind'],
+    'Caravan guard from the salt road':['Strength','Agility'],
+    'Assistant to a plague surgeon':['Agility','Mind'],
+    'Condemned mine laborer':['Strength','Mind'],
+    'Runaway monastery novice':['Agility','Mind'],
+    'Poacher in the royal forest':['Agility','Mind'],
+    'Scavenger from a broken siege':['Strength','Agility'],
+    'Escapee from a hidden cult':['Agility','Mind'],
+    'Village undertaker':['Strength','Mind'],
+    'Smuggler through forgotten tunnels':['Agility','Mind'],
+    'Retainer to a witch hunter':['Strength','Mind'],
+    'Disgraced duelist':['Strength','Agility'],
+    'Guide to the city sewers':['Agility','Mind'],
+    'Standard-bearer from a lost battle':['Strength','Mind'],
+    'Apprentice to an apothecary':['Agility','Mind'],
+    'Thief from a temple reliquary':['Agility','Mind'],
+    'Ferryman on a black river':['Strength','Mind'],
+    'Keeper of dangerous beasts':['Strength','Mind'],
+    'Assistant to an obsessive mapmaker':['Agility','Mind'],
+    'Sole survivor of a failed expedition':['Strength','Agility','Mind']
+  };
   const knacks = [
-    { name:'Never Lost Below', cost:2, effect:'Learn the direction of the nearest known exit or previously visited Room without rolling.' },
+    { name:'Never Lost Below', cost:2, effect:'Retrace up to three connected, previously visited conquered Rooms for a total of one exploration turn and 1 Light, waived if every departure Room has permanent light. Resolve the normal danger roll for each unlit Room; a threat stops travel. Unsecured traversal features retain their normal costs and checks.' },
     { name:'Trap Whisperer', cost:2, effect:'Learn the trigger and one safe method of bypassing a detected mundane trap.' },
     { name:'Appraiser’s Eye', cost:2, effect:'Ask two questions about an object: its purpose, value, maker, age, danger, or whether it is magical. Receive truthful answers.' },
-    { name:'Field Surgeon', cost:2, effect:'Treat one active Wound without a check or treatment supply. It becomes its normal Scar.' },
+    { name:'Field Surgeon', cost:2, effect:'Treat one active Wound on yourself or an adjacent willing ally without a check or treatment supply. It becomes its normal Scar. Spend one exploration turn and 1 Light unless this Room is permanently lit. HP is not restored.' },
     { name:'Second Wind', cost:2, effect:'During a fight, restore yourself to full HP. This does not remove a Wound.' },
-    { name:'Scrounger', cost:2, effect:'In a plausible location, find one ordinary consumable such as a bandage, oil, torch, ration, or ammunition.' },
+    { name:'Scrounger', cost:2, effect:'Once per expedition, search a plausible supply cache to find either one packet of Bandages or one Flask of oil holding 6 Light of lantern fuel. No check or exploration turn. This cannot produce a Fresh torch, Lantern, Medkit, treasure, or Skill Tokens.' },
     { name:'Lie Reader', cost:2, effect:'Learn whether a speaker believes one statement they just made.' },
     { name:'Parley Under Steel', cost:2, effect:'Halt immediate violence from intelligent creatures long enough to exchange one short offer, demand, or warning.' },
     { name:'Slip the Noose', cost:2, effect:'Escape one mundane grapple, restraint, or enclosed hold and reposition nearby.' },
     { name:'Gone in a Blink', cost:2, effect:'If plausible concealment or an exit is nearby, break line of sight and become hidden from ordinary senses.' },
     { name:'Weak-Point Eye', cost:2, effect:'After observing a creature or barrier, the next successful damaging attack against it deals +1 damage.' },
-    { name:'Improvised Calamity', cost:2, effect:'Use a suitable Room feature to deal 1 damage to every creature in a small affected area.' },
-    { name:'Read the Signs', cost:2, effect:'Ask the oracle one yes/no question twice and choose which result becomes true.' },
-    { name:'Echoes of the Place', cost:2, effect:'Learn what significant event most recently happened in the current Room through a truthful sensory impression.' },
-    { name:'Threshold Premonition', cost:2, effect:'Before entering a new Room, learn the category of its primary Challenge.' },
+    { name:'Improvised Calamity', cost:2, effect:'Collapse, ignite, or release a suitable Room feature to deal 1 damage without a check to up to two creatures in one small nearby area, including allies if they occupy it. State the affected creatures before spending. The feature is spent and cannot power this Knack again.' },
+    { name:'Read the Signs', cost:2, effect:'Ask the oracle one yes/no question about an unresolved uncertainty twice and choose which answer to use. This cannot contradict revealed cards, established facts, or a completed roll, or directly defeat a creature or complete a Quest. In GM-led play, learn one useful clue instead.' },
+    { name:'Echoes of the Place', cost:2, effect:'Learn the most recent significant event in this Room through a truthful sensory impression, including one actionable clue about its current danger, mechanism, or occupants when one exists. Your next check acting on that clue in this Scene has advantage.' },
+    { name:'Threshold Premonition', cost:2, effect:'Before entering the next Room, learn its primary Challenge category and whether an ambush awaits. Entering still costs its normal turn. That Scene cannot surprise your party, and your first check addressing its primary Challenge has advantage.' },
     { name:'Name the Weakness', cost:2, effect:'Learn one actionable vulnerability, prohibition, appetite, or fear belonging to a creature you can observe.' }
   ];
   const items = ['Medkit','Rope','Fresh torch','Crowbar','Climbing tools','Flask of oil','Lantern','Bandages','Chalk and spikes','Small mirror'];
+  const itemRules = {
+    Medkit:'Single use. Treat one active Wound on yourself or an adjacent ally, converting it to its normal Scar. Spend one exploration turn and 1 Light unless this Room is permanently lit. In safety no check is needed; immediate danger requires an appropriate Scene-target check. Consume only on success; failure grants the dungeon one action. Treatment does not restore HP.',
+    Rope:'Twelve metres of reusable rope. Secure a climb, crossing, descent, restraint, or handline. A sound anchored setup removes ordinary uncertainty and recurring traversal costs on that route. Placing it under pressure may require a Scene-target check; failure grants the dungeon one action. Recovering it leaves the route unsecured.',
+    'Fresh torch':'Single use. When the active light expires, light this to provide 12 Light. It occupies one hand while carried; it can be placed on a stable dry surface to free that hand but does not travel with you. Spend Light for normal exploration actions; ordinary combat checks spend no Light.',
+    Crowbar:'Reusable leverage for doors, slabs, rubble, containers, and similar obstacles. Straightforward unopposed prying needs no check; uncertain force under pressure uses Strength against the Scene target. A durable opened route remains open. Failure grants the dungeon one action.',
+    'Climbing tools':'Reusable hooks, spikes, hammer, and pulley. With a sound anchor and rope, establish a durable climbing route that removes ordinary uncertainty and recurring traversal costs. An uncertain setup under pressure uses Agility against the Scene target. Failure grants the dungeon one action.',
+    'Flask of oil':'Single use. Add 6 Light to a Lantern, to a maximum of 12; refilling in safety needs no check or exploration turn. Alternatively burn or lubricate one small nearby area when the fiction permits; this consumes the oil and uncertain harmful use requires a Scene-target check.',
+    Lantern:'Reusable housing with 6 Light of initial fuel. It occupies one hand while carried, or can be placed or hung at a fixed point to free that hand. Spend fuel as normal Light. A Flask of oil adds 6 Light, to a maximum of 12. The enclosed flame ignores ordinary wind and splashes. Closing the shutters conceals the light and leaves the area dark.',
+    Bandages:'Single use. As a Medkit, but only for an ordinary cut, bite, or arrow Wound; they cannot treat poison, disease, curses, burns, or crushed limbs. Spend the normal treatment turn and Light, and make the normal treatment check in immediate danger. Consume only on successful treatment.',
+    'Chalk and spikes':'Mark known routes, wedge a small mundane mechanism, or anchor a lightweight setup without a check in safety. A durable wedge can prevent that mechanism from closing again until removed. Six spikes; leave one behind for each permanent setup. Supporting a person requires suitable climbing equipment.',
+    'Small mirror':'Reusable. Inspect around a corner or through an opening from cover, reflect ordinary light, or examine a surface without touching it. Reveal an ordinary visible ambush around a corner without exposing the observer. A mirror requires light and cannot reveal invisible creatures or disable traps.'
+  };
   const names = ['Mara','Corvin','Iona','Bram','Sable','Orin','Hester','Tarn','Nera','Garrick','Ada','Brann'];
 
   const classics = {
@@ -306,7 +363,7 @@ window.GAME_MODULES = (() => {
     description:'A practical old-school dungeon of goblins, ogres, traps, prisoners, treasure, skeletons, and zombies.',
     scenes, rooms:scenes, heartScenes, allScenes:[...scenes,...heartScenes],
     randomMonsters, bosses, monsters:monsterCards, sceneOpportunities, quests:activeQuests, questBands,
-    gear, armor, pasts, knacks, items, names
+    gear, armor, pasts, pastAttributes, knacks, items, itemRules, names
   };
   return { classics };
 })();
