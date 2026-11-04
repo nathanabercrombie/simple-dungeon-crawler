@@ -1948,12 +1948,14 @@
       const room = activeRoom();
       const heroes = state.party.filter(hero => !hero.dead && (!modal.abilityTitle || hero.id === modal.heroId));
       const selectedId = modal.heroId || heroes[0]?.id;
+      const selectedHero = heroes.find(hero => hero.id === selectedId) || heroes[0];
+      const selectedAttribute = modal.attribute || Object.keys(selectedHero?.attributes || {})[0] || 'Strength';
       const target = targetForRoom(room);
       const dark = state.light.remaining <= 0 && !room.securedLight;
       const heroButtons = heroes.map(hero => `<label class="check-hero-choice"><input type="radio" name="heroId" value="${hero.id}" data-action="check-hero" ${hero.id === selectedId ? 'checked' : ''}><span>${esc(hero.name)}</span><small>${hero.wound ? 'Wounded' : dark ? 'In darkness' : hero.hp < hero.maxHp ? 'Low HP' : 'Ready'}</small></label>`).join('');
-      const statPanels = heroes.map(hero => `<div class="check-stat-grid ${hero.id === selectedId ? '' : 'hidden'}" data-check-stats="${hero.id}">${Object.entries(hero.attributes).map(([attribute,bonus]) => `<button class="check-stat-choice ${modal.attribute === attribute ? 'suggested' : ''}" type="submit" name="attribute" value="${esc(attribute)}"><span>${esc(attribute)}</span><strong>${signed(bonus + Number(modal.abilityBonus || 0))}</strong></button>`).join('')}</div>`).join('');
+      const statPanels = heroes.map(hero => `<div class="check-stat-grid ${hero.id === selectedId ? '' : 'hidden'}" data-check-stats="${hero.id}">${Object.entries(hero.attributes).map(([attribute,bonus]) => `<button class="check-stat-choice ${hero.id === selectedId && selectedAttribute === attribute ? 'selected' : ''}" type="button" data-action="select-check-stat" data-attribute="${esc(attribute)}"><span>${esc(attribute)}</span><strong>${signed(bonus + Number(modal.abilityBonus || 0))}</strong></button>`).join('')}</div>`).join('');
       const abilityFields = modal.abilityTitle ? `<input type="hidden" name="abilityTitle" value="${esc(modal.abilityTitle)}"><input type="hidden" name="abilityCost" value="${Number(modal.abilityCost || 0)}"><input type="hidden" name="abilityBonus" value="${Number(modal.abilityBonus || 0)}"><input type="hidden" name="failureDamage" value="${Number(modal.failureDamage || 1)}">` : '';
-      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Scene check</small><strong>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer, then click the attribute being used.</p></div><div class="modal-body">${abilityFields}<div class="check-hero-grid">${heroButtons}</div>${statPanels}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for an active Wound or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button></div></form>`;
+      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Scene check</small><strong>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer and the attribute being used, then roll.</p></div><div class="modal-body">${abilityFields}<input type="hidden" name="attribute" value="${esc(selectedAttribute)}"><div class="check-hero-grid">${heroButtons}</div>${statPanels}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for an active Wound or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button type="submit" class="btn btn-primary">Roll against ${target}</button></div></form>`;
     } else if (modal.type === 'rollResult') {
       const r = modal.result;
       const followUps = [];
@@ -2055,6 +2057,12 @@
     else if (action === 'add-turn') { advanceTurns(1); closeModal(); render(); }
     else if (action === 'roll') openModal('roll');
     else if (action === 'prepare-check' || action === 'roll-attribute') openModal('roll',{ heroId:target.dataset.id, attribute:target.dataset.attribute, abilityTitle:target.dataset.ability || '', abilityCost:Number(target.dataset.cost || 0), abilityBonus:Number(target.dataset.bonus || 0), failureDamage:Number(target.dataset.failureDamage || 1) });
+    else if (action === 'select-check-stat') {
+      const form = target.closest('#roll-form');
+      if (!form) return;
+      form.elements.attribute.value = target.dataset.attribute;
+      form.querySelectorAll('.check-stat-choice').forEach(button => button.classList.toggle('selected', button === target));
+    }
     else if (action === 'use-ability') useAbility(target.dataset.id,target.dataset.kind,Number(target.dataset.cost || 0));
     else if (action === 'prepare-guard') prepareGuard(target.dataset.id);
     else if (action === 'dungeon-action') openModal('dungeon',{enemyId:target.dataset.id});
@@ -2117,6 +2125,12 @@
     if (event.target.dataset.action === 'check-hero') {
       const form = event.target.closest('#roll-form');
       form?.querySelectorAll('[data-check-stats]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.checkStats !== event.target.value));
+      const visiblePanel = form?.querySelector(`[data-check-stats="${event.target.value}"]`);
+      const firstStat = visiblePanel?.querySelector('.check-stat-choice');
+      if (firstStat) {
+        form.elements.attribute.value = firstStat.dataset.attribute;
+        form.querySelectorAll('.check-stat-choice').forEach(button => button.classList.toggle('selected', button === firstStat));
+      }
     } else if (event.target.dataset.action === 'notes') {
       activeRoom().notes = event.target.value;
       persist();
