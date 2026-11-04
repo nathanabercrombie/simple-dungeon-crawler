@@ -83,7 +83,7 @@ Each expedition begins with **one torch** shared by the party. Put 12 Light toke
 
 A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or any other equipment requiring both hands. Another adventurer may carry the torch. A lone adventurer must set it down, secure it nearby, or accept darkness to use two-handed equipment. Position and the fiction determine whether a placed torch remains useful, becomes inaccessible, or can be extinguished.
 
-Without sufficient light, every adventurer check has disadvantage. Automatic monster attacks remain automatic. A specific ability, sense, or item can explicitly ignore darkness.
+Without sufficient light, every adventurer check has disadvantage. The party may still enter new rooms, travel through known rooms, and search in darkness; a lack of Light never traps them in place. Rest, Wound treatment, and lighting permanent fixtures still require portable or secured light. Automatic monster attacks remain automatic. A specific ability, sense, or item can explicitly ignore darkness.
 
 Every room template has an authored **Lighting** entry based on its architecture and terrain:
 
@@ -97,7 +97,7 @@ A carried or placed torch illuminates the immediate situation but does not count
 
 ### Travel through known rooms
 
-Move through known rooms one connection at a time. Each adjacent move costs 1 Light unless it begins in a permanently illuminated room. The app may resolve a longer selected route as several consecutive adjacent moves.
+Move through known rooms one connection at a time. Each adjacent move spends 1 Light when available unless it begins in a permanently illuminated room. At 0 Light, movement continues in darkness. The app may resolve a longer selected route as several consecutive adjacent moves.
 
 Roll a d6 each time the party enters a conquered room during this movement. On a 1, wandering enemies arrive in the room and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not award its conquest Skill Tokens again.
 
@@ -115,7 +115,7 @@ The three-room allowance and the 1-in-6 danger chance are initial playtest value
 
 Wandering enemies are real mobile occupants of the site, not the conquered room regenerating its original challenge. Each Domain, Theme, or specific site provides a short table containing creatures that can plausibly move through many room types: vermin, shambling dead, ghosts, patrols, scavengers, hunting beasts, ogres, and similar roamers.
 
-An ordinary wandering group has at least **1 total HP per active adventurer, minimum 2**. A specific entry can exceed this floor. Wanderers use their own Defense, HP, Instinct, and Wound rather than inheriting the current room's original challenge.
+An ordinary wandering group has at least **2 total HP per active adventurer when its card enters play**. A specific entry can exceed this floor. Monster cards express scaling as equations using `P` for that party size: `P×2 Goblins — 1 HP each`, for example. Resolve the equation when the card enters play and track every creature's HP separately. Later deaths do not resize an encounter already in play. Wanderers use their own Defense, HP, Instinct, and Wound rather than inheriting the current room's original challenge.
 
 If the adventurers escape, record where the wanderers remain. They may pursue according to their Instinct, occupy the room, move elsewhere when the fiction warrants it, or interact with other inhabitants. They do not disappear merely because the encounter ends.
 
@@ -292,7 +292,7 @@ Adventurers have **2 HP** and ordinary monster attacks deal **1 damage**:
 2. The second reduces 1 HP to 0 HP, leaving the adventurer exposed.
 3. The third causes a source-specific Wound.
 
-HP replenishes after the fight genuinely ends. Exceptional monster attacks may later receive rules that deal more damage, but ordinary damage is fixed and requires no damage roll.
+HP replenishes only when the party rests in a conquered room with no active threat. Exceptional monster attacks may deal more damage, but ordinary damage is fixed and requires no damage roll.
 
 ### Damage against monsters
 
@@ -448,14 +448,7 @@ Special monster attacks may break these defaults but should be clearly telegraph
 
 ### Hostile opposition
 
-A room whose main challenge is immediately hostile creatures begins with at least **2 total monster HP per active adventurer**. Divide that HP among creatures as the fiction suggests.
-
-| Active adventurers | Minimum total monster HP |
-| ---: | ---: |
-| 1 | 2 |
-| 2 | 4 |
-| 3 | 6 |
-| 4 | 8 |
+A room whose main challenge is immediately hostile creatures begins with at least **2 total monster HP per active adventurer when the Monster card enters play**. Divide that HP among creatures as the fiction suggests and express the physical card's setup as a `P` equation rather than a lookup table.
 
 The existing individual HP bands remain:
 

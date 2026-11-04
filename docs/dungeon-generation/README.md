@@ -58,7 +58,7 @@ Quest finale Scenes place named cards from a set-aside Boss pile. Securing the o
 
 A fresh Torch carries 12 Light tokens. Unless the current Scene is permanently illuminated, spend 1 Light to enter a new Scene, move to one adjacent known Scene, rest, search, treat a Wound, or illuminate permanent fixtures.
 
-At 0 Light, ordinary checks in an unlit Scene have disadvantage and actions that explicitly cost Light cannot begin. Combat actions do not ordinarily spend Light.
+At 0 Light, the party may still enter a new Scene, move to an adjacent known Scene, or search. Those actions continue in darkness and every uncertain check has disadvantage. Resting, treating a Wound, and igniting permanent fixtures require either 1 portable Light or a permanently illuminated Scene. Combat actions do not ordinarily spend Light.
 
 When entering a conquered dark Scene during backtracking, roll a d6. On a 1, draw a random Monster through the nearest plausible exit and stop movement. Permanently lit Scenes suppress this draw.
 
@@ -66,7 +66,7 @@ Persistent terrain remains after conquest. A secured rope, lowered bridge, drain
 
 ## Rest and search
 
-Wounded or injured adventurers have disadvantage on checks, as does any adventurer acting in darkness. The check dialog applies those rules by default while allowing an explicit override for exceptional fiction.
+Adventurers with an active Wound have disadvantage on checks, as does any adventurer acting in darkness. Lost HP alone does not cause disadvantage. The check dialog applies those rules by default while allowing an explicit override for exceptional fiction.
 
 In a conquered Scene without an active threat, spend 1 Light to restore living adventurers to full HP. Wounds and Scars remain. Permanently illuminated Scenes waive this Light cost.
 

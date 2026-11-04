@@ -48,7 +48,7 @@ Do not print Examine menus, preferred solution lists, compatibility tags, genera
 - **Set-aside Boss card:** use for named or text-heavy Quest defenders.
 - Never tell players to search a shuffled deck for a specific ordinary Monster.
 
-A compact Monster stat line contains number, HP, Defense, Instinct, and Wound. Signs or one short special rule may be added when needed.
+A compact Monster stat line contains a party-size equation, HP per creature, Defense, Instinct, and Wound. `P` means the number of active adventurers when the Monster card enters play. For example, `P×2 Goblins — 1 HP each` creates four separate Goblins for two active adventurers, while `1 Ogre — 2 + P×2 HP` creates one 6 HP Ogre. Resolve the equation once; later deaths do not resize that encounter. Signs or one short special rule may be added when needed.
 
 ## Other cards
 

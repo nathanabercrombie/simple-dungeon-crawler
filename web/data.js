@@ -237,7 +237,7 @@ window.GAME_MODULES = (() => {
     return { ...questCard, heartSceneId:heartScene.id, heartScene, bossIds:heartScene.encounter.mode === 'boss' ? heartScene.encounter.monsterIds : [], wanderingAdds:questDeckAdds[index] };
   });
   const heartScenes = activeQuests.map(questCard => questCard.heartScene);
-  // P is the number of living adventurers when this Monster card is placed.
+  // P is the number of active adventurers when this Monster card is placed.
   // Count and HP describe individual creatures, never a combined group HP pool.
   const monsterScales = {
     'classics:monster:goblin-skirmishers':{ count:'P*2', hpEach:'1' },
@@ -256,9 +256,9 @@ window.GAME_MODULES = (() => {
     'classics:monster:kobold-trappers':{ count:'P*2', hpEach:'1' },
     'classics:monster:rival-delvers':{ count:'P*1', hpEach:'2' },
     'classics:monster:cult-acolytes':{ count:'P*1', hpEach:'2' },
-    'classics:monster:gristlemaw':{ count:'1', hpEach:'4+P*2' },
-    'classics:monster:redcap-rusk':{ count:'1', hpEach:'2+P*2' },
-    'classics:monster:necromancer':{ count:'1', hpEach:'3+P*2' }
+    'classics:monster:gristlemaw':{ count:'1', hpEach:'4+P*1' },
+    'classics:monster:redcap-rusk':{ count:'1', hpEach:'2+P*1' },
+    'classics:monster:necromancer':{ count:'1', hpEach:'3+P*1' }
   };
   const monsterCards = monsters.map(({ tags:_retiredTags, requiresAny:_retiredPlacementRules, ...monster }) => ({ ...monster, scale:monsterScales[monster.id] }));
   const randomMonsters = monsterCards.filter(monster => monster.wandering && !monster.questOnly);
@@ -275,7 +275,7 @@ window.GAME_MODULES = (() => {
   ];
 
   const gear = [
-    ['Arming sword','Strength','Parry: +1 maximum HP while readied. Drawing or swapping weapons never restores lost HP.',1,'Lunge','Spend before making one attack against a target at Near range. Make the normal attack check; failure grants the dungeon one action.',1],
+    ['Arming sword','Strength','Parry: +1 maximum HP while readied. Maximum HP bonuses do not stack. Drawing or swapping weapons never restores lost HP.',1,'Lunge','Spend before making one attack against a target at Near range. Make the normal attack check; failure grants the dungeon one action.',1],
     ['Greatsword','Strength','Brutal: deal 2 damage with a normal attack check. On failure, any normal monster attack made during the resulting dungeon action deals 2 damage instead of 1. Guard still applies. This risk does not apply to Whirlwind.',2,'Whirlwind','Spend before rolling one attack against the highest Defense among adjacent enemies. On success, deal 1 damage to each adjacent enemy; on failure, the dungeon takes one ordinary action. Brutal changes neither its damage nor its failure cost.',2],
     ['Maul','Strength','Shattering: deal 2 damage to skeletons, objects, and other obviously brittle targets; otherwise deal 1 damage.',2,'Concuss','Spend after a successful hit against a surviving target. The next attack against that target before this Scene ends has advantage. No additional check.',1],
     ['Spear','Strength','Reach: attack across an ally or obstacle. An adjacent ally does not block your attack.',2,'Brace','Spend when an enemy closes within your reach. Deal 1 damage to that enemy before it completes its action, without a check. If defeated, it cannot complete the action. This does not change whose turn follows.',1],
@@ -289,18 +289,18 @@ window.GAME_MODULES = (() => {
     ['Wand and spellbook','Mind','The wand makes a ranged 1-damage Arcane Bolt attack. The spellbook contains Counterspell; a book alone provides no basic attack.',1,'Counterspell','Spend as a visible magical effect within Near range begins. Cancel that single occurrence without a check, including its damage or immediate condition. This does not remove a creature, destroy a permanent ward, undo an earlier effect, or conquer a Challenge. Turn ownership is unchanged.',2]
   ];
   const armor = [
-    { primary:'Strength', weak:'Agility', burden:'Ironbound', name:'Black-iron plate', rule:'Reinforced: +1 maximum HP while worn. Loud, conspicuous, and slow to remove.', reinforced:true },
+    { primary:'Strength', weak:'Agility', burden:'Ironbound', name:'Black-iron plate', rule:'Reinforced: +1 maximum HP while worn; maximum HP bonuses do not stack. Loud, conspicuous, and slow to remove.', reinforced:true },
     { primary:'Strength', weak:'Agility', burden:'Chain-laden', name:'Mail, coif, and heavy boots', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Noisy during stealth and dangerous in deep water.', guard:true },
     { primary:'Strength', weak:'Mind', burden:'Superstitious', name:'Charm-stitched leather', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The protective charms rattle; observe a personal taboo.', guard:true },
-    { primary:'Strength', weak:'Mind', burden:'Glory-bound', name:'Bright half-plate', rule:'Reinforced: +1 maximum HP while worn. Intelligent enemies readily identify and challenge you.', reinforced:true },
+    { primary:'Strength', weak:'Mind', burden:'Glory-bound', name:'Bright half-plate', rule:'Reinforced: +1 maximum HP while worn; maximum HP bonuses do not stack. Intelligent enemies readily identify and challenge you.', reinforced:true },
     { primary:'Agility', weak:'Strength', burden:'Slight', name:'Quilted coat', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Thin padding offers little comfort against heavy blows.', guard:true },
     { primary:'Agility', weak:'Strength', burden:'Sickly', name:'Waxed plague coat and mask', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The mask muffles speech and alarms strangers.', guard:true },
     { primary:'Agility', weak:'Mind', burden:'Impulsive', name:'Light brigandine', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. You habitually overextend and pursue.', guard:true },
     { primary:'Agility', weak:'Mind', burden:'Marked', name:'Patchwork monster-hide', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Civilized strangers distrust the trophies.', guard:true },
     { primary:'Mind', weak:'Strength', burden:'Frail', name:'Warded robes', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. The cloth is fragile and visibly marked with occult signs.', guard:true },
     { primary:'Mind', weak:'Strength', burden:'Distracted', name:'Alchemist’s reinforced coat', rule:'Guard: once per Scene, prevent 1 damage to yourself from any source, including a hit while exposed. Its many pockets catch on obstacles.', guard:true },
-    { primary:'Mind', weak:'Agility', burden:'Ritually encumbered', name:'Ceremonial mail', rule:'Reinforced: +1 maximum HP while worn. Bells and layered vestments make stealth difficult.', reinforced:true },
-    { primary:'Mind', weak:'Agility', burden:'Nearsighted', name:'Rune-carved plate', rule:'Reinforced: +1 maximum HP while worn. Fine distant details are difficult to perceive.', reinforced:true }
+    { primary:'Mind', weak:'Agility', burden:'Ritually encumbered', name:'Ceremonial mail', rule:'Reinforced: +1 maximum HP while worn; maximum HP bonuses do not stack. Bells and layered vestments make stealth difficult.', reinforced:true },
+    { primary:'Mind', weak:'Agility', burden:'Nearsighted', name:'Rune-carved plate', rule:'Reinforced: +1 maximum HP while worn; maximum HP bonuses do not stack. Fine distant details are difficult to perceive.', reinforced:true }
   ];
   const pasts = ['Former tomb robber','Caravan guard from the salt road','Assistant to a plague surgeon','Condemned mine laborer','Runaway monastery novice','Poacher in the royal forest','Scavenger from a broken siege','Escapee from a hidden cult','Village undertaker','Smuggler through forgotten tunnels','Retainer to a witch hunter','Disgraced duelist','Guide to the city sewers','Standard-bearer from a lost battle','Apprentice to an apothecary','Thief from a temple reliquary','Ferryman on a black river','Keeper of dangerous beasts','Assistant to an obsessive mapmaker','Sole survivor of a failed expedition'];
   const pastAttributes = {

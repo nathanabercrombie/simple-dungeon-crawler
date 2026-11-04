@@ -24,9 +24,9 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 - ordinary monsters printed directly on Scenes when their identity matters;
 - random Monster draws for monster-agnostic premises such as sleeping, trapped, hidden, or guarding creatures;
 - Quest setup that adds thematic random Monsters and set-aside Bosses;
-- creature trackers with Instincts and Wounds;
+- party-size Monster equations resolved into separately tracked creatures, with Instincts and Wounds;
 - Scene conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
-- the shared torch clock, darkness, fixtures, secured light, and spare torches;
+- the shared torch or lantern clock, darkness travel and searching at disadvantage, fixtures, secured light, and spare supplies;
 - known-room travel with persistent traversal costs and danger rolls;
 - roll-high d20 checks, automatic darkness/injury disadvantage, criticals, and dungeon actions;
 - a fixed mobile action dock, compact resource bar, card-based character controls, and a chronological expedition log;

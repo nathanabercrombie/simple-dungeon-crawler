@@ -23,6 +23,46 @@
   const sceneTarget = (number, isHeart = false) => clamp(9 + Math.floor((number - 1) / 2) + (isHeart ? 1 : 0), 9, 15);
   const targetForRoom = room => Number(room?.target) || sceneTarget(room?.number || 1, room?.quest?.name === 'Heart');
   const difficultyForTarget = target => target <= 10 ? 'Easy' : target <= 12 ? 'Standard' : target <= 14 ? 'Hard' : 'Extreme';
+  function evaluatePartyFormula(expression, partySize) {
+    const source = String(expression ?? '1').replace(/\s+/g, '').toUpperCase();
+    if (/^\d+$/.test(source)) return Number(source);
+    if (source === 'P') return partySize;
+    let match = source.match(/^P\*(\d+)$/);
+    if (match) return partySize * Number(match[1]);
+    match = source.match(/^(\d+)\+P\*(\d+)$/);
+    if (match) return Number(match[1]) + partySize * Number(match[2]);
+    match = source.match(/^P-(\d+)$/);
+    if (match) return Math.max(0, partySize - Number(match[1]));
+    throw new Error(`Unsupported party formula: ${expression}`);
+  }
+  const displayPartyFormula = expression => String(expression ?? '1').toUpperCase().replaceAll('*', '×');
+  function syncEnemy(enemy) {
+    if (!Array.isArray(enemy.members)) return enemy;
+    enemy.units = enemy.members.length;
+    enemy.maxHp = enemy.members.reduce((total, member) => total + member.maxHp, 0);
+    enemy.hp = enemy.members.reduce((total, member) => total + member.hp, 0);
+    return enemy;
+  }
+  function ensureEnemyMembers(enemy) {
+    const source = DATA.monsters.find(monster => monster.id === enemy.monsterId);
+    enemy.scale = enemy.scale || source?.scale || { count:String(enemy.units || 1), hpEach:String(Math.max(1, Math.ceil((enemy.maxHp || 1) / (enemy.units || 1)))) };
+    if (!Array.isArray(enemy.members) || !enemy.members.length) {
+      const count = Math.max(1, Number(enemy.units) || evaluatePartyFormula(enemy.scale.count, Math.max(1, state.party.filter(hero => !hero.dead).length)));
+      const hpEach = Math.max(1, Math.ceil((enemy.maxHp || evaluatePartyFormula(enemy.scale.hpEach, Math.max(1, state.party.filter(hero => !hero.dead).length))) / count));
+      let remaining = clamp(Number(enemy.hp) || 0, 0, hpEach * count);
+      enemy.members = Array.from({ length:count }, (_, index) => {
+        const hp = Math.min(hpEach, remaining);
+        remaining -= hp;
+        return { id:`${enemy.id}-member-${index+1}`, hp, maxHp:hpEach };
+      });
+    }
+    return syncEnemy(enemy);
+  }
+  function canonicalEnemySetup(enemy) {
+    const count = displayPartyFormula(enemy.scale?.count || enemy.units || 1);
+    const hpEach = displayPartyFormula(enemy.scale?.hpEach || enemy.unitHp || 1);
+    return `${count} ${enemy.name} · ${hpEach} HP each`;
+  }
   const liveEnemies = room => room.enemies.filter(enemy => enemy.hp > 0);
   const roomCardState = room => room.cardState || (room.cardState = {
     resolutionRevealed: room.status === 'conquered',
@@ -426,8 +466,10 @@
       state.light.remaining = Math.min(TORCH_CAPACITY, Math.max(0, Number(state.light.remaining) || 0) * 2);
       state.light.capacity = TORCH_CAPACITY;
     }
+    if (!state.light.source) state.light.source = 'Torch';
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const hero of state.party) {
+      if (hero.gear === 'Spellbook') hero.gear = 'Wand and spellbook';
       const gear = DATA.gear.find(entry => entry[0] === hero.gear);
       if (!hero.gearAttribute) hero.gearAttribute = gear?.[1] || 'Strength';
       if (!hero.gearHands) hero.gearHands = gear?.[3] || null;
@@ -441,19 +483,28 @@
         hero.burden = armor.burden;
         hero.armorName = armor.name;
         hero.armorRule = armor.rule;
-        const expectedMaxHp = 2 + (hero.gear === 'Arming sword' ? 1 : 0) + (armor.reinforced ? 1 : 0);
-        if (hero.maxHp < expectedMaxHp) {
-          const gainedHp = expectedMaxHp - hero.maxHp;
+        const expectedMaxHp = 2 + (hero.gear === 'Arming sword' || armor.reinforced ? 1 : 0);
+        if (hero.maxHp !== expectedMaxHp) {
+          const damageTaken = Math.max(0, hero.maxHp - hero.hp);
           hero.maxHp = expectedMaxHp;
-          if (hero.hp > 0) hero.hp += gainedHp;
+          hero.hp = Math.max(0, expectedMaxHp - damageTaken);
         }
       }
+      const armorDefinition = DATA.armor.find(entry => entry.name === hero.armorName);
+      hero.armorGuard = Boolean(armorDefinition?.guard);
       if (!hero.knackRule) {
         const knack = DATA.knacks.find(entry => entry.name === hero.knack);
         if (knack) {
           hero.knackCost = knack.cost;
           hero.knackRule = knack.effect;
         }
+      }
+      if (!hero.bonusItemsNormalized) {
+        for (const [item, attribute] of Object.entries({ 'Circlet of Mind':'Mind', 'Gauntlets of Might':'Strength', 'Boots of Celerity':'Agility' })) {
+          const duplicates = hero.items.filter(candidate => candidate === item).length - 1;
+          if (duplicates > 0) hero.attributes[attribute] -= duplicates;
+        }
+        hero.bonusItemsNormalized = true;
       }
     }
     const legacyFound = Math.max(0, Number(state.quest.elementsFound) || 0);
@@ -467,7 +518,10 @@
       roomCardState(room);
       roomSearchState(room);
       if (!Number.isFinite(room.target)) room.target = sceneTarget(room.number, room.quest?.name === 'Heart');
-      for (const enemy of room.enemies || []) enemy.defense = room.target;
+      for (const enemy of room.enemies || []) {
+        enemy.defense = room.target;
+        ensureEnemyMembers(enemy);
+      }
       if (passiveScene(challengeFor(room))) {
         room.status = 'conquered';
         room.cardState.resolutionRevealed = true;
@@ -534,24 +588,27 @@
   }
 
   function createCharacter(name, { mustCarryTorch = false } = {}) {
-    const gearPool = mustCarryTorch ? DATA.gear.filter(entry => entry[3] === 1) : DATA.gear;
-    const [gear, primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost] = pick(gearPool);
     const attrs = ['Strength','Agility','Mind'];
+    const torchPrimary = mustCarryTorch ? pick(attrs) : null;
+    const gearPool = mustCarryTorch ? DATA.gear.filter(entry => entry[3] === 1 && entry[1] === torchPrimary) : DATA.gear;
+    const [gear, primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost] = pick(gearPool);
     const weak = pick(attrs.filter(attr => attr !== primary));
     const values = { Strength: 0, Agility: 0, Mind: 0 };
     values[primary] = 3;
     values[weak] = -2;
     const armor = pick(armorPool(primary, weak));
     const knack = pick(DATA.knacks);
-    const maxHp = 2 + (gear === 'Arming sword' ? 1 : 0) + (armor.reinforced ? 1 : 0);
+    const maxHp = 2 + (gear === 'Arming sword' || armor.reinforced ? 1 : 0);
     const item = pick(DATA.items);
+    const past = pick(DATA.pasts);
+    const coherentPastAttributes = DATA.pastAttributes?.[past] || attrs;
     return {
       id: uid('hero'), name, attributes: values, hp: maxHp, maxHp,
       tokens: 1, gear, gearAttribute:primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost,
-      burden: armor.burden, armorName: armor.name, armorRule: armor.rule,
-      past: pick(DATA.pasts), pastAttribute: pick(attrs),
+      burden: armor.burden, armorName: armor.name, armorRule: armor.rule, armorGuard:Boolean(armor.guard),
+      past, pastAttribute: pick(coherentPastAttributes),
       knack: knack.name, knackCost: knack.cost, knackRule: knack.effect,
-      items: [item], wound: '', scar: '', dead: false
+      items: [item], wound: '', scar: '', dead: false, bonusItemsNormalized:true
     };
   }
 
@@ -563,7 +620,7 @@
       version: 2, moduleId:DATA.id, title: form.title || 'The Broken Crown Dungeon', seed,
       rngState: hashSeed(seed), size, escalation: Number(form.escalation || 3),
       domain: DATA.domain, theme: DATA.theme, quest: null,
-      turn: 0, light: { remaining: TORCH_CAPACITY, capacity: TORCH_CAPACITY, reserve: 0, holderId: null }, usedTemplates: [], usedQuestRolls: [],
+      turn: 0, light: { remaining: TORCH_CAPACITY, capacity: TORCH_CAPACITY, reserve: 0, holderId: null, source:'Torch' }, usedTemplates: [], usedQuestRolls: [],
       sceneDeck:[], monsterDeck:[], monsterDiscard:[], questCardsDrawn:0,
       rooms: [], activeRoomId: null, party: [], gold: 0, log: [], savedAt: null
     };
@@ -621,9 +678,11 @@
   }
 
   function enemyScale(source) {
-    const minimum = Math.max(2, state.party.filter(hero => !hero.dead).length);
-    const units = Math.max(source.baseUnits, Math.ceil(minimum / source.unitHp));
-    return { units, total: source.unitHp * units };
+    const partySize = Math.max(1, state.party.filter(hero => !hero.dead).length);
+    const scale = source.scale || { count:`P*${Math.max(1, source.baseUnits || 1)}`, hpEach:String(Math.max(1, source.unitHp || 1)) };
+    const units = Math.max(1, evaluatePartyFormula(scale.count, partySize));
+    const hpEach = Math.max(1, evaluatePartyFormula(scale.hpEach, partySize));
+    return { units, hpEach, total:hpEach * units, scale, partySize };
   }
 
   function makeEnemy(template, major = false, wandering = false, monsterRef = null, manuallyAdded = Number.isInteger(monsterRef), origin = wandering ? 'random' : 'printed') {
@@ -632,9 +691,12 @@
     else if (typeof monsterRef === 'string') source = DATA.monsters.find(monster => monster.id === monsterRef);
     else source = DATA.monsters.find(monster => monster.id === drawRandomMonsterId());
     if (!source) source = DATA.monsters[0];
-    const { units, total } = enemyScale(source);
+    const { units, hpEach, total, scale, partySize } = enemyScale(source);
+    const id = uid('enemy');
     return {
-      id: uid('enemy'), name: source.name, hp: total, maxHp: total, units,
+      id, name: source.name, hp: total, maxHp: total, units, unitHp:hpEach,
+      scale:{ ...scale }, partySize,
+      members:Array.from({ length:units }, (_, index) => ({ id:`${id}-member-${index+1}`, hp:hpEach, maxHp:hpEach })),
       defense: template.target, behavior: source.behavior, instinct: source.instinct,
       wound: source.wound, pack:source.pack || DATA.pack, monsterId:source.id, wandering, manuallyAdded, origin
     };
@@ -656,7 +718,7 @@
     if (sourceRoom && liveEnemies(sourceRoom).length && !bypassed) {
       return openModal('bypass', { movement:'explore' });
     }
-    if (!spendLight('enter a new room', sourceRoom, { advance:false })) return null;
+    if (!spendLight('enter a new room', sourceRoom, { advance:false, allowDark:true })) return null;
     const template = drawSceneCard();
     const quest = questResultForScene(template);
     const index = template.index;
@@ -712,13 +774,18 @@
     if (announce && count) log(`${count} exploration turn${count === 1 ? '' : 's'} passed.`);
   }
 
-  function spendLight(reason, room = activeRoom(), { advance = true } = {}) {
+  function spendLight(reason, room = activeRoom(), { advance = true, allowDark = false } = {}) {
     if (room?.securedLight) {
       if (advance) advanceTurns(1, false);
       log(`${reason[0].toUpperCase()}${reason.slice(1)} used the room's permanent light; no Light token was spent.`);
       return true;
     }
     if (state.light.remaining <= 0) {
+      if (allowDark) {
+        if (advance) advanceTurns(1, false);
+        log(`${reason[0].toUpperCase()}${reason.slice(1)} continued in darkness. No Light was available; checks have disadvantage.`, 'warning');
+        return true;
+      }
       showToast(`No Light remains to ${reason}. Find or light a torch, or reach a permanently illuminated room.`);
       return false;
     }
@@ -756,7 +823,7 @@
     for (const id of path.slice(1)) {
       const room = roomById(id);
       const template = templateFor(room);
-      if (!spendLight(`travel from Room ${destination.number} to adjacent Room ${room.number}`, destination, { advance:false })) break;
+      if (!spendLight(`travel from Room ${destination.number} to adjacent Room ${room.number}`, destination, { advance:false, allowDark:true })) break;
       turns += 1;
       destination = room;
       if (room.status !== 'conquered' || room.enemies.some(enemy => enemy.hp > 0)) break;
@@ -839,10 +906,43 @@
     state.light.reserve -= 1;
     state.light.remaining = TORCH_CAPACITY;
     state.light.capacity = TORCH_CAPACITY;
+    state.light.source = 'Torch';
     const torchOwner = state.party.find(hero => hero.items.some(item => item.toLowerCase().includes('torch')));
     if (torchOwner) torchOwner.items.splice(torchOwner.items.findIndex(item => item.toLowerCase().includes('torch')), 1);
     if (!state.party.some(hero => hero.id === state.light.holderId && !hero.dead)) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     log(`A fresh torch was lit with ${TORCH_CAPACITY} Light tokens. One hand must hold it.`);
+    render();
+  }
+
+  function lightLantern(heroId = null) {
+    if (state.light.remaining > 0) return showToast('A light source is already burning.');
+    const hero = state.party.find(candidate => candidate.id === heroId && !candidate.dead) || state.party.find(candidate => !candidate.dead && candidate.items.includes('Lantern'));
+    const index = hero?.items.indexOf('Lantern') ?? -1;
+    if (!hero || index < 0) return showToast('No fueled Lantern is available.');
+    hero.items[index] = 'Empty lantern';
+    state.light.remaining = 6;
+    state.light.capacity = 12;
+    state.light.source = 'Lantern';
+    state.light.holderId = hero.id;
+    log(`${hero.name} lit a Lantern with 6 Light. It occupies one hand while carried.`);
+    render();
+  }
+
+  function useLanternOil(heroId, itemIndex) {
+    const hero = state.party.find(candidate => candidate.id === heroId);
+    if (!hero || hero.items[itemIndex] !== 'Flask of oil') return;
+    if (state.light.source === 'Lantern' && state.light.remaining > 0) {
+      state.light.remaining = Math.min(12, state.light.remaining + 6);
+      hero.items.splice(itemIndex, 1);
+      log(`${hero.name} added 6 Light of oil to the burning Lantern.`);
+      render();
+      return;
+    }
+    const lanternOwner = state.party.find(candidate => candidate.items.includes('Empty lantern'));
+    if (!lanternOwner) return showToast('Oil can fuel an empty or burning Lantern.');
+    lanternOwner.items[lanternOwner.items.indexOf('Empty lantern')] = 'Lantern';
+    hero.items.splice(itemIndex, 1);
+    log(`${hero.name} refilled ${lanternOwner.name}'s Lantern with 6 Light of oil.`);
     render();
   }
 
@@ -851,8 +951,13 @@
     if (living.length < 2) return;
     const current = living.findIndex(hero => hero.id === state.light.holderId);
     const next = living[(current + 1 + living.length) % living.length];
+    const previous = living[current];
+    if (state.light.source === 'Lantern' && previous?.items.includes('Empty lantern')) {
+      previous.items.splice(previous.items.indexOf('Empty lantern'), 1);
+      next.items.push('Empty lantern');
+    }
     state.light.holderId = next.id;
-    log(`${next.name} took the torch; one of their hands is occupied.`);
+    log(`${next.name} took the ${state.light.source || 'Torch'}; one of their hands is occupied.`);
     render();
   }
 
@@ -865,10 +970,11 @@
     }
     if (item) {
       const hero = state.party.find(candidate => candidate.id === heroId && !candidate.dead) || state.party.find(candidate => !candidate.dead) || state.party[0];
+      const duplicateBonusItem = Boolean(loot.attributeBonus && hero.items.includes(item));
       hero.items.push(item);
       if (item === 'Fresh torch') state.light.reserve += 1;
-      if (loot.attributeBonus) hero.attributes[loot.attributeBonus] += 1;
-      result = `${item} added to ${hero.name}${loot.attributeBonus ? `; ${hero.name} gained +1 ${loot.attributeBonus}` : ''}`;
+      if (loot.attributeBonus && !duplicateBonusItem) hero.attributes[loot.attributeBonus] += 1;
+      result = `${item} added to ${hero.name}${loot.attributeBonus ? duplicateBonusItem ? '; duplicate worn bonuses do not stack' : `; ${hero.name} gained +1 ${loot.attributeBonus}` : ''}`;
     }
     log(`Claimed ${source} Loot in Room ${room.number}: ${result}.`);
   }
@@ -907,7 +1013,6 @@
     const room = activeRoom();
     if (room.status !== 'conquered' || liveEnemies(room).length) return showToast('Conquer the room and remove active threats before searching.');
     if (roomSearchState(room).attempted) return showToast('This room has already been searched.');
-    if (!room.securedLight && state.light.remaining <= 0) return showToast('Searching this unlit room requires 1 Light.');
     openModal('search');
   }
 
@@ -915,19 +1020,20 @@
     const room = activeRoom();
     const search = roomSearchState(room);
     if (search.attempted || room.status !== 'conquered' || liveEnemies(room).length) return;
-    if (!spendLight('search this room', room)) return;
+    const searchedInDarkness = !room.securedLight && state.light.remaining <= 0;
+    if (!spendLight('search this room', room, { allowDark:true })) return;
     const hero = state.party.find(candidate => candidate.id === form.heroId);
     const attribute = form.attribute;
     const bonus = Number(hero.attributes[attribute] || 0);
     const target = targetForRoom(room);
-    const injured = Boolean(hero.wound) || hero.hp < hero.maxHp;
-    const dice = injured ? [die(20), die(20)] : [die(20)];
-    const kept = injured ? Math.min(...dice) : dice[0];
+    const disadvantaged = Boolean(hero.wound) || searchedInDarkness;
+    const dice = disadvantaged ? [die(20), die(20)] : [die(20)];
+    const kept = disadvantaged ? Math.min(...dice) : dice[0];
     const total = kept + bonus;
     const success = kept === 20 || (kept !== 1 && total >= target);
     search.attempted = true;
     search.success = success;
-    log(`${hero.name} searched Room ${room.number} with ${attribute}: ${dice.join(' and ')}${injured ? `, keeping ${kept}` : ''} ${signed(bonus)} = ${total} vs ${target}. ${success ? 'One additional Loot card was revealed.' : 'The search found no Loot.'}`, success ? 'success' : 'event');
+    log(`${hero.name} searched Room ${room.number} with ${attribute}: ${dice.join(' and ')}${disadvantaged ? `, keeping ${kept}` : ''} ${signed(bonus)} = ${total} vs ${target}. ${success ? 'One additional Loot card was revealed.' : 'The search found no Loot.'}`, success ? 'success' : 'event');
     modal = { type:'lootResult', searchResult:{ hero, attribute, dice, kept, bonus, total, target, success } };
     render();
     renderModal();
@@ -956,14 +1062,25 @@
     render();
   }
 
-  function applyDungeonAction(enemyId, heroId) {
+  function applyDungeonAction(enemyId, heroId, damage = 1) {
     const room = activeRoom();
     const enemy = room.enemies.find(item => item.id === enemyId);
     const hero = state.party.find(item => item.id === heroId);
     if (!enemy || !hero || hero.dead) return;
+    if (hero.armorGuard && hero.guardPreparedSceneId === room.id && hero.guardUsedSceneId !== room.id) {
+      damage = Math.max(0, damage - 1);
+      hero.guardPreparedSceneId = null;
+      hero.guardUsedSceneId = room.id;
+      log(`${hero.name}'s ${hero.armorName} Guard prevented 1 damage.`, 'success');
+    }
+    if (damage <= 0) {
+      closeModal();
+      render();
+      return;
+    }
     if (hero.hp > 0) {
-      hero.hp -= 1;
-      log(`${enemy.name} followed its Instinct and dealt 1 damage to ${hero.name}.`);
+      hero.hp = Math.max(0, hero.hp - damage);
+      log(`${enemy.name} followed its Instinct and dealt ${damage} damage to ${hero.name}.`);
     } else if (hero.wound) {
       hero.dead = true;
       log(`${hero.name} received a second Wound and died.`, 'warning');
@@ -982,12 +1099,13 @@
     if (!hero || !attribute) return;
     const abilityBonus = Number(form.abilityBonus || 0);
     const abilityCost = Number(form.abilityCost || 0);
+    const failureDamage = Number(form.failureDamage || 1);
     if (abilityCost > hero.tokens) return showToast(`${hero.name} needs ${abilityCost} Skill Token${abilityCost === 1 ? '' : 's'}.`);
     if (abilityCost) hero.tokens -= abilityCost;
     const bonus = Number(hero.attributes[attribute] || 0) + abilityBonus;
     const target = targetForRoom(activeRoom());
     let mode = form.mode;
-    const forcedDisadvantage = Boolean(hero.wound) || hero.hp < hero.maxHp || (state.light.remaining <= 0 && !activeRoom().securedLight);
+    const forcedDisadvantage = Boolean(hero.wound) || (state.light.remaining <= 0 && !activeRoom().securedLight);
     if (mode === 'rules') mode = forcedDisadvantage ? 'disadvantage' : 'normal';
     const dice = mode === 'normal' ? [die(20)] : [die(20), die(20)];
     const kept = mode === 'advantage' ? Math.max(...dice) : mode === 'disadvantage' ? Math.min(...dice) : dice[0];
@@ -1003,7 +1121,7 @@
     }
     if (!success) detail += ' The dungeon has one meaningful action.';
     log(detail, success ? 'success' : 'warning');
-    modal = { type:'rollResult', result:{ hero, attribute, dice, kept, bonus, total, target, success, mode, afterSuccess } };
+    modal = { type:'rollResult', result:{ hero, attribute, dice, kept, bonus, total, target, success, mode, afterSuccess, failureDamage } };
     renderModal();
     persist();
   }
@@ -1013,10 +1131,45 @@
     if (!hero) return;
     const title = kind === 'technique' ? hero.gearTechnique : hero.knack;
     const rule = kind === 'technique' ? hero.gearTechniqueRule : hero.knackRule;
+    hero.usedAbilities ||= [];
+    if (title === 'Scrounger' && hero.usedAbilities.includes(title)) return showToast('Scrounger has already been used this expedition.');
     if (hero.tokens < cost) return showToast(`${hero.name} needs ${cost} Skill Token${cost === 1 ? '' : 's'}.`);
+    const woundTarget = state.party.find(candidate => !candidate.dead && candidate.wound);
+    if (title === 'Field Surgeon') {
+      if (!woundTarget) return showToast('No adventurer has an active Wound.');
+      if (!spendLight('perform Field Surgery')) return;
+    }
+    if (title === 'Cure Wounds' && !woundTarget) return showToast('No adventurer has an active Wound.');
     hero.tokens -= cost;
+    if (title === 'Second Wind') hero.hp = hero.maxHp;
+    if (title === 'Scrounger') {
+      const choice = prompt('Scrounge which supply? Enter Bandages or Oil.', 'Bandages');
+      const item = /^oil/i.test(choice || '') ? 'Flask of oil' : 'Bandages';
+      hero.items.push(item);
+      hero.usedAbilities.push(title);
+    }
+    if (title === 'Cure Wounds') {
+      woundTarget.wound = '';
+      woundTarget.hp = woundTarget.maxHp;
+    }
+    if (title === 'Field Surgeon') {
+      const wound = woundTarget.wound;
+      const reduced = ['Strength','Agility','Mind'].find(attribute => wound.includes(attribute));
+      if (reduced) woundTarget.attributes[reduced] -= 1;
+      woundTarget.scar = wound;
+      woundTarget.wound = '';
+    }
     log(`${hero.name} spent ${cost} Skill Token${cost === 1 ? '' : 's'} to use ${title}: ${rule}`, 'success');
     showToast(`${title} used. Apply its card text.`);
+    render();
+  }
+
+  function prepareGuard(heroId) {
+    const hero = state.party.find(candidate => candidate.id === heroId);
+    const room = activeRoom();
+    if (!hero?.armorGuard || hero.guardUsedSceneId === room.id) return showToast('That Guard has already been used in this Scene.');
+    hero.guardPreparedSceneId = hero.guardPreparedSceneId === room.id ? null : room.id;
+    log(`${hero.name} ${hero.guardPreparedSceneId ? 'readied' : 'lowered'} ${hero.armorName} Guard.`);
     render();
   }
 
@@ -1513,7 +1666,7 @@
         ? `Place ${template.encounter.monsterIds.map(id => DATA.bosses.find(monster => monster.id === id)?.name).filter(Boolean).join(' and ')} from the Boss pile.`
         : '';
     const inlineMonsters = encounterMode === 'printed' || encounterMode === 'boss'
-      ? room.enemies.map(enemy => `<div class="inline-monster"><strong>${esc(enemy.name)}</strong><span>${enemy.units} × ${Math.ceil(enemy.maxHp/enemy.units)} HP · Defense ${enemy.defense} · ${esc(enemy.wound)}</span><small>${esc(enemy.instinct)}</small></div>`).join('')
+      ? room.enemies.map(enemy => `<div class="inline-monster"><strong>${esc(enemy.name)}</strong><span>${esc(canonicalEnemySetup(enemy))} = ${enemy.units} creature${enemy.units === 1 ? '' : 's'} · Defense ${enemy.defense}</span><small>${esc(enemy.instinct)}</small></div>`).join('')
       : '';
     const lootCard = (loot, searched = false) => {
       const claimed = searched ? search.claimed : room.opportunityClaimed;
@@ -1557,10 +1710,14 @@
   }
 
   function renderActiveEnemyCard(enemy) {
-    const pips = Array.from({length:enemy.maxHp}, (_, index) => `<button class="pip ${index >= enemy.hp ? 'empty' : ''}" data-action="enemy-hp" data-id="${enemy.id}" data-hp="${index+1}" title="Set HP to ${index+1}"></button>`).join('');
+    ensureEnemyMembers(enemy);
+    const members = enemy.members.map((member, index) => {
+      const pips = Array.from({length:member.maxHp}, (_, hpIndex) => `<button class="pip ${hpIndex >= member.hp ? 'empty' : ''}" data-action="member-hp" data-id="${enemy.id}" data-member-id="${member.id}" data-hp="${hpIndex+1}" title="Set creature ${index+1} HP to ${hpIndex+1}"></button>`).join('');
+      return `<div class="enemy-member ${member.hp <= 0 ? 'defeated' : ''}"><span>Creature ${index+1}</span><div class="hp-pips">${pips}</div><strong>${member.hp}/${member.maxHp}</strong><button class="btn btn-small" data-action="damage-member" data-id="${enemy.id}" data-member-id="${member.id}" ${member.hp <= 0 ? 'disabled' : ''}>Deal 1</button></div>`;
+    }).join('');
     const encounterType = enemy.manuallyAdded ? 'Added encounter' : enemy.wandering ? 'Wandering enemy' : `${enemy.units} creature${enemy.units === 1 ? '' : 's'}`;
     const sourceLabel = enemy.origin === 'printed' ? 'Printed on Scene' : enemy.origin === 'boss' ? 'Set-aside Boss card' : enemy.origin === 'random' ? 'Random Monster card' : 'Added Monster';
-    return `<article class="game-card supplemental-card enemy-card"><header class="card-titlebar enemy-top"><div><div class="eyebrow">${sourceLabel} · ${esc(enemy.pack || DATA.pack)}</div><h3>${esc(enemy.name)}</h3></div><strong>${enemy.defense}</strong></header><div class="card-text"><div class="hp-pips">${pips}</div><div class="enemy-stats"><span>${enemy.units} × ${Math.ceil(enemy.maxHp / enemy.units)} HP</span><span>${enemy.hp}/${enemy.maxHp} HP</span></div><p><strong>Signs:</strong> ${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="damage-enemy" data-id="${enemy.id}">Deal 1</button><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></div><footer class="card-footer">${esc(encounterType)} · Defense ${enemy.defense}</footer></article>`;
+    return `<article class="game-card supplemental-card enemy-card"><header class="card-titlebar enemy-top"><div><div class="eyebrow">${sourceLabel} · ${esc(enemy.pack || DATA.pack)}</div><h3>${esc(enemy.name)}</h3></div><strong>${enemy.defense}</strong></header><div class="card-text"><p class="monster-equation"><strong>Setup:</strong> ${esc(canonicalEnemySetup(enemy))}</p><div class="enemy-stats"><span>Resolved for P=${enemy.partySize || state.party.filter(hero => !hero.dead).length}: ${enemy.units} creature${enemy.units === 1 ? '' : 's'}</span><span>${enemy.hp}/${enemy.maxHp} total HP</span></div><div class="enemy-members">${members}</div><p><strong>Signs:</strong> ${esc(enemy.behavior)}</p><p><strong>Instinct:</strong> ${esc(enemy.instinct)}</p><p><strong>Wound:</strong> ${esc(enemy.wound)}</p><div class="card-actions"><button class="btn btn-small" data-action="dungeon-action" data-id="${enemy.id}">Dungeon action</button><button class="btn btn-small btn-quiet" data-action="remove-enemy" data-id="${enemy.id}">Remove</button></div></div><footer class="card-footer">${esc(encounterType)} · Defense ${enemy.defense}</footer></article>`;
   }
 
   function renderEncounterCards() {
@@ -1584,6 +1741,8 @@
   }
 
   function itemRules(item) {
+    if (DATA.itemRules?.[item]) return DATA.itemRules[item];
+    if (item === 'Empty lantern') return 'Reusable Lantern housing with no fuel. Consume a Flask of oil to refill it with 6 Light.';
     const rules = {
       'Fresh torch':'Light this when the active torch expires. Put 12 Light tokens on the Torch card.',
       Medkit:'Consume during treatment to turn one active Wound into its normal Scar.',
@@ -1627,21 +1786,27 @@
 
   function renderHero(hero) {
     const bearingTorch = state.light.remaining > 0 && state.light.holderId === hero.id;
-    const attack = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.gearAttribute)}">Make attack</button>`;
+    const attack = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.gearAttribute)}" data-ability="${esc(hero.gear)}" ${hero.gear === 'Greatsword' ? 'data-failure-damage="2"' : ''}>Make attack</button>`;
     const technique = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="technique" data-cost="${hero.gearTechniqueCost}">Use · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}</button>`;
     const past = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.pastAttribute)}" data-ability="${esc(hero.past)}" data-cost="1" data-bonus="2">Use · 1 token</button>`;
     const knack = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="knack" data-cost="${hero.knackCost}">Use · ${hero.knackCost} token${hero.knackCost === 1 ? '' : 's'}</button>`;
-    const itemCards = hero.items.map((item,index) => renderCharacterCard('Item',item,itemRules(item),`<button class="btn btn-small btn-quiet" data-action="remove-item" data-id="${hero.id}" data-index="${index}">Use or remove</button>`)).join('');
+    const guard = hero.armorGuard ? `<button class="btn btn-small" data-action="prepare-guard" data-id="${hero.id}" ${hero.guardUsedSceneId === activeRoom().id ? 'disabled' : ''}>${hero.guardPreparedSceneId === activeRoom().id ? 'Guard readied' : hero.guardUsedSceneId === activeRoom().id ? 'Guard used' : 'Ready Guard'}</button>` : '';
+    const itemCards = hero.items.map((item,index) => {
+      let itemAction = `<button class="btn btn-small btn-quiet" data-action="remove-item" data-id="${hero.id}" data-index="${index}">Use or remove</button>`;
+      if (item === 'Lantern' && state.light.remaining <= 0) itemAction = `<button class="btn btn-small" data-action="light-lantern" data-id="${hero.id}">Light · 6 Light</button>`;
+      if (item === 'Flask of oil') itemAction = `<button class="btn btn-small" data-action="use-oil" data-id="${hero.id}" data-index="${index}">Fuel Lantern · +6</button>`;
+      return renderCharacterCard('Item',item,itemRules(item),itemAction);
+    }).join('');
     return `<article class="adventurer-card ${hero.dead ? 'dead' : ''}"><div class="adventurer-head"><div><h3>${esc(hero.name)}${hero.dead ? ' · dead' : ''}</h3><p>${esc(hero.past)} · ${esc(hero.knack)}${bearingTorch ? ' · Torch bearer' : ''}</p></div><div class="tracker"><button data-action="hero-hp" data-id="${hero.id}" data-delta="-1">−</button><strong>♥ ${hero.hp}/${hero.maxHp}</strong><button data-action="hero-hp" data-id="${hero.id}" data-delta="1">+</button></div></div>
       <div class="character-row">${Object.entries(hero.attributes).map(([name,value]) => `<button type="button" class="stat" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(name)}" title="Prepare a ${esc(name)} check" ${hero.dead ? 'disabled' : ''}><small>${name}</small><strong>${signed(value)}</strong></button>`).join('')}</div>
       <div class="hero-resources"><div class="tracker"><button data-action="hero-token" data-id="${hero.id}" data-delta="-1">−</button><strong>◆ ${hero.tokens}/3</strong><button data-action="hero-token" data-id="${hero.id}" data-delta="1">+</button></div>${hero.wound ? `<span class="tag danger-hard">Wound: ${esc(hero.wound)}</span><button class="btn btn-small" data-action="treat" data-id="${hero.id}">Treat</button>` : ''}${hero.scar ? `<span class="tag">Scar: ${esc(hero.scar)}</span>` : ''}</div>
       <div class="hero-card-strip">
         ${renderCharacterCard('Gear',`${hero.gear} · ${hero.gearHands} hand${hero.gearHands === 1 ? '' : 's'}`,hero.gearRule,attack)}
         ${renderCharacterCard('Technique',hero.gearTechnique,hero.gearTechniqueRule,technique)}
-        ${renderCharacterCard('Armor',`${hero.armorName} · ${hero.burden}`,hero.armorRule)}
+        ${renderCharacterCard('Armor',`${hero.armorName} · ${hero.burden}`,hero.armorRule,guard)}
         ${renderCharacterCard('Past',hero.past,`Spend 1 Skill Token for +2 on a relevant ${hero.pastAttribute} check.`,past)}
         ${renderCharacterCard('Knack',hero.knack,hero.knackRule,knack)}
-        ${bearingTorch ? renderCharacterCard('Supply',`Torch · ${state.light.remaining}/${TORCH_CAPACITY} Light`,'Occupies one hand. Spend Light to travel, rest, search, treat Wounds, or illuminate fixtures.') : ''}
+        ${bearingTorch ? renderCharacterCard('Supply',`${state.light.source || 'Torch'} · ${state.light.remaining}/${state.light.capacity || TORCH_CAPACITY} Light`,'Occupies one hand while carried. Spend Light to travel, rest, search, treat Wounds, or illuminate fixtures.') : ''}
         ${itemCards}
         <button class="character-rule-card add-card" data-action="add-item" data-id="${hero.id}">+ Add item</button>
       </div></article>`;
@@ -1689,15 +1854,17 @@
     const escapeButton = state.quest.completed && room.number === 1 ? `<button class="btn btn-primary" data-action="escape">${enemiesPresent ? 'Escape past creatures…' : 'Escape dungeon'}</button>` : '';
     const search = roomSearchState(room);
     const fixtureButton = template.lighting === 'Fixtures' && !room.securedLight ? '<button class="btn" data-action="light-fixtures">Illuminate · 1 Light</button>' : '';
-    const searchButton = room.status === 'conquered' && !enemiesPresent && !search.attempted ? `<button class="btn" data-action="search-room">${room.securedLight ? 'Search' : 'Search · 1 Light'}</button>` : '';
+    const searchButton = room.status === 'conquered' && !enemiesPresent && !search.attempted ? `<button class="btn" data-action="search-room">${room.securedLight ? 'Search' : state.light.remaining > 0 ? 'Search · 1 Light' : 'Search in darkness'}</button>` : '';
     const restButton = room.status === 'conquered' && !enemiesPresent ? `<button class="btn" data-action="rest">${room.securedLight ? 'Rest' : 'Rest · 1 Light'}</button>` : '';
-    const torchButton = state.light.remaining <= 0 ? '<button class="btn" data-action="light-torch">Light torch</button>' : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass torch</button>' : '';
+    const darkLightButtons = state.light.remaining <= 0
+      ? `${state.light.reserve > 0 ? '<button class="btn" data-action="light-torch">Light torch · 12</button>' : ''}${state.party.some(hero => !hero.dead && hero.items.includes('Lantern')) ? '<button class="btn" data-action="light-lantern">Light lantern · 6</button>' : ''}`
+      : state.party.filter(hero=>!hero.dead).length > 1 ? '<button class="btn" data-action="pass-torch">Pass light</button>' : '';
     app.innerHTML = `<div class="app-shell">
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
       <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Light</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${difficultyForTarget(roomTarget)} Scene"><small>Scene check</small><strong>${roomTarget}</strong></div><div class="resource"><small>Gold</small><strong>${state.gold}</strong></div><div class="resource"><small>Torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Scenes</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
       <div class="workspace">${renderMap()}${renderRoomCards()}${renderEncounterCards()}${renderParty()}</div>
-      <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button>${conquerButton}${searchButton}${restButton}${fixtureButton}${torchButton}<button class="btn btn-quiet" data-action="pass-turn">Pass turn</button>${escapeButton}</div><div id="save-state" class="save-state">Saved locally</div></footer>
+      <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button>${conquerButton}${searchButton}${restButton}${fixtureButton}${darkLightButtons}<button class="btn btn-quiet" data-action="pass-turn">Pass turn</button>${escapeButton}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
     if (mapScroll) {
@@ -1764,7 +1931,7 @@
       }
     } else if (modal.type === 'search') {
       const room = activeRoom(), template = templateFor(room);
-      root.innerHTML = `<form class="modal" id="search-form"><div class="modal-head"><div class="eyebrow">Scene search</div><h2>Search Scene ${room.number}</h2><p>Choose how an adventurer searches. The attempt ${room.securedLight ? 'uses permanent light' : 'spends 1 Light'} and checks against ${targetForRoom(room)}. The Scene is exhausted either way.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Adventurer</label><select name="heroId">${state.party.filter(hero => !hero.dead).map(hero => `<option value="${hero.id}">${esc(hero.name)}</option>`).join('')}</select></div><div class="field full"><label>Narratively applicable attribute</label><select name="attribute"><option value="Strength">Strength · move, break, or lift</option><option value="Agility">Agility · reach, climb, or handle carefully</option><option value="Mind">Mind · inspect, interpret, or deduce</option></select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-primary" type="submit">Search · ${targetForRoom(room)}</button></div></form>`;
+      root.innerHTML = `<form class="modal" id="search-form"><div class="modal-head"><div class="eyebrow">Scene search</div><h2>Search Scene ${room.number}</h2><p>Choose how an adventurer searches. The attempt ${room.securedLight ? 'uses permanent light' : state.light.remaining > 0 ? 'spends 1 Light' : 'continues in darkness with disadvantage'} and checks against ${targetForRoom(room)}. The Scene is exhausted either way.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Adventurer</label><select name="heroId">${state.party.filter(hero => !hero.dead).map(hero => `<option value="${hero.id}">${esc(hero.name)}</option>`).join('')}</select></div><div class="field full"><label>Narratively applicable attribute</label><select name="attribute"><option value="Strength">Strength · move, break, or lift</option><option value="Agility">Agility · reach, climb, or handle carefully</option><option value="Mind">Mind · inspect, interpret, or deduce</option></select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-primary" type="submit">Search · ${targetForRoom(room)}</button></div></form>`;
     } else if (modal.type === 'lootResult') {
       const result = modal.searchResult;
       root.innerHTML = modalShell(result.success ? 'Loot found' : 'Nothing found', result.success ? 'One additional Loot card has been revealed.' : 'The Room is now marked searched.', `<div class="roll-result"><strong>${result.total}</strong><span>${esc(result.hero.name)} · ${esc(result.attribute)} ${signed(result.bonus)} · rolled ${result.dice.join(' / ')} · target ${result.target}</span></div>`, result.success ? '<button class="btn btn-primary" data-action="close-modal">View Loot card</button>' : '');
@@ -1777,27 +1944,28 @@
       const selectedId = modal.heroId || heroes[0]?.id;
       const target = targetForRoom(room);
       const dark = state.light.remaining <= 0 && !room.securedLight;
-      const heroButtons = heroes.map(hero => `<label class="check-hero-choice"><input type="radio" name="heroId" value="${hero.id}" data-action="check-hero" ${hero.id === selectedId ? 'checked' : ''}><span>${esc(hero.name)}</span><small>${hero.wound ? 'Wounded' : hero.hp < hero.maxHp ? 'Injured' : dark ? 'In darkness' : 'Ready'}</small></label>`).join('');
+      const heroButtons = heroes.map(hero => `<label class="check-hero-choice"><input type="radio" name="heroId" value="${hero.id}" data-action="check-hero" ${hero.id === selectedId ? 'checked' : ''}><span>${esc(hero.name)}</span><small>${hero.wound ? 'Wounded' : dark ? 'In darkness' : hero.hp < hero.maxHp ? 'Low HP' : 'Ready'}</small></label>`).join('');
       const statPanels = heroes.map(hero => `<div class="check-stat-grid ${hero.id === selectedId ? '' : 'hidden'}" data-check-stats="${hero.id}">${Object.entries(hero.attributes).map(([attribute,bonus]) => `<button class="check-stat-choice ${modal.attribute === attribute ? 'suggested' : ''}" type="submit" name="attribute" value="${esc(attribute)}"><span>${esc(attribute)}</span><strong>${signed(bonus + Number(modal.abilityBonus || 0))}</strong></button>`).join('')}</div>`).join('');
-      const abilityFields = modal.abilityTitle ? `<input type="hidden" name="abilityTitle" value="${esc(modal.abilityTitle)}"><input type="hidden" name="abilityCost" value="${Number(modal.abilityCost || 0)}"><input type="hidden" name="abilityBonus" value="${Number(modal.abilityBonus || 0)}">` : '';
-      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Scene check</small><strong>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer, then click the attribute being used.</p></div><div class="modal-body">${abilityFields}<div class="check-hero-grid">${heroButtons}</div>${statPanels}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for injury, a Wound, or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button></div></form>`;
+      const abilityFields = modal.abilityTitle ? `<input type="hidden" name="abilityTitle" value="${esc(modal.abilityTitle)}"><input type="hidden" name="abilityCost" value="${Number(modal.abilityCost || 0)}"><input type="hidden" name="abilityBonus" value="${Number(modal.abilityBonus || 0)}"><input type="hidden" name="failureDamage" value="${Number(modal.failureDamage || 1)}">` : '';
+      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Scene check</small><strong>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer, then click the attribute being used.</p></div><div class="modal-body">${abilityFields}<div class="check-hero-grid">${heroButtons}</div>${statPanels}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for an active Wound or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button></div></form>`;
     } else if (modal.type === 'rollResult') {
       const r = modal.result;
       const followUps = [];
       if (r.success && r.afterSuccess) followUps.push('<button class="btn btn-primary" data-action="complete-bypass">Continue past the creatures</button>');
       if (!roomCardState(activeRoom()).resolutionRevealed) followUps.push('<button class="btn btn-primary" data-action="reveal-challenge-from-roll">Reveal Scene response</button>');
-      if (!r.success) followUps.push('<button class="btn btn-danger" data-action="open-dungeon-action">Take dungeon action</button>');
+      if (!r.success) followUps.push(`<button class="btn btn-danger" data-action="open-dungeon-action" data-damage="${r.failureDamage || 1}">Take dungeon action${r.failureDamage > 1 ? ` · ${r.failureDamage} damage` : ''}</button>`);
       const followUp = followUps.join('');
       root.innerHTML = modalShell(r.success ? 'Success' : 'Failure', r.success ? 'The adventurers retain momentum.' : 'The dungeon receives one meaningful action.', `<div class="roll-result"><strong>${r.total}</strong><span>${r.attribute ? `${esc(r.attribute)} · ` : ''}${r.dice.join(' / ')} · kept ${r.kept} · ${signed(r.bonus)} bonus · target ${r.target}</span></div>`, followUp);
     } else if (modal.type === 'dungeon') {
       const live = activeRoom().enemies.filter(e=>e.hp>0);
-      root.innerHTML = `<form class="modal" id="dungeon-form"><div class="modal-head"><h2>Dungeon action</h2><p>Use the creature’s Instinct and current fiction to choose a target. Ordinary attacks automatically deal 1 damage.</p></div><div class="modal-body"><div class="form-grid"><div class="field full"><label>Creature</label><select name="enemyId">${live.map(e=>`<option value="${e.id}" ${e.id===modal.enemyId?'selected':''}>${esc(e.name)} — ${esc(e.instinct)}</option>`).join('')}</select></div><div class="field full"><label>Target</label><select name="heroId">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)} · ${h.hp}/${h.maxHp} HP${h.wound?' · Wounded':''}</option>`).join('')}</select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-danger" type="submit" ${live.length?'':'disabled'}>Deal 1 damage</button></div></form>`;
+      const damage = Number(modal.damage || 1);
+      root.innerHTML = `<form class="modal" id="dungeon-form"><div class="modal-head"><h2>Dungeon action</h2><p>Use the creature’s Instinct and current fiction to choose a target. This attack automatically deals ${damage} damage.</p></div><div class="modal-body"><input type="hidden" name="damage" value="${damage}"><div class="form-grid"><div class="field full"><label>Creature</label><select name="enemyId">${live.map(e=>`<option value="${e.id}" ${e.id===modal.enemyId?'selected':''}>${esc(e.name)} — ${esc(e.instinct)}</option>`).join('')}</select></div><div class="field full"><label>Target</label><select name="heroId">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)} · ${h.hp}/${h.maxHp} HP${h.wound?' · Wounded':''}</option>`).join('')}</select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-danger" type="submit" ${live.length?'':'disabled'}>Deal ${damage} damage</button></div></form>`;
     } else if (modal.type === 'encounter') {
       const template = templateFor(activeRoom());
       const options = DATA.monsters.map((monster, index) => {
-        const { units, total } = enemyScale(monster);
+        const { units, hpEach, total, scale, partySize } = enemyScale(monster);
         const search = `${monster.name} ${monster.behavior} ${monster.instinct}`.toLowerCase();
-        return `<article class="monster-option" data-monster-option data-search="${esc(search)}"><div><h3>${esc(monster.name)}</h3><p>${units} creature${units === 1 ? '' : 's'} · ${monster.unitHp} HP each · ${total} total HP · Defense ${targetForRoom(activeRoom())}</p><small>${esc(monster.behavior)}</small></div><button class="btn btn-small" data-action="add-specific-enemy" data-index="${index}">Add</button></article>`;
+        return `<article class="monster-option" data-monster-option data-search="${esc(search)}"><div><h3>${esc(monster.name)}</h3><p>${esc(displayPartyFormula(scale.count))} creatures · ${esc(displayPartyFormula(scale.hpEach))} HP each</p><p>At P=${partySize}: ${units} × ${hpEach} HP = ${total} total · Defense ${targetForRoom(activeRoom())}</p><small>${esc(monster.behavior)}</small></div><button class="btn btn-small" data-action="add-specific-enemy" data-index="${index}">Add</button></article>`;
       }).join('');
       root.innerHTML = `<section class="modal encounter-picker"><div class="modal-head"><h2>Add encounter</h2><p>Choose the creature named by the room, search the roster, or roll a random roaming encounter.</p></div><div class="modal-body"><div class="field"><label for="enemy-search">Search creatures</label><input id="enemy-search" data-action="enemy-search" type="search" placeholder="Skeleton, spirit, wounded prey…" autocomplete="off"></div><button class="random-encounter" data-action="add-random-enemy"><strong>Roll random encounter</strong><span>Uses the full roaming-creature table and scales it to the living party.</span></button><div class="monster-options">${options}</div><div class="empty-state monster-search-empty hidden">No creatures match that search.</div></div><div class="modal-foot"><button class="btn btn-quiet" data-action="close-modal">Cancel</button></div></section>`;
     } else if (modal.type === 'settings') {
@@ -1868,6 +2036,8 @@
     else if (action === 'reveal-rewards') revealRoomRewards();
     else if (action === 'light-fixtures') lightFixtures();
     else if (action === 'light-torch') lightTorch();
+    else if (action === 'light-lantern') lightLantern(target.dataset.id);
+    else if (action === 'use-oil') useLanternOil(target.dataset.id,Number(target.dataset.index));
     else if (action === 'pass-torch') passTorch();
     else if (action === 'claim') claimOpportunity(target.dataset.heroId);
     else if (action === 'claim-quest-element') claimQuestElement();
@@ -1878,12 +2048,15 @@
     else if (action === 'pass-turn') { if (spendLight('spend one exploration turn')) render(); }
     else if (action === 'add-turn') { advanceTurns(1); closeModal(); render(); }
     else if (action === 'roll') openModal('roll');
-    else if (action === 'prepare-check' || action === 'roll-attribute') openModal('roll',{ heroId:target.dataset.id, attribute:target.dataset.attribute, abilityTitle:target.dataset.ability || '', abilityCost:Number(target.dataset.cost || 0), abilityBonus:Number(target.dataset.bonus || 0) });
+    else if (action === 'prepare-check' || action === 'roll-attribute') openModal('roll',{ heroId:target.dataset.id, attribute:target.dataset.attribute, abilityTitle:target.dataset.ability || '', abilityCost:Number(target.dataset.cost || 0), abilityBonus:Number(target.dataset.bonus || 0), failureDamage:Number(target.dataset.failureDamage || 1) });
     else if (action === 'use-ability') useAbility(target.dataset.id,target.dataset.kind,Number(target.dataset.cost || 0));
+    else if (action === 'prepare-guard') prepareGuard(target.dataset.id);
     else if (action === 'dungeon-action') openModal('dungeon',{enemyId:target.dataset.id});
-    else if (action === 'open-dungeon-action') openModal('dungeon');
-    else if (action === 'damage-enemy') { const e=activeRoom().enemies.find(e=>e.id===target.dataset.id); e.hp=Math.max(0,e.hp-1); log(`${e.name} took 1 damage${e.hp===0?' and was defeated':''}.`); render(); }
-    else if (action === 'enemy-hp') { const e=activeRoom().enemies.find(e=>e.id===target.dataset.id); e.hp = e.hp===Number(target.dataset.hp) ? Number(target.dataset.hp)-1 : Number(target.dataset.hp); render(); }
+    else if (action === 'open-dungeon-action') openModal('dungeon',{ damage:Number(target.dataset.damage || 1) });
+    else if (action === 'damage-enemy') { const e=ensureEnemyMembers(activeRoom().enemies.find(e=>e.id===target.dataset.id)); const member=e.members.find(candidate=>candidate.hp>0); if(member) member.hp=Math.max(0,member.hp-1); syncEnemy(e); log(`${e.name} took 1 damage${e.hp===0?' and were defeated':''}.`); render(); }
+    else if (action === 'damage-member') { const e=ensureEnemyMembers(activeRoom().enemies.find(e=>e.id===target.dataset.id)); const member=e.members.find(candidate=>candidate.id===target.dataset.memberId); if(member) member.hp=Math.max(0,member.hp-1); syncEnemy(e); log(`${e.name} creature ${e.members.indexOf(member)+1} took 1 damage${member?.hp===0?' and was defeated':''}.`); render(); }
+    else if (action === 'member-hp') { const e=ensureEnemyMembers(activeRoom().enemies.find(e=>e.id===target.dataset.id)); const member=e.members.find(candidate=>candidate.id===target.dataset.memberId); const hp=Number(target.dataset.hp); if(member) member.hp=member.hp===hp?hp-1:hp; syncEnemy(e); render(); }
+    else if (action === 'enemy-hp') { const e=ensureEnemyMembers(activeRoom().enemies.find(e=>e.id===target.dataset.id)); const hp=Number(target.dataset.hp); let remaining=e.hp===hp?hp-1:hp; for(const member of e.members){member.hp=Math.min(member.maxHp,Math.max(0,remaining));remaining-=member.hp;} syncEnemy(e); render(); }
     else if (action === 'remove-enemy') { activeRoom().enemies=activeRoom().enemies.filter(e=>e.id!==target.dataset.id); render(); }
     else if (action === 'add-enemy') openModal('encounter');
     else if (action === 'add-random-enemy') addEncounter();
@@ -1891,20 +2064,24 @@
     else if (action === 'hero-hp') { const h=state.party.find(h=>h.id===target.dataset.id); h.hp=clamp(h.hp+Number(target.dataset.delta),0,h.maxHp); render(); }
     else if (action === 'hero-token') { const h=state.party.find(h=>h.id===target.dataset.id); h.tokens=clamp(h.tokens+Number(target.dataset.delta),0,3); render(); }
     else if (action === 'add-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=prompt('Item name'); if(item){h.items.push(item); if(item.toLowerCase().includes('torch')) state.light.reserve++; render();} }
-    else if (action === 'remove-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=h.items[Number(target.dataset.index)]; if(confirm(`Consume or remove ${item}?`)){h.items.splice(Number(target.dataset.index),1); if(item==='Fresh torch') state.light.reserve=Math.max(0,state.light.reserve-1); const bonus={ 'Circlet of Mind':'Mind', 'Gauntlets of Might':'Strength', 'Boots of Celerity':'Agility' }[item]; if(bonus) h.attributes[bonus]-=1; render();} }
+    else if (action === 'remove-item') { const h=state.party.find(h=>h.id===target.dataset.id); const item=h.items[Number(target.dataset.index)]; if(confirm(`Consume or remove ${item}?`)){h.items.splice(Number(target.dataset.index),1); if(item==='Fresh torch') state.light.reserve=Math.max(0,state.light.reserve-1); const bonus={ 'Circlet of Mind':'Mind', 'Gauntlets of Might':'Strength', 'Boots of Celerity':'Agility' }[item]; if(bonus && !h.items.includes(item)) h.attributes[bonus]-=1; render();} }
     else if (action === 'treat') {
       const h=state.party.find(h=>h.id===target.dataset.id);
-      const kitHolder=state.party.find(p=>p.items.includes('Medkit'));
-      if(!kitHolder) return showToast('No medkit is available.');
+      const medkitHolder=state.party.find(p=>p.items.includes('Medkit'));
+      const bandageEligible = !/(fever|venom|burn|crush|pulverized|life-drained|ritual mark|disease|poison|curse)/i.test(h.wound || '');
+      const bandageHolder=bandageEligible ? state.party.find(p=>p.items.includes('Bandages')) : null;
+      const supplyHolder=medkitHolder || bandageHolder;
+      const supplyName=medkitHolder ? 'Medkit' : 'Bandages';
+      if(!supplyHolder) return showToast(bandageEligible ? 'No Medkit or Bandages are available.' : 'This Wound requires a Medkit or Field Surgeon.');
       if(activeRoom().status==='dangerous' && !confirm('Treatment during immediate danger requires a successful appropriate check. Continue because that check has succeeded?')) return;
       if(!spendLight('treat a Wound')) return;
-      kitHolder.items.splice(kitHolder.items.indexOf('Medkit'),1);
+      supplyHolder.items.splice(supplyHolder.items.indexOf(supplyName),1);
       const wound=h.wound;
       const reduced=['Strength','Agility','Mind'].find(attr=>wound.includes(attr));
       if(reduced) h.attributes[reduced]-=1;
       h.scar=wound;
       h.wound='';
-      log(`${h.name}’s Wound became a Scar${reduced?`; ${reduced} fell by 1`:''}. Treatment consumed one turn and a medkit.`);
+      log(`${h.name}’s Wound became a Scar${reduced?`; ${reduced} fell by 1`:''}. Treatment consumed one turn and ${supplyName}.`);
       render();
     }
     else if (action === 'add-torch') { state.light.reserve++; closeModal(); render(); }
@@ -1926,7 +2103,7 @@
     } else if (event.target.id === 'search-form') {
       event.preventDefault(); resolveRoomSearch(Object.fromEntries(new FormData(event.target)));
     } else if (event.target.id === 'dungeon-form') {
-      event.preventDefault(); const data=Object.fromEntries(new FormData(event.target)); applyDungeonAction(data.enemyId,data.heroId);
+      event.preventDefault(); const data=Object.fromEntries(new FormData(event.target)); applyDungeonAction(data.enemyId,data.heroId,Number(data.damage || 1));
     }
   }
 

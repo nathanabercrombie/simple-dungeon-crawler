@@ -14,6 +14,18 @@ const unique = (items, label) => {
     seen.add(item.id);
   }
 };
+const resolvePartyFormula = (formula, partySize) => {
+  const source = String(formula || '').replace(/\s+/g, '').toUpperCase();
+  if (/^\d+$/.test(source)) return Number(source);
+  if (source === 'P') return partySize;
+  let match = source.match(/^P\*(\d+)$/);
+  if (match) return partySize * Number(match[1]);
+  match = source.match(/^(\d+)\+P\*(\d+)$/);
+  if (match) return Number(match[1]) + partySize * Number(match[2]);
+  match = source.match(/^P-(\d+)$/);
+  if (match) return Math.max(0, partySize - Number(match[1]));
+  return NaN;
+};
 
 for (const module of Object.values(window.GAME_MODULES)) {
   unique(module.scenes, `${module.id} Scene deck`);
@@ -49,6 +61,15 @@ for (const module of Object.values(window.GAME_MODULES)) {
   for (const monster of module.monsters) {
     assert(monster.pack && monster.name && monster.unitHp && monster.baseUnits && monster.instinct && monster.wound, `${monster.id} has an incomplete stat block`);
     assert(!('tags' in monster) && !('requiresAny' in monster), `${monster.id} still uses placement tags`);
+    assert(monster.scale?.count && monster.scale?.hpEach, `${monster.id} has no physical-card party equation`);
+    for (const partySize of [1,2,3,4]) {
+      const count = resolvePartyFormula(monster.scale?.count, partySize);
+      const hpEach = resolvePartyFormula(monster.scale?.hpEach, partySize);
+      assert(Number.isInteger(count) && count > 0 && Number.isInteger(hpEach) && hpEach > 0, `${monster.id} has an invalid equation at P=${partySize}`);
+      if (module.randomMonsters.some(candidate => candidate.id === monster.id)) {
+        assert(count * hpEach >= partySize * 2, `${monster.id} falls below the ordinary 2 HP per adventurer floor at P=${partySize}`);
+      }
+    }
   }
 
   for (const quest of module.quests) {
