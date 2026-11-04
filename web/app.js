@@ -632,12 +632,18 @@
     state.sceneDeck.splice(heartPosition, 0, quest.heartSceneId);
     state.monsterDeck = shuffle([...DATA.randomMonsters.map(monster => monster.id), ...(quest.wanderingAdds || [])]);
     const names = form.names.filter(Boolean);
-    for (let i = 0; i < Number(form.partySize); i++) {
+    const partySize = Number(form.partySize);
+    for (let i = 0; i < partySize; i++) {
       const character = createCharacter(names[i] || DATA.names[i], { mustCarryTorch: i === 0 });
+      if (partySize === 1) {
+        character.tokens = 2;
+        character.items.push(pick(DATA.items));
+      }
       state.party.push(character);
-      if (character.items.includes('Fresh torch')) state.light.reserve += 1;
+      state.light.reserve += character.items.filter(item => item === 'Fresh torch').length;
     }
     state.light.holderId = state.party[0]?.id || null;
+    if (partySize === 1) log(`${state.party[0].name} gained Lone Delver: 2 starting Skill Tokens and one additional Supply.`);
     log(`Expedition begun with seed ${seed}. Quest: ${state.quest.name}.`);
     generateRoom(0, 0, null);
     render();
@@ -1736,7 +1742,7 @@
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }
   function miniCard(type, title, rules, footer = 'Core set') {
     let cardRules = type === 'Armor' ? rules.replace('<strong>Rule:</strong>', '<strong>Protection:</strong>') : rules;
-    if (title === 'Torch') cardRules = cardRules.replace('</ul><p>', '<li>Treat a Wound</li></ul><p>At 0 Light, these actions cannot begin in an unlit Room. ');
+    if (title === 'Torch') cardRules = cardRules.replace('</ul><p>', '<li>Treat a Wound</li></ul><p>At 0 Light, travel, exploration, and searching continue in darkness with disadvantage; rest, treatment, and permanent illumination require Light. ');
     return `<span class="mini-card-tooltip game-card"><span class="card-titlebar"><span><span class="eyebrow">${esc(type)}</span><strong>${esc(title)}</strong></span></span><span class="card-art card-art-placeholder"><span>${esc(type)} artwork</span><small>Placeholder</small></span><span class="card-text">${cardRules}</span><span class="card-footer">${esc(footer)}</span></span>`;
   }
 

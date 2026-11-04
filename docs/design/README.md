@@ -158,6 +158,8 @@ Each room can grant its Skill Tokens only once. Token ownership follows adventur
 
 The game must equally support one adventurer and a small player-controlled party. Procedures should scale by the number of adventurers without making either mode an afterthought.
 
+At setup, a lone adventurer gains **Lone Delver**: begin with 2 Skill Tokens instead of 1 and draw one additional Supply. This offsets some of the party’s additional HP, Wound capacity, equipment, and breadth without changing Monster equations.
+
 Likely design consequences:
 
 - Threat and resource costs may need explicit scaling rules.
