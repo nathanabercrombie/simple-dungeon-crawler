@@ -21,13 +21,16 @@ An **opportunity Scene** begins conquered, has its Response visible, and grants 
 
 Front:
 
-- title, source set, danger, and default target;
+- a title that does not reveal a hidden threat or solution;
+- source set and the expedition's current Scene target;
 - complete floorplan, entrance, and exits;
 - lighting and visible persistent terrain;
-- read-aloud prose containing every immediately perceptible fact;
+- prose containing every immediately perceptible fact and no hidden explanation;
 - one Monster instruction: Printed, Random, Boss, or None;
 - compact ordinary Monster stat lines when identity defines the Scene;
 - one facedown reward icon, if any.
+
+In the guided app, the unrevealed Scene presentation is deliberately quieter: floorplan, title, prose, and only the Monster instruction that requires player action. Rules, terrain consequences, rewards, and facilitator language remain in the Response or appear after resolution.
 
 Response:
 
@@ -64,6 +67,8 @@ Loot is either **Supply** or **Treasure** and always uses **Take**. Supply is pr
 Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A Torch is a full Light reference card.
 
 ## Defined terms
+
+The expedition's **Scene target** is 9 for Scenes 1-2, then rises by 1 every two Scenes to a maximum of 15. A Quest finale is 1 point harder within that cap. This live value replaces authored per-card difficulty.
 
 - **Scene:** one card containing both place and present situation.
 - **Commit:** state an intended action and accept the Response and check that follow.

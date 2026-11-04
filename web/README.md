@@ -25,11 +25,11 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 - random Monster draws for monster-agnostic premises such as sleeping, trapped, hidden, or guarding creatures;
 - Quest setup that adds thematic random Monsters and set-aside Bosses;
 - creature trackers with Instincts and Wounds;
-- room conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
+- Scene conquest, Skill Tokens, HP, Wounds, Scars, items, and treatment;
 - the shared torch clock, darkness, fixtures, secured light, and spare torches;
 - known-room travel with persistent traversal costs and danger rolls;
-- roll-high d20 checks, advantage/disadvantage, criticals, and dungeon actions;
-- room notes and a chronological expedition log;
+- roll-high d20 checks, automatic darkness/injury disadvantage, criticals, and dungeon actions;
+- a fixed mobile action dock, compact resource bar, card-based character controls, and a chronological expedition log;
 - automatic save/resume in browser `localStorage` plus JSON export/import.
 
 The application deliberately permits manual adjustment. Current rules still require players to judge fictional positioning, target selection, what conquers a challenge, and creative solutions.

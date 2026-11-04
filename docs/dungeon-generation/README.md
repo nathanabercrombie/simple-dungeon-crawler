@@ -32,6 +32,8 @@ The web app currently inserts the finale after six or more ordinary Scene draws.
 
 Players may freely ask what is immediately perceptible. A player commits to an approach; reveal the Response before an uncertain check. Failure gives the dungeon one meaningful action or applies the printed consequence.
 
+The first two Scenes have target 9. The target rises by 1 after every two newly revealed Scenes, to a maximum of 15. A Quest finale is 1 point harder than an ordinary Scene at the same depth, without exceeding 15. The sequence keeps early improvisation permissive while opposition, dwindling Light, injury, and finale defenders provide the later pressure.
+
 Conquest means the Scene’s active problem durably stops controlling passage or use. Each active adventurer gains one Skill Token. Reveal the Scene’s one Quest or Loot reward, if present. Opportunity Scenes begin conquered and do not award conquest tokens.
 
 Active creatures block ordinary departure. The party may defeat, negotiate with, drive off, sneak past, or otherwise bypass them through the fiction. Bypassed creatures remain present and may pursue according to their Instinct.
@@ -63,6 +65,8 @@ When entering a conquered dark Scene during backtracking, roll a d6. On a 1, dra
 Persistent terrain remains after conquest. A secured rope, lowered bridge, drained channel, cleared route, or opened gate can permanently remove its uncertainty.
 
 ## Rest and search
+
+Wounded or injured adventurers have disadvantage on checks, as does any adventurer acting in darkness. The check dialog applies those rules by default while allowing an explicit override for exceptional fiction.
 
 In a conquered Scene without an active threat, spend 1 Light to restore living adventurers to full HP. Wounds and Scars remain. Permanently illuminated Scenes waive this Light cost.
 
