@@ -87,6 +87,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .btn {
   border: 1px solid var(--line-bright); border-radius: 3px; padding: 9px 12px;
   background: linear-gradient(#2a2c24, #22241d); cursor: pointer;
+  display:inline-block; color:inherit; text-decoration:none;
   font-size: 12px; font-weight: 650; letter-spacing: .02em;
   transition: border-color .15s, background .15s, transform .08s;
 }

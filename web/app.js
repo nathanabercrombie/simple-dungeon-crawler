@@ -1203,6 +1203,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
+            <a class="btn" href="card-viewer.html">Open the 219-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>

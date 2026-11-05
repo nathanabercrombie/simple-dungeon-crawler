@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15140f">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Delvekeeper Card Viewer</title>
+  <link rel="stylesheet" href="card-viewer.css?build=20261101.8">
+</head>
+<body>
+  <header class="studio-header">
+    <div class="studio-title">
+      <a href="index.html" class="back-link">← Expedition app</a>
+      <div>
+        <span class="eyebrow">Print development studio</span>
+        <h1>Delvekeeper Card Viewer</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="build-badge">Build 20261101.8</span>
+      <button type="button" class="button" id="print-button">Print visible</button>
+      <button type="button" class="button primary" id="export-button">Export CSV</button>
+    </div>
+  </header>
+
+  <section class="filter-panel" aria-label="Card filters">
+    <label class="search-field"><span>Search</span><input id="search-filter" type="search" placeholder="Title or card text"></label>
+    <label><span>Category</span><select id="category-filter"><option value="all">All categories</option></select></label>
+    <label><span>Quest</span><select id="quest-filter"><option value="all">All cards</option><option value="none">No Quest</option></select></label>
+    <label><span>Status</span><select id="status-filter"><option value="all">All cards</option><option value="included">Included</option><option value="trimmed">Trimmed</option><option value="edited">Edited</option></select></label>
+    <label><span>Script face</span><select id="face-filter"><option value="front">Front</option><option value="response">Response</option></select></label>
+  </section>
+
+  <main class="studio-main">
+    <section class="set-summary" aria-live="polite">
+      <div><strong id="full-count">—</strong><span>Full set</span></div>
+      <div><strong id="included-count">—</strong><span>Included</span></div>
+      <div><strong id="trimmed-count">—</strong><span>Trimmed</span></div>
+      <div><strong id="edited-count">—</strong><span>Edited</span></div>
+      <div><strong id="visible-count">—</strong><span>Visible</span></div>
+      <p>Edits and trim decisions are stored in this browser. CSV exports the entire manifest—including original and edited text—so it can be reviewed or sent back for integration.</p>
+    </section>
+
+    <div id="manifest-warning" class="manifest-warning hidden" role="alert"></div>
+    <section id="card-grid" class="card-grid" aria-label="Card set"></section>
+    <div id="empty-state" class="empty-state hidden">No cards match these filters.</div>
+  </main>
+
+  <div id="editor-backdrop" class="editor-backdrop hidden">
+    <section class="editor" role="dialog" aria-modal="true" aria-labelledby="editor-heading">
+      <header class="editor-header">
+        <div><span class="eyebrow" id="editor-category"></span><h2 id="editor-heading">Edit card</h2></div>
+        <button type="button" class="icon-button" id="close-editor" aria-label="Close editor">×</button>
+      </header>
+      <div class="editor-body">
+        <label><span>Title</span><input data-edit-field="title"></label>
+        <label><span>Type line</span><input data-edit-field="kicker"></label>
+        <label><span>Front / prose</span><textarea rows="6" data-edit-field="frontText"></textarea></label>
+        <label><span>Response / rules</span><textarea rows="10" data-edit-field="rulesText"></textarea></label>
+        <label><span>Footer</span><input data-edit-field="footer"></label>
+        <label><span>Review notes</span><textarea rows="4" data-edit-field="notes" placeholder="Why this card should change, combine, or be cut"></textarea></label>
+      </div>
+      <footer class="editor-footer">
+        <button type="button" class="button danger" id="editor-trim">Trim card</button>
+        <button type="button" class="button" id="reset-card">Reset text</button>
+        <button type="button" class="button primary" id="done-editor">Done</button>
+      </footer>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="data.js?build=20261101.8"></script>
+  <script src="card-viewer.js?build=20261101.8"></script>
+</body>
+</html>
