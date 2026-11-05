@@ -1045,14 +1045,25 @@
     renderModal();
   }
 
-  function claimQuestElement() {
-    const room = activeRoom();
+  function claimQuestElement(roomId = activeRoom()?.id) {
+    const room = roomById(roomId);
+    if (!room) return;
     if (!roomCardState(room).rewardsRevealed || challengeRewardType(room) !== 'quest') return;
     if (!isQuestElement(room) || room.quest.claimed) return;
     const scene = buildQuestScene(room);
     room.quest.claimed = true;
     state.quest.elementsFound += 1;
     log(`${scene.title} was claimed in Room ${room.number}. The party now has ${state.quest.elementsFound} Quest element${state.quest.elementsFound === 1 ? '' : 's'}.`);
+    render();
+  }
+
+  function toggleQuestCardUsed(roomId) {
+    const room = roomById(roomId);
+    if (!room || !roomCardState(room).rewardsRevealed || challengeRewardType(room) !== 'quest') return;
+    if (isQuestElement(room) && !room.quest.claimed) return showToast('Claim this Quest card before using it.');
+    room.quest.used = !room.quest.used;
+    const card = buildQuestScene(room);
+    log(`${card.title} was marked ${room.quest.used ? 'used' : 'available again'}.`);
     render();
   }
 
@@ -1728,15 +1739,9 @@
 
   function renderEncounterCards() {
     const room = activeRoom();
-    const scene = buildRoomScene(room, templateFor(room));
-    const cards = roomCardState(room);
-    const rewardType = challengeRewardType(room);
     const live = room.enemies.filter(enemy => enemy.hp > 0);
-    const questCard = rewardType === 'quest' && cards.rewardsRevealed
-      ? `<article class="game-card supplemental-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} · ${esc(scene.quest.subtype || room.quest.name)}</div><h3>${esc(scene.quest.title)}</h3></div></header><div class="card-text"><p>${esc(scene.quest.prose)}</p>${isQuestElement(room) ? `<p><strong>Claim:</strong> ${esc(scene.quest.claim || questElementPlacement(room))}</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>${room.quest.name === 'Omen' ? 'Meaning' : room.quest.name === 'Heart' ? 'Claim' : 'Use'}:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest card</footer></article>`
-      : '';
     const renderedMonsters = live.map(renderActiveEnemyCard).join('');
-    return `<section class="pane pane-encounter"><div class="section-head"><h2>Cards in play</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div>${live.length || questCard ? `<div class="supplemental-card-grid">${renderedMonsters}${questCard}</div>` : '<div class="empty-state">No Monster or Quest cards are currently in play.</div>'}</section>`;
+    return `<section class="pane pane-encounter"><div class="section-head"><h2>Monsters in play</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div>${live.length ? `<div class="supplemental-card-grid">${renderedMonsters}</div>` : '<div class="empty-state">No Monster cards are currently in play.</div>'}</section>`;
   }
 
   function signed(value) { return value >= 0 ? `+${value}` : String(value); }
@@ -1822,6 +1827,22 @@
     return `<section class="pane pane-party"><div class="section-head"><h2>Party</h2><span>No carrying capacity · fiction still applies</span></div><div class="party-list">${state.party.map(renderHero).join('')}</div></section>`;
   }
 
+  function renderQuestInventory() {
+    const questRooms = state.rooms
+      .filter(room => challengeRewardType(room) === 'quest' && roomCardState(room).rewardsRevealed)
+      .sort((a,b) => a.number - b.number);
+    const cards = questRooms.map(room => {
+      const questCard = buildQuestScene(room);
+      const claimable = isQuestElement(room);
+      const claimed = !claimable || room.quest.claimed;
+      const controls = !claimed
+        ? `<button class="btn btn-small btn-primary" data-action="claim-quest-element" data-room-id="${room.id}">Claim Quest card</button>`
+        : `<button class="btn btn-small ${room.quest.used ? 'btn-quiet' : ''}" data-action="toggle-quest-card" data-room-id="${room.id}">${room.quest.used ? 'Mark available' : 'Mark used'}</button>`;
+      return `<article class="game-card supplemental-card quest-card persistent-quest-card ${room.quest.used ? 'used' : ''}"><header class="card-titlebar"><div><div class="eyebrow">${esc(state.quest.name)} · ${esc(questCard.subtype || room.quest.name)}</div><h3>${esc(questCard.title)}</h3></div><strong>${room.number}</strong></header><div class="card-text"><p>${esc(questCard.prose)}</p>${claimable ? `<p><strong>Claim:</strong> ${esc(questCard.claim || questElementPlacement(room))}</p>` : ''}<div class="effect-line"><strong>${room.quest.name === 'Omen' ? 'Meaning' : 'Use'}:</strong> ${esc(questCard.effect)}</div><div class="card-actions">${controls}${room.quest.used ? '<span class="tag">Used</span>' : claimed ? '<span class="tag lit">Available</span>' : ''}</div></div><footer class="card-footer">Revealed in Scene ${room.number} · remains with the party</footer></article>`;
+    }).join('');
+    return `<section class="pane pane-quest-inventory"><div class="section-head"><h2>Quest cards</h2><span>${questRooms.length} revealed</span></div>${cards ? `<div class="supplemental-card-grid">${cards}</div>` : '<div class="empty-state">Revealed Quest cards remain here for the expedition.</div>'}</section>`;
+  }
+
   function renderDrawer() {
     return `<aside id="log-drawer" class="drawer hidden"><div class="drawer-head"><h2>Expedition log</h2><button class="btn icon-btn" data-action="toggle-log">×</button></div><div class="log-list">${state.log.map(entry => `<article class="log-entry"><time>Turn ${entry.turn}</time><p>${esc(entry.message)}</p></article>`).join('')}</div></aside>`;
   }
@@ -1869,7 +1890,7 @@
       <header class="topbar"><div class="brand"><div class="brand-mark"><span>D</span></div><div><h1>${esc(state.title)}</h1><p>${esc(state.domain)} · ${esc(state.theme)} · seed ${esc(state.seed)} · build ${esc(BUILD)}</p></div></div>
       <div class="resource-strip"><div class="resource"><small>Turn</small><strong>${state.turn}</strong></div><div class="resource torch"><small>Light</small><strong>${state.light.remaining || 'Dark'}</strong></div><div class="resource challenge-rating" title="${difficultyForTarget(roomTarget)} Scene"><small>Scene check</small><strong>${roomTarget}</strong></div><div class="resource"><small>Gold</small><strong>${state.gold}</strong></div><div class="resource"><small>Torches</small><strong>${state.light.reserve}</strong></div><div class="resource"><small>Scenes</small><strong>${state.rooms.length}</strong></div></div>
       <div class="top-actions"><span class="build-pill" title="Deployed application build">Build ${esc(BUILD)}</span><button class="btn icon-btn" data-action="toggle-log" title="Expedition log">☷</button><button class="btn icon-btn" data-action="settings" title="Save and expedition settings">···</button></div></header>
-      <div class="workspace">${renderMap()}${renderRoomCards()}${renderEncounterCards()}${renderParty()}</div>
+      <div class="workspace">${renderMap()}${renderRoomCards()}${renderEncounterCards()}${renderParty()}${renderQuestInventory()}</div>
       <footer class="action-dock"><div class="primary-actions">${exploreButton}<button class="btn" data-action="roll">Make a check</button>${conquerButton}${searchButton}${restButton}${fixtureButton}${darkLightButtons}<button class="btn btn-quiet" data-action="pass-turn">Pass turn</button>${escapeButton}</div><div id="save-state" class="save-state">Saved locally</div></footer>
       ${renderDrawer()}<div id="modal" class="modal-backdrop hidden"></div>
     </div>`;
@@ -2048,7 +2069,8 @@
     else if (action === 'use-oil') useLanternOil(target.dataset.id,Number(target.dataset.index));
     else if (action === 'pass-torch') passTorch();
     else if (action === 'claim') claimOpportunity(target.dataset.heroId);
-    else if (action === 'claim-quest-element') claimQuestElement();
+    else if (action === 'claim-quest-element') claimQuestElement(target.dataset.roomId || activeRoom()?.id);
+    else if (action === 'toggle-quest-card') toggleQuestCardUsed(target.dataset.roomId);
     else if (action === 'complete-heart') completeHeart();
     else if (action === 'claim-search') claimSearchLoot(target.dataset.heroId);
     else if (action === 'search-room') beginRoomSearch();

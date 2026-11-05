@@ -78,6 +78,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .pane-room { order:2; background:#181914; }
 .pane-encounter { order:3; }
 .pane-party { order:4; border-top:1px solid var(--line); }
+.pane-quest-inventory { order:5; }
 .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
 .section-head > * { min-width:0; overflow-wrap:anywhere; }
 .section-head h2 { margin: 0; font: 600 13px/1 var(--sans); letter-spacing: .15em; text-transform: uppercase; }
@@ -426,6 +427,8 @@ textarea { line-height: 1.45; }
 .supplemental-card-grid { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
 .supplemental-card { flex:0 1 290px; width:min(290px,100%); min-height:250px; aspect-ratio:auto; }
 .enemy-card,.quest-card { padding:0; border-radius:14px; }
+.persistent-quest-card.used { opacity:.58; }
+.persistent-quest-card.used .card-text { filter:saturate(.55); }
 .enemy-card p,.quest-card p { font-size:10px; }
 .enemy-card .hp-pips { justify-content:flex-start; margin-bottom:7px; }
 .monster-equation { padding:8px 10px; border:1px solid var(--gold-soft); background:rgba(199,169,90,.07); }
