@@ -478,20 +478,25 @@
         hero.gearTechniqueRule = gear[5];
         hero.gearTechniqueCost = gear[6];
       }
-      if (!hero.armorName) {
+      let armorDefinition = DATA.armor.find(entry => entry.name === hero.armorName);
+      if (!armorDefinition) {
         const armor = stableArmorFor(hero);
         hero.burden = armor.burden;
         hero.armorName = armor.name;
         hero.armorRule = armor.rule;
-        const expectedMaxHp = 2 + (hero.gear === 'Arming sword' || armor.reinforced ? 1 : 0);
-        if (hero.maxHp !== expectedMaxHp) {
-          const damageTaken = Math.max(0, hero.maxHp - hero.hp);
-          hero.maxHp = expectedMaxHp;
-          hero.hp = Math.max(0, expectedMaxHp - damageTaken);
-        }
+        armorDefinition = armor;
       }
-      const armorDefinition = DATA.armor.find(entry => entry.name === hero.armorName);
+      hero.burden = armorDefinition.burden;
+      hero.armorRule = armorDefinition.rule;
       hero.armorGuard = Boolean(armorDefinition?.guard);
+      hero.armorGuardCost = Number(armorDefinition?.guardCost || 0);
+      hero.armorAbility = armorDefinition?.ability || '';
+      const expectedMaxHp = 2 + (hero.gear === 'Arming sword' || armorDefinition?.reinforced ? 1 : 0);
+      if (hero.maxHp !== expectedMaxHp) {
+        const damageTaken = Math.max(0, hero.maxHp - hero.hp);
+        hero.maxHp = expectedMaxHp;
+        hero.hp = Math.max(0, expectedMaxHp - damageTaken);
+      }
       if (!hero.knackRule) {
         const knack = DATA.knacks.find(entry => entry.name === hero.knack);
         if (knack) {
@@ -605,7 +610,7 @@
     return {
       id: uid('hero'), name, attributes: values, hp: maxHp, maxHp,
       tokens: 1, gear, gearAttribute:primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost,
-      burden: armor.burden, armorName: armor.name, armorRule: armor.rule, armorGuard:Boolean(armor.guard),
+      burden: armor.burden, armorName: armor.name, armorRule: armor.rule, armorAbility:armor.ability, armorGuard:Boolean(armor.guard), armorGuardCost:Number(armor.guardCost || 0),
       past, pastAttribute: pick(coherentPastAttributes),
       knack: knack.name, knackCost: knack.cost, knackRule: knack.effect,
       items: [item], wound: '', scar: '', dead: false, bonusItemsNormalized:true
@@ -1084,10 +1089,9 @@
     const enemy = room.enemies.find(item => item.id === enemyId);
     const hero = state.party.find(item => item.id === heroId);
     if (!enemy || !hero || hero.dead) return;
-    if (hero.armorGuard && hero.guardPreparedSceneId === room.id && hero.guardUsedSceneId !== room.id) {
+    if (hero.armorGuard && hero.guardPreparedSceneId === room.id) {
       damage = Math.max(0, damage - 1);
       hero.guardPreparedSceneId = null;
-      hero.guardUsedSceneId = room.id;
       log(`${hero.name}'s ${hero.armorName} Guard prevented 1 damage.`, 'success');
     }
     if (damage <= 0) {
@@ -1184,9 +1188,30 @@
   function prepareGuard(heroId) {
     const hero = state.party.find(candidate => candidate.id === heroId);
     const room = activeRoom();
-    if (!hero?.armorGuard || hero.guardUsedSceneId === room.id) return showToast('That Guard has already been used in this Scene.');
-    hero.guardPreparedSceneId = hero.guardPreparedSceneId === room.id ? null : room.id;
-    log(`${hero.name} ${hero.guardPreparedSceneId ? 'readied' : 'lowered'} ${hero.armorName} Guard.`);
+    if (!hero?.armorGuard) return;
+    const cost = Number(hero.armorGuardCost || 1);
+    if (hero.guardPreparedSceneId === room.id) {
+      hero.guardPreparedSceneId = null;
+      hero.tokens = clamp(hero.tokens + cost,0,3);
+      log(`${hero.name} lowered ${hero.armorName} Guard and recovered ${cost} Skill Token${cost === 1 ? '' : 's'}.`);
+      return render();
+    }
+    if (hero.tokens < cost) return showToast(`${hero.name} needs ${cost} Skill Token${cost === 1 ? '' : 's'} to ready Guard.`);
+    hero.tokens -= cost;
+    hero.guardPreparedSceneId = room.id;
+    log(`${hero.name} spent ${cost} Skill Token${cost === 1 ? '' : 's'} to ready ${hero.armorName} Guard.`);
+    render();
+  }
+
+  function useArmorAbility(heroId) {
+    const hero = state.party.find(candidate => candidate.id === heroId);
+    const room = activeRoom();
+    const armor = DATA.armor.find(entry => entry.name === hero?.armorName);
+    if (!hero || !armor || (!armor.evasive && !armor.steadfast)) return;
+    if (hero.armorUsedSceneId === room.id) return showToast(`${armor.ability} has already been used in this Scene.`);
+    hero.armorUsedSceneId = room.id;
+    log(`${hero.name} used ${armor.ability}: ${armor.rule}`, 'success');
+    showToast(`${armor.ability} used. Apply its card text.`);
     render();
   }
 
@@ -1203,7 +1228,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
-            <a class="btn" href="card-viewer.html">Open the 219-card viewer</a>
+            <a class="btn" href="card-viewer.html">Open the 213-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>
@@ -1802,7 +1827,11 @@
     const technique = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="technique" data-cost="${hero.gearTechniqueCost}">Use · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}</button>`;
     const past = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.pastAttribute)}" data-ability="${esc(hero.past)}" data-cost="1" data-bonus="2">Use · 1 token</button>`;
     const knack = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="knack" data-cost="${hero.knackCost}">Use · ${hero.knackCost} token${hero.knackCost === 1 ? '' : 's'}</button>`;
-    const guard = hero.armorGuard ? `<button class="btn btn-small" data-action="prepare-guard" data-id="${hero.id}" ${hero.guardUsedSceneId === activeRoom().id ? 'disabled' : ''}>${hero.guardPreparedSceneId === activeRoom().id ? 'Guard readied' : hero.guardUsedSceneId === activeRoom().id ? 'Guard used' : 'Ready Guard'}</button>` : '';
+    const armor = DATA.armor.find(entry => entry.name === hero.armorName);
+    let armorAction = '';
+    if (hero.armorGuard) armorAction = `<button class="btn btn-small" data-action="prepare-guard" data-id="${hero.id}" ${hero.guardPreparedSceneId === activeRoom().id || hero.tokens >= (hero.armorGuardCost || 1) ? '' : 'disabled'}>${hero.guardPreparedSceneId === activeRoom().id ? 'Lower Guard · refund token' : `Ready Guard · ${hero.armorGuardCost || 1} token`}</button>`;
+    else if (armor?.checkBonus) armorAction = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(armor.checkAttribute)}" data-ability="${esc(armor.ability)}" data-bonus="${armor.checkBonus}">${esc(armor.checkLabel || `Use ${armor.ability}`)} · +${armor.checkBonus}</button>`;
+    else if (armor?.evasive || armor?.steadfast) armorAction = `<button class="btn btn-small" data-action="use-armor" data-id="${hero.id}" ${hero.armorUsedSceneId === activeRoom().id ? 'disabled' : ''}>${hero.armorUsedSceneId === activeRoom().id ? `${esc(armor.ability)} used` : `Use ${esc(armor.ability)}`}</button>`;
     const itemCards = hero.items.map((item,index) => {
       let itemAction = `<button class="btn btn-small btn-quiet" data-action="remove-item" data-id="${hero.id}" data-index="${index}">Use or remove</button>`;
       if (item === 'Lantern' && state.light.remaining <= 0) itemAction = `<button class="btn btn-small" data-action="light-lantern" data-id="${hero.id}">Light · 6 Light</button>`;
@@ -1815,7 +1844,7 @@
       <div class="hero-card-strip">
         ${renderCharacterCard('Gear',`${hero.gear} · ${hero.gearHands} hand${hero.gearHands === 1 ? '' : 's'}`,hero.gearRule,attack)}
         ${renderCharacterCard('Technique',hero.gearTechnique,hero.gearTechniqueRule,technique)}
-        ${renderCharacterCard('Armor',`${hero.armorName} · ${hero.burden}`,hero.armorRule,guard)}
+        ${renderCharacterCard('Armor',`${hero.armorName} · ${hero.burden}`,hero.armorRule,armorAction)}
         ${renderCharacterCard('Past',hero.past,`Spend 1 Skill Token for +2 on a relevant ${hero.pastAttribute} check.`,past)}
         ${renderCharacterCard('Knack',hero.knack,hero.knackRule,knack)}
         ${bearingTorch ? renderCharacterCard('Supply',`${state.light.source || 'Torch'} · ${state.light.remaining}/${state.light.capacity || TORCH_CAPACITY} Light`,'Occupies one hand while carried. Spend Light to travel, rest, search, treat Wounds, or illuminate fixtures.') : ''}
@@ -2088,6 +2117,7 @@
     }
     else if (action === 'use-ability') useAbility(target.dataset.id,target.dataset.kind,Number(target.dataset.cost || 0));
     else if (action === 'prepare-guard') prepareGuard(target.dataset.id);
+    else if (action === 'use-armor') useArmorAbility(target.dataset.id);
     else if (action === 'dungeon-action') openModal('dungeon',{enemyId:target.dataset.id});
     else if (action === 'open-dungeon-action') openModal('dungeon',{ damage:Number(target.dataset.damage || 1) });
     else if (action === 'damage-enemy') { const e=ensureEnemyMembers(activeRoom().enemies.find(e=>e.id===target.dataset.id)); const member=e.members.find(candidate=>candidate.hp>0); if(member) member.hp=Math.max(0,member.hp-1); syncEnemy(e); log(`${e.name} took 1 damage${e.hp===0?' and were defeated':''}.`); render(); }
