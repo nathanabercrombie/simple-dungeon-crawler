@@ -23,6 +23,9 @@
   let state = loadState();
   let selectedId = null;
   let toastTimer = null;
+  const flippedCards = new Set();
+  let swipeGesture = null;
+  let suppressFlipClick = false;
 
   function persist() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -215,11 +218,15 @@
     return `<div class="card-image"><div class="card-image-placeholder">${esc(card.imageLabel || `Illustration — ${card.title}`)}</div></div>`;
   }
 
-  function deckIcon(category) {
-    const group = category.startsWith('Scene') ? 'Scene'
+  function deckGroup(category) {
+    return category.startsWith('Scene') ? 'Scene'
       : category.startsWith('Quest') ? 'Quest'
       : category.includes('Monster') ? 'Monster'
       : category;
+  }
+
+  function deckIcon(category) {
+    const group = deckGroup(category);
     const paths = {
       Scene:'<path d="M4 17V4h16v13M8 17V8h8v9M2 20h20"/>',
       Quest:'<path d="M6 3h11l2 2v15H6zM9 8h7M9 12h7M9 16h4"/>',
@@ -234,35 +241,60 @@
     return `<span class="deck-icon" title="${esc(group)} deck" aria-label="${esc(group)} deck"><svg viewBox="0 0 24 24" aria-hidden="true">${paths[group] || paths.Scene}</svg></span>`;
   }
 
-  function copyForFace(card) {
-    const face = $('#face-filter').value;
-    if (card.script && face === 'front') return { label:'Front', copy:card.frontText };
-    if (card.script && face === 'response') return { label:'Response', copy:card.rulesText };
-    return { label:'Rules', copy:text(card.frontText, card.rulesText) };
+  function frontCopy(card) {
+    return card.script ? card.frontText : text(card.frontText, card.rulesText);
+  }
+
+  function densityClass(words) {
+    return words > 115 ? 'is-very-long' : words > 78 ? 'is-long' : '';
+  }
+
+  function renderCardBack(card) {
+    if (card.script) {
+      const backWords = wordCount(card.rulesText);
+      return `<div class="game-card card-face card-back response-card-back">
+        <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div></header>
+        <div class="response-kicker">Response</div>
+        <div class="card-copy ${densityClass(backWords)}">${esc(card.rulesText)}</div>
+        <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
+      </div>`;
+    }
+    const group = deckGroup(card.category);
+    return `<div class="game-card card-face card-back generic-card-back deck-back-${slug(group)}">
+      <div class="deck-back-frame"><div class="deck-back-mark">${deckIcon(card.category)}</div><div class="deck-back-name">Delvekeeper</div><div class="deck-back-rule"></div><div class="deck-back-label">${esc(group)}</div></div>
+    </div>`;
   }
 
   function renderCard(original) {
     const card = currentCard(original);
-    const face = copyForFace(card);
-    const words = wordCount(face.copy);
-    const density = words > 115 ? 'is-very-long' : words > 78 ? 'is-long' : '';
+    const copy = frontCopy(card);
+    const frontWords = wordCount(copy);
+    const backWords = card.script ? wordCount(card.rulesText) : 0;
+    const words = Math.max(frontWords,backWords);
+    const density = densityClass(frontWords);
     const wordClass = words > 115 ? 'too-long' : words > 78 ? 'long' : '';
     const mapOnly = card.imageType === 'map';
-    return `<article class="card-wrap ${card.trimmed ? 'is-trimmed' : ''} ${isEdited(original) ? 'is-edited' : ''}" data-card-id="${esc(card.id)}">
-      <div class="game-card ${card.imageType === 'map' ? 'card-map-layout' : ''}">
-        <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
-        ${imageHtml(card)}
-        ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(face.copy)}</div>`}
-        <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
+    const flipped = flippedCards.has(card.id);
+    return `<article class="card-wrap ${card.trimmed ? 'is-trimmed' : ''} ${isEdited(original) ? 'is-edited' : ''} ${flipped ? 'is-flipped' : ''}" data-card-id="${esc(card.id)}">
+      <div class="card-flip-shell" role="button" tabindex="0" aria-pressed="${flipped}" aria-label="${flipped ? 'Show front of' : 'Show back of'} ${esc(card.title)}">
+        <div class="card-flipper">
+          <div class="game-card card-face card-front ${card.imageType === 'map' ? 'card-map-layout' : ''}">
+            <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
+            ${imageHtml(card)}
+            ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(copy)}</div>`}
+            <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
+          </div>
+          ${renderCardBack(card)}
+        </div>
       </div>
-      <div class="card-tools"><span class="word-count ${wordClass}">${words} words${words > 115 ? ' · too long' : words > 78 ? ' · dense' : ''}</span><button type="button" data-action="edit">Edit</button><button type="button" data-action="trim">${card.trimmed ? 'Restore' : 'Trim'}</button></div>
+      <div class="card-tools"><span class="word-count ${wordClass}">${words} words${words > 115 ? ' · too long' : words > 78 ? ' · dense' : ''}</span><button type="button" data-action="flip">${flipped ? 'Front' : 'Back'}</button><button type="button" data-action="edit">Edit</button><button type="button" data-action="trim">${card.trimmed ? 'Restore' : 'Trim'}</button></div>
     </article>`;
   }
 
   function filters() {
     return {
       search:$('#search-filter').value.trim().toLowerCase(), category:$('#category-filter').value,
-      quest:$('#quest-filter').value, status:$('#status-filter').value, face:$('#face-filter').value
+      quest:$('#quest-filter').value, status:$('#status-filter').value
     };
   }
 
@@ -306,10 +338,27 @@
     $('#category-filter').insertAdjacentHTML('beforeend',categories.map(category => `<option value="${esc(category)}">${esc(category)}</option>`).join(''));
     DATA.quests.forEach(quest => $('#quest-filter').insertAdjacentHTML('beforeend',`<option value="${esc(quest.name)}">${esc(quest.name)}</option>`));
     const saved = state.filters;
-    ['search','category','quest','status','face'].forEach(name => {
+    ['search','category','quest','status'].forEach(name => {
       const element = $(`#${name}-filter`);
       if (element && saved[name] != null && [...(element.options || [])].some(option => option.value === saved[name]) || element?.tagName === 'INPUT') element.value = saved[name] ?? '';
     });
+  }
+
+  function setCardFlip(id, showBack) {
+    if (showBack) flippedCards.add(id); else flippedCards.delete(id);
+    const article = [...document.querySelectorAll('[data-card-id]')].find(candidate => candidate.dataset.cardId === id);
+    if (!article) return;
+    article.classList.toggle('is-flipped',showBack);
+    const shell = article.querySelector('.card-flip-shell');
+    const button = article.querySelector('[data-action="flip"]');
+    const card = currentCard(manifest.find(candidate => candidate.id === id));
+    shell?.setAttribute('aria-pressed',String(showBack));
+    shell?.setAttribute('aria-label',`${showBack ? 'Show front of' : 'Show back of'} ${card.title}`);
+    if (button) button.textContent = showBack ? 'Front' : 'Back';
+  }
+
+  function toggleCardFlip(id) {
+    setCardFlip(id,!flippedCards.has(id));
   }
 
   function toggleTrim(id) {
@@ -405,10 +454,42 @@
   $('.filter-panel').addEventListener('change',renderGrid);
   $('#card-grid').addEventListener('click',event => {
     const button = event.target.closest('button[data-action]');
-    if (!button) return;
-    const id = button.closest('[data-card-id]').dataset.cardId;
-    if (button.dataset.action === 'edit') openEditor(id);
-    if (button.dataset.action === 'trim') toggleTrim(id);
+    if (button) {
+      const id = button.closest('[data-card-id]').dataset.cardId;
+      if (button.dataset.action === 'flip') toggleCardFlip(id);
+      if (button.dataset.action === 'edit') openEditor(id);
+      if (button.dataset.action === 'trim') toggleTrim(id);
+      return;
+    }
+    const shell = event.target.closest('.card-flip-shell');
+    if (!shell) return;
+    if (suppressFlipClick) { suppressFlipClick = false; return; }
+    toggleCardFlip(shell.closest('[data-card-id]').dataset.cardId);
+  });
+  $('#card-grid').addEventListener('pointerdown',event => {
+    const shell = event.target.closest('.card-flip-shell');
+    if (!shell || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    swipeGesture = { pointerId:event.pointerId, x:event.clientX, y:event.clientY, shell };
+  });
+  $('#card-grid').addEventListener('pointerup',event => {
+    if (!swipeGesture || swipeGesture.pointerId !== event.pointerId) return;
+    const { x,y,shell } = swipeGesture;
+    swipeGesture = null;
+    const dx = event.clientX - x;
+    const dy = event.clientY - y;
+    if (Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const id = shell.closest('[data-card-id]').dataset.cardId;
+    setCardFlip(id,dx < 0);
+    suppressFlipClick = true;
+    setTimeout(() => { suppressFlipClick = false; },350);
+  });
+  $('#card-grid').addEventListener('pointercancel',() => { swipeGesture = null; });
+  $('#card-grid').addEventListener('keydown',event => {
+    if (!['Enter',' '].includes(event.key)) return;
+    const shell = event.target.closest('.card-flip-shell');
+    if (!shell) return;
+    event.preventDefault();
+    toggleCardFlip(shell.closest('[data-card-id]').dataset.cardId);
   });
   $('#close-editor').addEventListener('click',closeEditor);
   $('#done-editor').addEventListener('click',closeEditor);
