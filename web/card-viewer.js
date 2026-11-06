@@ -159,7 +159,7 @@
 
     DATA.knacks.forEach((knack, index) => cards.push({
       id:`knack:${slug(knack.name)}:${index + 1}`, category:'Knack', quest:'', title:knack.name,
-      kicker:`Knack · ${knack.cost} Skill Tokens`, tokenCost:knack.cost, frontText:knack.effect, rulesText:'', footer:'Core Set', imageLabel:`Illustration — ${knack.name}`
+      kicker:`Knack · ${knack.cost} Skill Tokens`, frontText:`Cost: ${knack.cost} Skill Token${knack.cost === 1 ? '' : 's'}.\n\n${knack.effect}`, rulesText:'', footer:'Core Set', imageLabel:`Illustration — ${knack.name}`
     }));
 
     const loot = [...new Map(Object.values(DATA.sceneOpportunities).flat().map(card => [card.id,card])).values()];
@@ -279,7 +279,7 @@
       <div class="card-flip-shell" role="button" tabindex="0" aria-pressed="${flipped}" aria-label="${flipped ? 'Show front of' : 'Show back of'} ${esc(card.title)}">
         <div class="card-flipper">
           <div class="game-card card-face card-front ${card.imageType === 'map' ? 'card-map-layout' : ''}">
-            <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.tokenCost ? `<span class="skill-cost" title="${card.tokenCost} Skill Tokens"><strong>${card.tokenCost}</strong><small>Skill</small></span>` : card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
+            <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
             ${imageHtml(card)}
             ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(copy)}</div>`}
             <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
