@@ -89,8 +89,7 @@
       const questName = quest?.name || '';
       cards.push({
         id:`scene-map:${scene.id}`, category:'Scene Map', quest:questName, title:scene.name,
-        kicker:`Scene Map · ${scene.lighting === 'None' ? 'Cannot be lit' : scene.lighting === 'Inherent' ? 'Permanently lit' : 'Can be lit'}`,
-        frontText:text(scene.builtAs, scene.definition), rulesText:'',
+        kicker:'Scene Map', frontText:'', rulesText:'',
         footer:scene.pack || 'Classics Set', imageType:'map', map:scene.map, lighting:scene.lighting
       });
       cards.push({
@@ -229,12 +228,12 @@
     const words = wordCount(face.copy);
     const density = words > 115 ? 'is-very-long' : words > 78 ? 'is-long' : '';
     const wordClass = words > 115 ? 'too-long' : words > 78 ? 'long' : '';
+    const mapOnly = card.imageType === 'map';
     return `<article class="card-wrap ${card.trimmed ? 'is-trimmed' : ''} ${isEdited(original) ? 'is-edited' : ''}" data-card-id="${esc(card.id)}">
       <div class="game-card ${card.imageType === 'map' ? 'card-map-layout' : ''}">
         <header class="card-topline"><h2>${esc(card.title)}</h2>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
         ${imageHtml(card)}
-        <div class="type-line"><span>${esc(card.kicker)}</span><span>${esc(face.label)}</span></div>
-        <div class="card-copy ${density}">${esc(face.copy)}</div>
+        ${mapOnly ? '' : `<div class="type-line"><span>${esc(card.kicker)}</span><span>${esc(face.label)}</span></div><div class="card-copy ${density}">${esc(face.copy)}</div>`}
         <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
       </div>
       <div class="card-tools"><span class="word-count ${wordClass}">${words} words${words > 115 ? ' · too long' : words > 78 ? ' · dense' : ''}</span><button type="button" data-action="edit">Edit</button><button type="button" data-action="trim">${card.trimmed ? 'Restore' : 'Trim'}</button></div>
