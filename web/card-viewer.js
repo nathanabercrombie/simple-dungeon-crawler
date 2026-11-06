@@ -215,6 +215,25 @@
     return `<div class="card-image"><div class="card-image-placeholder">${esc(card.imageLabel || `Illustration — ${card.title}`)}</div></div>`;
   }
 
+  function deckIcon(category) {
+    const group = category.startsWith('Scene') ? 'Scene'
+      : category.startsWith('Quest') ? 'Quest'
+      : category.includes('Monster') ? 'Monster'
+      : category;
+    const paths = {
+      Scene:'<path d="M4 17V4h16v13M8 17V8h8v9M2 20h20"/>',
+      Quest:'<path d="M6 3h11l2 2v15H6zM9 8h7M9 12h7M9 16h4"/>',
+      Monster:'<path d="M7 9 4 4l6 3h4l6-3-3 5 2 4-3 7H8l-3-7zM9 12h.1M15 12h.1M10 16h4"/>',
+      Gear:'<path d="m5 19 11-11M14 5l3-2 4 4-2 3-5-5ZM3 21l5-1-4-4z"/>',
+      Armor:'<path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6z"/>',
+      Past:'<path d="M4 5c3-1 5 0 8 2v13c-3-2-5-3-8-2zM20 5c-3-1-5 0-8 2v13c3-2 5-3 8-2z"/>',
+      Knack:'<path d="m12 2 1.6 6.4L20 10l-6.4 1.6L12 18l-1.6-6.4L4 10l6.4-1.6zM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/>',
+      Supply:'<path d="M5 8h14v12H5zM9 8V5h6v3M9 14h6M12 11v6"/>',
+      Treasure:'<path d="m12 3 7 6-7 12L5 9zM5 9h14M9 9l3 12 3-12-3-6z"/>'
+    };
+    return `<span class="deck-icon" title="${esc(group)} deck" aria-label="${esc(group)} deck"><svg viewBox="0 0 24 24" aria-hidden="true">${paths[group] || paths.Scene}</svg></span>`;
+  }
+
   function copyForFace(card) {
     const face = $('#face-filter').value;
     if (card.script && face === 'front') return { label:'Front', copy:card.frontText };
@@ -231,9 +250,9 @@
     const mapOnly = card.imageType === 'map';
     return `<article class="card-wrap ${card.trimmed ? 'is-trimmed' : ''} ${isEdited(original) ? 'is-edited' : ''}" data-card-id="${esc(card.id)}">
       <div class="game-card ${card.imageType === 'map' ? 'card-map-layout' : ''}">
-        <header class="card-topline"><h2>${esc(card.title)}</h2>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
+        <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
         ${imageHtml(card)}
-        ${mapOnly ? '' : `<div class="type-line"><span>${esc(card.kicker)}</span><span>${esc(face.label)}</span></div><div class="card-copy ${density}">${esc(face.copy)}</div>`}
+        ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(face.copy)}</div>`}
         <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>
       </div>
       <div class="card-tools"><span class="word-count ${wordClass}">${words} words${words > 115 ? ' · too long' : words > 78 ? ' · dense' : ''}</span><button type="button" data-action="edit">Edit</button><button type="button" data-action="trim">${card.trimmed ? 'Restore' : 'Trim'}</button></div>
