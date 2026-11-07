@@ -3,7 +3,7 @@
 
   const DATA = window.GAME_DATA;
   const STORAGE_KEY = 'delvekeeper.cardViewer.v1';
-  const EXPECTED_CARD_COUNT = 213;
+  const EXPECTED_CARD_COUNT = 199;
   const EDIT_FIELDS = ['title','kicker','frontText','rulesText','footer','notes'];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
@@ -149,11 +149,10 @@
     }));
 
     DATA.pasts.forEach((past, index) => {
-      const attributes = DATA.pastAttributes[past] || [];
       cards.push({
         id:`past:${slug(past)}:${index + 1}`, category:'Past', quest:'', title:past, kicker:'Adventurer Past',
-        frontText:'Once per expedition, when this Past is directly relevant, spend 1 Skill Token to gain +2 on an appropriate check.',
-        rulesText:attributes.length ? `Common attributes\n${attributes.join(' or ')}` : '', footer:'Core Set', imageLabel:`Illustration — ${past}`
+        frontText:DATA.pastProse[past],
+        rulesText:'Spend 1 Skill Token to gain +2 on a check related to your Past.', footer:'Core Set', imageLabel:`Illustration — ${past}`
       });
     });
 

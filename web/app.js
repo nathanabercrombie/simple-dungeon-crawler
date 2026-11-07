@@ -497,6 +497,8 @@
         hero.maxHp = expectedMaxHp;
         hero.hp = Math.max(0, expectedMaxHp - damageTaken);
       }
+      if (!DATA.pasts.includes(hero.past)) hero.past = stablePastFor(hero);
+      delete hero.pastAttribute;
       if (!hero.knackRule) {
         const knack = DATA.knacks.find(entry => entry.name === hero.knack);
         if (knack) {
@@ -592,6 +594,15 @@
     return choices[(hash >>> 0) % choices.length];
   }
 
+  function stablePastFor(hero) {
+    let hash = 2166136261 >>> 0;
+    for (const char of `${state.seed}:${hero.id}:past`) {
+      hash ^= char.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return DATA.pasts[(hash >>> 0) % DATA.pasts.length];
+  }
+
   function createCharacter(name, { mustCarryTorch = false } = {}) {
     const attrs = ['Strength','Agility','Mind'];
     const torchPrimary = mustCarryTorch ? pick(attrs) : null;
@@ -606,12 +617,11 @@
     const maxHp = 2 + (gear === 'Arming sword' || armor.reinforced ? 1 : 0);
     const item = pick(DATA.items);
     const past = pick(DATA.pasts);
-    const coherentPastAttributes = DATA.pastAttributes?.[past] || attrs;
     return {
       id: uid('hero'), name, attributes: values, hp: maxHp, maxHp,
       tokens: 1, gear, gearAttribute:primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost,
       burden: armor.burden, armorName: armor.name, armorRule: armor.rule, armorAbility:armor.ability, armorGuard:Boolean(armor.guard), armorGuardCost:Number(armor.guardCost || 0),
-      past, pastAttribute: pick(coherentPastAttributes),
+      past,
       knack: knack.name, knackCost: knack.cost, knackRule: knack.effect,
       items: [item], wound: '', scar: '', dead: false, bonusItemsNormalized:true
     };
@@ -1228,7 +1238,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
-            <a class="btn" href="card-viewer.html">Open the 213-card viewer</a>
+            <a class="btn" href="card-viewer.html">Open the 199-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>
@@ -1810,7 +1820,7 @@
       <div class="gear-line"><strong>${esc(hero.gearTechnique)} · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}:</strong> ${esc(hero.gearTechniqueRule)}</div>
       <div class="gear-line"><button type="button" class="inline-card-trigger"><strong>${esc(hero.armorName)} · ${esc(hero.burden)}:</strong> ${esc(hero.armorRule)}${miniCard('Armor', hero.armorName, `<p><strong>Rule:</strong> ${esc(hero.armorRule)}</p><p><strong>Burden:</strong> ${esc(hero.burden)}</p>`)}</button></div>
       ${bearingTorch ? `<div class="gear-line"><button type="button" class="inline-card-trigger"><strong>Torch · ${state.light.remaining}/${TORCH_CAPACITY} Light:</strong> occupies one hand; bows and two-handed equipment are unavailable.${miniCard('Supply', 'Torch', `<p>Put <strong>12 Light tokens</strong> on this card when lit. Spend 1 Light to:</p><ul><li>Travel to an adjacent room</li><li>Enter a new room</li><li>Rest and recover HP</li><li>Illuminate a room permanently, if possible</li><li>Search a conquered room</li></ul><p>These actions spend no Light while the party is in a permanently illuminated room.</p>`)}</button></div>` : ''}
-      <div class="gear-line"><strong>Past · 1 token:</strong> ${esc(hero.past)} (${esc(hero.pastAttribute)}; invoke for +2 when its fictional scope applies)</div>
+      <div class="gear-line"><strong>Past · 1 token:</strong> ${esc(hero.past)}; gain +2 on a check related to your Past.</div>
       <div class="gear-line"><strong>${esc(hero.knack)} · ${hero.knackCost} tokens:</strong> ${esc(hero.knackRule)}</div>
       ${hero.wound ? `<div class="gear-line"><strong>Wound:</strong> ${esc(hero.wound)}</div>` : ''}${hero.scar ? `<div class="gear-line"><strong>Scar:</strong> ${esc(hero.scar)}</div>` : ''}
       <div class="inventory">${hero.items.map((item,index) => `<span class="item-token"><button type="button" class="item-chip inline-card-trigger">${esc(item)}${miniCard('Item', item, `<p>${esc(itemRules(item))}</p>`)}</button><button class="item-remove" data-action="remove-item" data-id="${hero.id}" data-index="${index}" title="Consume or remove ${esc(item)}">×</button></span>`).join('')}<button class="item-chip" data-action="add-item" data-id="${hero.id}">+ item</button></div>
@@ -1825,7 +1835,7 @@
     const bearingTorch = state.light.remaining > 0 && state.light.holderId === hero.id;
     const attack = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.gearAttribute)}" data-ability="${esc(hero.gear)}" ${hero.gear === 'Greatsword' ? 'data-failure-damage="2"' : ''}>Make attack</button>`;
     const technique = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="technique" data-cost="${hero.gearTechniqueCost}">Use · ${hero.gearTechniqueCost} token${hero.gearTechniqueCost === 1 ? '' : 's'}</button>`;
-    const past = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-attribute="${esc(hero.pastAttribute)}" data-ability="${esc(hero.past)}" data-cost="1" data-bonus="2">Use · 1 token</button>`;
+    const past = `<button class="btn btn-small" data-action="prepare-check" data-id="${hero.id}" data-ability="${esc(hero.past)}" data-cost="1" data-bonus="2">Use · 1 token</button>`;
     const knack = `<button class="btn btn-small" data-action="use-ability" data-id="${hero.id}" data-kind="knack" data-cost="${hero.knackCost}">Use · ${hero.knackCost} token${hero.knackCost === 1 ? '' : 's'}</button>`;
     const armor = DATA.armor.find(entry => entry.name === hero.armorName);
     let armorAction = '';
@@ -1845,7 +1855,7 @@
         ${renderCharacterCard('Gear',`${hero.gear} · ${hero.gearHands} hand${hero.gearHands === 1 ? '' : 's'}`,hero.gearRule,attack)}
         ${renderCharacterCard('Technique',hero.gearTechnique,hero.gearTechniqueRule,technique)}
         ${renderCharacterCard('Armor',`${hero.armorName} · ${hero.burden}`,hero.armorRule,armorAction)}
-        ${renderCharacterCard('Past',hero.past,`Spend 1 Skill Token for +2 on a relevant ${hero.pastAttribute} check.`,past)}
+        ${renderCharacterCard('Past',hero.past,'Spend 1 Skill Token to gain +2 on a check related to your Past.',past)}
         ${renderCharacterCard('Knack',hero.knack,hero.knackRule,knack)}
         ${bearingTorch ? renderCharacterCard('Supply',`${state.light.source || 'Torch'} · ${state.light.remaining}/${state.light.capacity || TORCH_CAPACITY} Light`,'Occupies one hand while carried. Spend Light to travel, rest, search, treat Wounds, or illuminate fixtures.') : ''}
         ${itemCards}

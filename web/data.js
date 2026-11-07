@@ -296,28 +296,14 @@ window.GAME_MODULES = (() => {
     { primary:'Mind', weak:'Strength', burden:'Frail', name:'Warded robes', ability:'Warded', rule:'Warded: gain +2 on Mind checks against hostile magic, fear, curses, or possession. The visible sigils make the wearer easy to identify.', checkAttribute:'Mind', checkBonus:2, checkLabel:'Use Ward' },
     { primary:'Mind', weak:'Agility', burden:'Ritually encumbered', name:'Rune-carved plate', ability:'Steadfast', rule:'Steadfast: once per Scene, ignore one attempt to move, knock down, or physically restrain you. This does not prevent damage.', steadfast:true }
   ];
-  const pasts = ['Former tomb robber','Caravan guard from the salt road','Assistant to a plague surgeon','Condemned mine laborer','Runaway monastery novice','Poacher in the royal forest','Scavenger from a broken siege','Escapee from a hidden cult','Village undertaker','Smuggler through forgotten tunnels','Retainer to a witch hunter','Disgraced duelist','Guide to the city sewers','Standard-bearer from a lost battle','Apprentice to an apothecary','Thief from a temple reliquary','Ferryman on a black river','Keeper of dangerous beasts','Assistant to an obsessive mapmaker','Sole survivor of a failed expedition'];
-  const pastAttributes = {
-    'Former tomb robber':['Agility','Mind'],
-    'Caravan guard from the salt road':['Strength','Agility'],
-    'Assistant to a plague surgeon':['Agility','Mind'],
-    'Condemned mine laborer':['Strength','Mind'],
-    'Runaway monastery novice':['Agility','Mind'],
-    'Poacher in the royal forest':['Agility','Mind'],
-    'Scavenger from a broken siege':['Strength','Agility'],
-    'Escapee from a hidden cult':['Agility','Mind'],
-    'Village undertaker':['Strength','Mind'],
-    'Smuggler through forgotten tunnels':['Agility','Mind'],
-    'Retainer to a witch hunter':['Strength','Mind'],
-    'Disgraced duelist':['Strength','Agility'],
-    'Guide to the city sewers':['Agility','Mind'],
-    'Standard-bearer from a lost battle':['Strength','Mind'],
-    'Apprentice to an apothecary':['Agility','Mind'],
-    'Thief from a temple reliquary':['Agility','Mind'],
-    'Ferryman on a black river':['Strength','Mind'],
-    'Keeper of dangerous beasts':['Strength','Mind'],
-    'Assistant to an obsessive mapmaker':['Agility','Mind'],
-    'Sole survivor of a failed expedition':['Strength','Agility','Mind']
+  const pasts = ['Former tomb robber','Caravan guard from the salt road','Assistant to a plague surgeon','Runaway monastery novice','Smuggler through forgotten tunnels','Keeper of dangerous beasts'];
+  const pastProse = {
+    'Former tomb robber':'You learned to read untouched dust, false stonework, and the little warnings left by people who expected thieves. One sealed crypt still appears in your dreams.',
+    'Caravan guard from the salt road':'You crossed empty country beside creaking wagons, watching horizons for raiders and keeping frightened travelers alive through bad nights.',
+    'Assistant to a plague surgeon':'You carried the instruments, held down the fevered, and learned which wounds could wait and which could kill before sunrise.',
+    'Runaway monastery novice':'You fled before taking your final vows, but the old prayers, forbidden histories, and disciplined rituals never left your memory.',
+    'Smuggler through forgotten tunnels':'You moved forbidden cargo beneath locked streets, navigating by echoes and knowing when silence meant an ambush rather than safety.',
+    'Keeper of dangerous beasts':'You fed creatures that could tear through a stable door and learned how hunger, fear, posture, and scent reveal what teeth cannot say.'
   };
   const knacks = [
     { name:'Never Lost Below', cost:2, effect:'Retrace up to three connected, previously visited conquered Rooms for a total of one exploration turn and 1 Light, waived if every departure Room has permanent light. Resolve the normal danger roll for each unlit Room; a threat stops travel. Unsecured traversal features retain their normal costs and checks.' },
@@ -357,7 +343,7 @@ window.GAME_MODULES = (() => {
     description:'A practical old-school dungeon of goblins, ogres, traps, prisoners, treasure, skeletons, and zombies.',
     scenes, rooms:scenes, heartScenes, allScenes:[...scenes,...heartScenes],
     randomMonsters, bosses, monsters:monsterCards, sceneOpportunities, quests:activeQuests, questBands,
-    gear, armor, pasts, pastAttributes, knacks, items, itemRules, names
+    gear, armor, pasts, pastProse, knacks, items, itemRules, names
   };
   return { classics };
 })();
