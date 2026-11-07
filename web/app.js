@@ -471,9 +471,10 @@
     for (const hero of state.party) {
       if (hero.gear === 'Spellbook') hero.gear = 'Wand and spellbook';
       const gear = DATA.gear.find(entry => entry[0] === hero.gear);
-      if (!hero.gearAttribute) hero.gearAttribute = gear?.[1] || 'Strength';
-      if (!hero.gearHands) hero.gearHands = gear?.[3] || null;
-      if (!hero.gearTechnique && gear) {
+      if (gear) {
+        hero.gearAttribute = gear[1];
+        hero.gearRule = gear[2];
+        hero.gearHands = gear[3];
         hero.gearTechnique = gear[4];
         hero.gearTechniqueRule = gear[5];
         hero.gearTechniqueCost = gear[6];
