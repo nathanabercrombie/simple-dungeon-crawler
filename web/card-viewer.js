@@ -3,7 +3,7 @@
 
   const DATA = window.GAME_DATA;
   const STORAGE_KEY = 'delvekeeper.cardViewer.v1';
-  const EXPECTED_CARD_COUNT = 199;
+  const EXPECTED_CARD_COUNT = 156;
   const EDIT_FIELDS = ['title','kicker','frontText','rulesText','footer','notes'];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
@@ -112,7 +112,8 @@
         rulesText:text(
           addedNames.length && `Setup\nAdd ${addedNames.join(', ')} to the Monster deck.`,
           bossNames.length && `Set aside\n${bossNames.join(', ')}.`,
-          `Heart\n${quest.heartAction}. Return to the entrance to complete the expedition.`
+          `Heart\n${quest.heartAction}.`,
+          `Extraction\n${quest.extraction}`
         ),
         footer:`${quest.name} Quest Pack`, imageLabel:`Illustration — ${quest.name}`
       });

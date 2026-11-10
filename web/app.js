@@ -461,6 +461,7 @@
       state.quest.elements = canonicalQuest.elements;
       state.quest.heart = canonicalQuest.heart;
       state.quest.objective = canonicalQuest.objective;
+      state.quest.extraction = canonicalQuest.extraction;
     }
     if (!state.light.capacity) {
       state.light.remaining = Math.min(TORCH_CAPACITY, Math.max(0, Number(state.light.remaining) || 0) * 2);
@@ -553,6 +554,7 @@
       const parsed = JSON.parse(localStorage.getItem(SAVE_KEY));
       if (!parsed || parsed.version !== 2 || !window.GAME_MODULES?.[parsed.moduleId]) return null;
       activateModule(parsed.moduleId);
+      if (!DATA.quests.some(quest => quest.id === parsed.quest?.id)) return null;
       return parsed;
     } catch (_) { return null; }
   }
@@ -641,7 +643,7 @@
       rooms: [], activeRoomId: null, party: [], gold: 0, log: [], savedAt: null
     };
     const quest = form.quest === 'random' ? pick(DATA.quests) : DATA.quests.find(q => q.index === Number(form.quest));
-    state.quest = { id:quest.id, index:quest.index, name:quest.name, elements:quest.elements, heart:quest.heart, objective:quest.objective, elementsFound:0, heartFound:false, completed:false };
+    state.quest = { id:quest.id, index:quest.index, name:quest.name, elements:quest.elements, heart:quest.heart, objective:quest.objective, extraction:quest.extraction, elementsFound:0, heartFound:false, completed:false };
     const entranceScene = DATA.scenes[0];
     state.sceneDeck = [entranceScene.id, ...shuffle(DATA.scenes.slice(1).map(scene => scene.id))];
     const heartPosition = clamp(6 + die(5) + Math.max(0, 3-state.escalation), 6, state.sceneDeck.length-1);
@@ -852,10 +854,11 @@
       if (!room.securedLight && room.status === 'conquered') {
         const roll = die(6);
         dangerResults.push(`${room.number}:${roll}`);
-        if (roll === 1) {
+        const alarmedHeist = state.quest.id === 'classics:quest:steal-idol' && state.quest.completed && state.quest.alarmActive;
+        if (roll === 1 || (alarmedHeist && roll === 2)) {
           room.enemies.push(makeEnemy({ ...template, target:targetForRoom(room) }, false, true));
           room.status = 'dangerous';
-          log(`Wandering enemies entered Room ${room.number}; travel stopped.`, 'warning');
+          log(`${alarmedHeist ? 'The Golden Delver alarm drew' : 'Wandering'} enemies into Room ${room.number}; travel stopped.`, 'warning');
           break;
         }
       }
@@ -869,6 +872,7 @@
   function escapeDungeon(bypassed = false) {
     const room = activeRoom();
     if (room.number !== 1 || !state.quest.completed) return;
+    if (state.quest.failed) return showToast('The Quest failed during extraction.');
     if (liveEnemies(room).length && !bypassed) return openModal('bypass', { movement:'escape' });
     state.escaped = true;
     state.escapedAt = new Date().toISOString();
@@ -1091,13 +1095,32 @@
     room.cardState.rewardsRevealed = true;
     state.quest.completed = true;
     state.quest.claimedObjective = questDefinition().profile?.object || state.quest.heart;
+    state.quest.extractionActive = true;
+    if (state.quest.id === 'classics:quest:rescue-prisoner') state.quest.escortHp = 2;
+    if (state.quest.id === 'classics:quest:steal-idol') {
+      const usedFalseCopy = state.rooms.some(candidate => candidate.quest?.used && buildQuestScene(candidate).title === 'False Gold Copy');
+      state.quest.alarmActive = !usedFalseCopy;
+    }
     log(`${heartAction()} in Room ${room.number}. The Quest is complete; return to the entrance. Active Monster cards remain, and the Room is not conquered.`, 'success');
+    log(`Extraction rule: ${state.quest.extraction}`, 'warning');
     render();
   }
 
   function applyDungeonAction(enemyId, heroId, damage = 1) {
     const room = activeRoom();
     const enemy = room.enemies.find(item => item.id === enemyId);
+    if (heroId === 'quest-escort' && state.quest.id === 'classics:quest:rescue-prisoner' && state.quest.completed && !state.quest.failed) {
+      if (!enemy) return;
+      state.quest.escortHp = Math.max(0,Number(state.quest.escortHp ?? 2) - damage);
+      log(`${enemy.name} dealt ${damage} damage to Ada Stone. She has ${state.quest.escortHp}/2 HP.`, state.quest.escortHp > 0 ? 'warning' : 'event');
+      if (state.quest.escortHp <= 0) {
+        state.quest.failed = true;
+        log('Ada Stone was killed during extraction. The Quest failed.', 'warning');
+      }
+      closeModal();
+      render();
+      return;
+    }
     const hero = state.party.find(item => item.id === heroId);
     if (!enemy || !hero || hero.dead) return;
     if (hero.armorGuard && hero.guardPreparedSceneId === room.id) {
@@ -1239,7 +1262,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
-            <a class="btn" href="card-viewer.html">Open the 199-card viewer</a>
+            <a class="btn" href="card-viewer.html">Open the 156-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>
@@ -1552,8 +1575,17 @@
       return `<g class="overview-room-node${stateClass}" data-action="travel" data-id="${room.id}" tabindex="0"><title>Scene ${room.number}: ${esc(templateFor(room).name)}</title>${outline}${plan}<circle class="overview-room-number-bg" cx="${layout.x*unit+14}" cy="${layout.y*unit+14}" r="11"/><text class="overview-room-number" x="${layout.x*unit+14}" y="${layout.y*unit+18}">${room.number}</text><text class="overview-room-icons" x="${(layout.x+layout.width)*unit-6}" y="${layout.y*unit+15}">${statusIcon(room)}</text></g>`;
     }).join('');
     const displayWidth = totalWidth * 12, displayHeight = totalHeight * 12;
+    let extractionStatus = '';
+    if (state.quest.completed) {
+      const liveStatus = state.quest.id === 'classics:quest:rescue-prisoner'
+        ? ` Ada Stone: ${state.quest.escortHp ?? 2}/2 HP${state.quest.failed ? ' — Quest failed' : ''}.`
+        : state.quest.id === 'classics:quest:steal-idol'
+          ? ` Alarm: ${state.quest.alarmActive ? 'active — danger on 1–2' : 'fooled — normal danger rolls'}.`
+          : ' The iron tooth must reach the entrance.';
+      extractionStatus = `<p><strong>Extraction:</strong> ${esc(state.quest.extraction)}${esc(liveStatus)}</p>`;
+    }
     return `<aside class="pane pane-map"><div class="map-wrap">
-      <div class="site-card"><div class="eyebrow">Quest</div><h3>${esc(state.quest.name)}</h3><p>${esc(state.quest.objective)}</p></div>
+      <div class="site-card"><div class="eyebrow">Quest</div><h3>${esc(state.quest.name)}</h3><p>${esc(state.quest.objective)}</p>${extractionStatus}</div>
       <div class="section-head"><h2>Dungeon map</h2><span>${state.rooms.length} Scenes · shared scale</span></div>
       <div class="dungeon-overview-wrap"><svg class="dungeon-overview" width="${displayWidth}" height="${displayHeight}" viewBox="0 0 ${totalWidth*unit} ${totalHeight*unit}" role="img" aria-label="Connected dungeon overview at one shared grid scale"><defs><pattern id="overview-rock" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="map-hatch-line"/></pattern></defs><rect class="map-paper" width="100%" height="100%"/><rect class="map-hatching" width="100%" height="100%" fill="url(#overview-rock)"/>${roomPlans}${corridorTiles}${corridorWalls}</svg><div class="map-legend"><div class="legend-line"><i class="legend-swatch active"></i> Current Scene</div><div class="legend-line"><i class="legend-swatch danger"></i> Active danger</div><div class="legend-line">✦ Light &nbsp; ⚔ Enemies &nbsp; ♥ Heart</div></div></div>
     </div></aside>`;
@@ -2029,7 +2061,10 @@
     } else if (modal.type === 'dungeon') {
       const live = activeRoom().enemies.filter(e=>e.hp>0);
       const damage = Number(modal.damage || 1);
+      const escortTarget = state.quest.id === 'classics:quest:rescue-prisoner' && state.quest.completed && !state.quest.failed
+        ? `<option value="quest-escort">Ada Stone · ${state.quest.escortHp ?? 2}/2 HP</option>` : '';
       root.innerHTML = `<form class="modal" id="dungeon-form"><div class="modal-head"><h2>Dungeon action</h2><p>Use the creature’s Instinct and current fiction to choose a target. This attack automatically deals ${damage} damage.</p></div><div class="modal-body"><input type="hidden" name="damage" value="${damage}"><div class="form-grid"><div class="field full"><label>Creature</label><select name="enemyId">${live.map(e=>`<option value="${e.id}" ${e.id===modal.enemyId?'selected':''}>${esc(e.name)} — ${esc(e.instinct)}</option>`).join('')}</select></div><div class="field full"><label>Target</label><select name="heroId">${state.party.filter(h=>!h.dead).map(h=>`<option value="${h.id}">${esc(h.name)} · ${h.hp}/${h.maxHp} HP${h.wound?' · Wounded':''}</option>`).join('')}</select></div></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button class="btn btn-danger" type="submit" ${live.length?'':'disabled'}>Deal ${damage} damage</button></div></form>`;
+      if (escortTarget) root.querySelector('[name="heroId"]')?.insertAdjacentHTML('beforeend',escortTarget);
     } else if (modal.type === 'encounter') {
       const template = templateFor(activeRoom());
       const options = DATA.monsters.map((monster, index) => {

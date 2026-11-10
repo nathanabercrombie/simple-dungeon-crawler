@@ -185,7 +185,7 @@ window.GAME_MODULES = (() => {
       'Seal the Black Gate', ['classics:monster:cult-acolytes','classics:monster:living-statue'], ['gate','objective','ritual','arcane']),
     quest('classics:quest:steal-idol',6,'Steal the golden idol','Temple signs, offering customs, trap controls, and guardian rules','The shrine of the Golden Delver','Steal the Golden Delver idol from its guarded shrine and carry it out through the dungeon entrance.',
       { object:'the Golden Delver', location:'its guarded shrine', opposition:'the idol’s guardian', threat:'the shrine punishes anyone who takes without leaving an offering', sign:'A stamped inventory depicts a fist-sized golden idol called THE GOLDEN DELVER.', trace:'Tiny flakes of gold leaf and trails from dragged offerings lead toward the shrine.', lead:'An offering ledger says the guardian accepts any crafted object bearing the giver’s name.', use:'Leave a named crafted object to prevent the guardian’s first action.', setback:'The idol has been chained to its altar. The chain must be opened or broken before it can be taken.' },
-      [{title:'Offering Ledger',prose:'The final entry explains what the guardian accepts in exchange for the idol.',effect:'Leave a named crafted object to prevent the guardian’s first action.'},{title:'Altar Chain Key',prose:'A tiny gold key fits the chain shown around the Golden Delver.',effect:'Open the idol’s chain without a check.'},{title:'False Gold Copy',prose:'A weighted brass copy could occupy the idol’s place.',effect:'Replace the idol to delay the shrine’s alarm until extraction begins.'}],
+      [{title:'Offering Ledger',prose:'The final entry explains what the guardian accepts in exchange for the idol.',effect:'Leave a named crafted object to prevent the guardian’s first action.'},{title:'Altar Chain Key',prose:'A tiny gold key fits the chain shown around the Golden Delver.',effect:'Open the idol’s chain without a check.'},{title:'False Gold Copy',prose:'A weighted brass copy could occupy the idol’s place.',effect:'Use this while taking the Golden Delver. The alarm does not begin; use normal danger rolls during extraction.'}],
       'Take the Golden Delver', ['classics:monster:living-statue','classics:monster:skeleton-guard'], ['shrine','altar','treasure','throne','objective']),
     quest('classics:quest:necromancer',7,'Destroy the necromancer','Forbidden notes, disrupted rituals, servant commands, and soul anchors','The Bone-Speaker’s ritual chamber','Find and destroy the Bone-Speaker, then break the staff that lets the necromancer raise new servants.',
       { object:'the Bone-Speaker', location:'the ritual chamber', opposition:'the necromancer and raised dead', threat:'the staff raises one destroyed servant again', sign:'A fresh proclamation promises eternal service under a necromancer called THE BONE-SPEAKER.', trace:'Bare footprints walk beside skeleton tracks toward the oldest crypts.', lead:'A stolen ritual note says the finger-bone staff cannot raise servants while wrapped in burial cloth.', use:'Wrap the staff to prevent one defeated undead Monster card from returning.', setback:'The Bone-Speaker has raised another guard. Add Shambling Zombies at the Heart.' },
@@ -231,10 +231,17 @@ window.GAME_MODULES = (() => {
     ['classics:monster:skeleton-guard','classics:monster:shambling-zombies'],
     ['classics:monster:dire-wolves','classics:monster:giant-spider']
   ];
-  const activeQuests = quests.map((questCard, index) => {
-    const [layoutIndex,name,front,rule,failure] = heartSceneSpecs[index];
+  const activeQuestIds = new Set(['classics:quest:kill-ogre','classics:quest:rescue-prisoner','classics:quest:steal-idol']);
+  const extractionRules = {
+    'classics:quest:kill-ogre':'Proof: after taking the iron tooth, choose who carries it. If that adventurer dies or leaves it behind, another adventurer must recover it. Escape with the tooth.',
+    'classics:quest:rescue-prisoner':'Escort: Ada Stone has 2 HP and cannot take actions. A dungeon action may target her when the fiction permits; an adventurer in the same Scene may take that damage instead. If Ada reaches 0 HP, the Quest fails.',
+    'classics:quest:steal-idol':'Alarm: after taking the Golden Delver, wandering enemies enter a conquered dark Scene on a danger roll of 1 or 2 instead of only 1. Using the False Gold Copy keeps the normal danger roll.'
+  };
+  const activeQuests = quests.filter(questCard => activeQuestIds.has(questCard.id)).map(questCard => {
+    const sourceIndex = quests.indexOf(questCard);
+    const [layoutIndex,name,front,rule,failure] = heartSceneSpecs[sourceIndex];
     const heartScene = makeHeartScene(questCard,layoutIndex,name,front,rule,failure);
-    return { ...questCard, heartSceneId:heartScene.id, heartScene, bossIds:heartScene.encounter.mode === 'boss' ? heartScene.encounter.monsterIds : [], wanderingAdds:questDeckAdds[index] };
+    return { ...questCard, extraction:extractionRules[questCard.id], heartSceneId:heartScene.id, heartScene, bossIds:heartScene.encounter.mode === 'boss' ? heartScene.encounter.monsterIds : [], wanderingAdds:questDeckAdds[sourceIndex] };
   });
   const heartScenes = activeQuests.map(questCard => questCard.heartScene);
   // P is the number of active adventurers when this Monster card is placed.
@@ -262,7 +269,8 @@ window.GAME_MODULES = (() => {
   };
   const monsterCards = monsters.map(({ tags:_retiredTags, requiresAny:_retiredPlacementRules, ...monster }) => ({ ...monster, scale:monsterScales[monster.id] }));
   const randomMonsters = monsterCards.filter(monster => monster.wandering && !monster.questOnly);
-  const bosses = monsterCards.filter(monster => monster.questOnly);
+  const activeBossIds = new Set(activeQuests.flatMap(questCard => questCard.bossIds));
+  const bosses = monsterCards.filter(monster => activeBossIds.has(monster.id));
 
   const questBands = [
     [8,'Omen','Foreshadow the Heart, stakes, or opposition without concrete progress.'],
