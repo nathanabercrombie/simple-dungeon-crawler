@@ -501,13 +501,13 @@
       }
       if (!DATA.pasts.includes(hero.past)) hero.past = stablePastFor(hero);
       delete hero.pastAttribute;
-      if (!hero.knackRule) {
-        const knack = DATA.knacks.find(entry => entry.name === hero.knack);
-        if (knack) {
-          hero.knackCost = knack.cost;
-          hero.knackRule = knack.effect;
-        }
+      let knack = DATA.knacks.find(entry => entry.name === hero.knack);
+      if (!knack) {
+        knack = stableKnackFor(hero);
+        hero.knack = knack.name;
       }
+      hero.knackCost = knack.cost;
+      hero.knackRule = knack.effect;
       if (!hero.bonusItemsNormalized) {
         for (const [item, attribute] of Object.entries({ 'Circlet of Mind':'Mind', 'Gauntlets of Might':'Strength', 'Boots of Celerity':'Agility' })) {
           const duplicates = hero.items.filter(candidate => candidate === item).length - 1;
@@ -604,6 +604,15 @@
       hash = Math.imul(hash, 16777619);
     }
     return DATA.pasts[(hash >>> 0) % DATA.pasts.length];
+  }
+
+  function stableKnackFor(hero) {
+    let hash = 2166136261 >>> 0;
+    for (const char of `${state.seed}:${hero.id}:knack`) {
+      hash ^= char.charCodeAt(0);
+      hash = Math.imul(hash, 16777619);
+    }
+    return DATA.knacks[(hash >>> 0) % DATA.knacks.length];
   }
 
   function createCharacter(name, { mustCarryTorch = false } = {}) {
@@ -1262,7 +1271,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
-            <a class="btn" href="card-viewer.html">Open the 156-card viewer</a>
+            <a class="btn" href="card-viewer.html">Open the 146-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>

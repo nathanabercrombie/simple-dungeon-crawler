@@ -314,22 +314,12 @@ window.GAME_MODULES = (() => {
     'Keeper of dangerous beasts':'You fed creatures that could tear through a stable door and learned how hunger, fear, posture, and scent reveal what teeth cannot say.'
   };
   const knacks = [
-    { name:'Never Lost Below', cost:2, effect:'Retrace up to three connected, previously visited conquered Rooms for a total of one exploration turn and 1 Light, waived if every departure Room has permanent light. Resolve the normal danger roll for each unlit Room; a threat stops travel. Unsecured traversal features retain their normal costs and checks.' },
-    { name:'Trap Whisperer', cost:2, effect:'Learn the trigger and one safe method of bypassing a detected mundane trap.' },
-    { name:'Appraiser’s Eye', cost:2, effect:'Ask two questions about an object: its purpose, value, maker, age, danger, or whether it is magical. Receive truthful answers.' },
     { name:'Field Surgeon', cost:2, effect:'Treat one active Wound on yourself or an adjacent willing ally without a check or treatment supply. It becomes its normal Scar. Spend one exploration turn and 1 Light unless this Room is permanently lit. HP is not restored.' },
     { name:'Second Wind', cost:2, effect:'During a fight, restore yourself to full HP. This does not remove a Wound.' },
-    { name:'Scrounger', cost:2, effect:'Once per expedition, search a plausible supply cache to find either one packet of Bandages or one Flask of oil holding 6 Light of lantern fuel. No check or exploration turn. This cannot produce a Fresh torch, Lantern, Medkit, treasure, or Skill Tokens.' },
-    { name:'Lie Reader', cost:2, effect:'Learn whether a speaker believes one statement they just made.' },
     { name:'Parley Under Steel', cost:2, effect:'Halt immediate violence from intelligent creatures long enough to exchange one short offer, demand, or warning.' },
-    { name:'Slip the Noose', cost:2, effect:'Escape one mundane grapple, restraint, or enclosed hold and reposition nearby.' },
     { name:'Gone in a Blink', cost:2, effect:'If plausible concealment or an exit is nearby, break line of sight and become hidden from ordinary senses.' },
     { name:'Weak-Point Eye', cost:2, effect:'After observing a creature or barrier, the next successful damaging attack against it deals +1 damage.' },
-    { name:'Improvised Calamity', cost:2, effect:'Collapse, ignite, or release a suitable Room feature to deal 1 damage without a check to up to two creatures in one small nearby area, including allies if they occupy it. State the affected creatures before spending. The feature is spent and cannot power this Knack again.' },
-    { name:'Read the Signs', cost:2, effect:'Ask the oracle one yes/no question about an unresolved uncertainty twice and choose which answer to use. This cannot contradict revealed cards, established facts, or a completed roll, or directly defeat a creature or complete a Quest. In GM-led play, learn one useful clue instead.' },
-    { name:'Echoes of the Place', cost:2, effect:'Learn the most recent significant event in this Room through a truthful sensory impression, including one actionable clue about its current danger, mechanism, or occupants when one exists. Your next check acting on that clue in this Scene has advantage.' },
-    { name:'Threshold Premonition', cost:2, effect:'Before entering the next Room, learn its primary Challenge category and whether an ambush awaits. Entering still costs its normal turn. That Scene cannot surprise your party, and your first check addressing its primary Challenge has advantage.' },
-    { name:'Name the Weakness', cost:2, effect:'Learn one actionable vulnerability, prohibition, appetite, or fear belonging to a creature you can observe.' }
+    { name:'Improvised Calamity', cost:2, effect:'Collapse, ignite, or release a suitable Room feature to deal 1 damage without a check to up to two creatures in one small nearby area, including allies if they occupy it. State the affected creatures before spending. The feature is spent and cannot power this Knack again.' }
   ];
   const items = ['Medkit','Rope','Fresh torch','Crowbar','Climbing tools','Flask of oil','Lantern','Bandages','Chalk and spikes','Small mirror'];
   const itemRules = {

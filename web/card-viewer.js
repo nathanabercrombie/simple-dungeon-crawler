@@ -3,7 +3,7 @@
 
   const DATA = window.GAME_DATA;
   const STORAGE_KEY = 'delvekeeper.cardViewer.v1';
-  const EXPECTED_CARD_COUNT = 156;
+  const EXPECTED_CARD_COUNT = 146;
   const EDIT_FIELDS = ['title','kicker','frontText','rulesText','footer','notes'];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
