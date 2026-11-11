@@ -3,7 +3,7 @@
 
   const DATA = window.GAME_DATA;
   const STORAGE_KEY = 'delvekeeper.cardViewer.v1';
-  const EXPECTED_CARD_COUNT = 146;
+  const EXPECTED_CARD_COUNT = 135;
   const EDIT_FIELDS = ['title','kicker','frontText','rulesText','footer','notes'];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"]/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[character]));
@@ -138,7 +138,7 @@
       const [name,attribute,passive,hands,techniqueName,techniqueRule,techniqueCost] = gear;
       cards.push({
         id:`gear:${slug(name)}:${index + 1}`, category:'Gear', quest:'', title:name, kicker:`${attribute} weapon · ${hands} hand${hands === 1 ? '' : 's'}`,
-        frontText:passive, rulesText:`${techniqueName} · ${techniqueCost} Skill Token${techniqueCost === 1 ? '' : 's'}\n${techniqueRule}`,
+        frontText:`Attribute: ${attribute}\nHands: ${hands}\n\n${passive}`, rulesText:`${techniqueName} · ${techniqueCost} Skill Token${techniqueCost === 1 ? '' : 's'}\n${techniqueRule}`,
         footer:'Core Set', imageLabel:`Illustration — ${name}`
       });
     });

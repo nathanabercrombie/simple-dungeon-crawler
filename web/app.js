@@ -470,7 +470,19 @@
     if (!state.light.source) state.light.source = 'Torch';
     if (!state.light.holderId) state.light.holderId = state.party.find(hero => !hero.dead)?.id || null;
     for (const hero of state.party) {
-      if (hero.gear === 'Spellbook') hero.gear = 'Wand and spellbook';
+      const retiredGear = {
+        'Arming sword':'Rapier',
+        'Maul':'War hammer',
+        'Spear':'Greatsword',
+        'Longbow':'Crossbow',
+        'Dual daggers':'Crossbow',
+        'Throwing knives':'Crossbow',
+        'Wand':'Hexing staff',
+        'Hexing focus':'Hexing staff',
+        'Spellbook':'Sacred relic',
+        'Wand and spellbook':'Sacred relic'
+      };
+      if (retiredGear[hero.gear]) hero.gear = retiredGear[hero.gear];
       const gear = DATA.gear.find(entry => entry[0] === hero.gear);
       if (gear) {
         hero.gearAttribute = gear[1];
@@ -493,7 +505,7 @@
       hero.armorGuard = Boolean(armorDefinition?.guard);
       hero.armorGuardCost = Number(armorDefinition?.guardCost || 0);
       hero.armorAbility = armorDefinition?.ability || '';
-      const expectedMaxHp = 2 + (hero.gear === 'Arming sword' || armorDefinition?.reinforced ? 1 : 0);
+      const expectedMaxHp = 2 + (hero.gear === 'Rapier' || armorDefinition?.reinforced ? 1 : 0);
       if (hero.maxHp !== expectedMaxHp) {
         const damageTaken = Math.max(0, hero.maxHp - hero.hp);
         hero.maxHp = expectedMaxHp;
@@ -617,7 +629,9 @@
 
   function createCharacter(name, { mustCarryTorch = false } = {}) {
     const attrs = ['Strength','Agility','Mind'];
-    const torchPrimary = mustCarryTorch ? pick(attrs) : null;
+    const oneHandedGear = DATA.gear.filter(entry => entry[3] === 1);
+    const torchAttributes = [...new Set(oneHandedGear.map(entry => entry[1]))];
+    const torchPrimary = mustCarryTorch ? pick(torchAttributes) : null;
     const gearPool = mustCarryTorch ? DATA.gear.filter(entry => entry[3] === 1 && entry[1] === torchPrimary) : DATA.gear;
     const [gear, primary, gearRule, gearHands, gearTechnique, gearTechniqueRule, gearTechniqueCost] = pick(gearPool);
     const weak = pick(attrs.filter(attr => attr !== primary));
@@ -626,7 +640,7 @@
     values[weak] = -2;
     const armor = pick(armorPool(primary, weak));
     const knack = pick(DATA.knacks);
-    const maxHp = 2 + (gear === 'Arming sword' || armor.reinforced ? 1 : 0);
+    const maxHp = 2 + (gear === 'Rapier' || armor.reinforced ? 1 : 0);
     const item = pick(DATA.items);
     const past = pick(DATA.pasts);
     return {
@@ -1271,7 +1285,7 @@
           <div class="welcome-body">
             ${saved ? `<div class="resume-box"><strong>${esc(saved.title)}</strong><p>Turn ${saved.turn} · ${saved.rooms.length} rooms · last saved ${new Date(saved.savedAt).toLocaleString()}</p><button class="btn btn-primary" data-action="resume">Resume expedition</button></div>` : ''}
             <button class="btn ${saved ? '' : 'btn-primary'}" data-action="setup">Begin a new expedition</button>
-            <a class="btn" href="card-viewer.html">Open the 146-card viewer</a>
+            <a class="btn" href="card-viewer.html">Open the 135-card viewer</a>
             <div class="build-badge">Delvekeeper build ${esc(BUILD)}</div>
           </div>
         </section>
