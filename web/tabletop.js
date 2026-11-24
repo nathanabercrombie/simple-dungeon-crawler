@@ -2,7 +2,8 @@
   'use strict';
 
   const data = window.GAME_DATA;
-  const saveKey = 'delvekeeper.cardTable.v1';
+  const saveKey = 'delvekeeper.cardTable.v2';
+  const oldSaveKey = 'delvekeeper.cardTable.v1';
   const scenes = new Map(data.scenes.map(scene => [scene.id, scene]));
   const entrance = data.scenes[0];
   const $ = selector => document.querySelector(selector);
@@ -28,10 +29,19 @@
     return result;
   }
 
+  const faces = { sleeve:['teaser'], map:['teaser','map'], script:['prose','reveal'] };
+  const piece = (scene,kind,x,y,angle = 0,side = faces[kind][0]) => ({ id:`${scene}:${kind}`, scene,kind,x,y,angle,side });
+
+  function pair(scene,x,y,angle,showMap = false,showReveal = false) {
+    const radians = angle*Math.PI/180;
+    return [piece(scene,'map',x,y,angle,showMap ? 'map' : 'teaser'),
+      piece(scene,'script',x+Math.cos(radians)*(width+20),y+Math.sin(radians)*(width+20),angle,showReveal ? 'reveal' : 'prose')];
+  }
+
   function freshTable() {
     return {
       deck:shuffled(data.scenes.slice(1).map(scene => scene.id)),
-      cards:[{ id:entrance.id, x:deckPosition.x+width+48, y:52, angle:0, side:'front' }]
+      cards:[piece(entrance.id,'sleeve',deckPosition.x+width+48,52)]
     };
   }
 
@@ -39,8 +49,13 @@
     try {
       const saved = JSON.parse(localStorage.getItem(saveKey));
       if (Array.isArray(saved?.deck) && Array.isArray(saved.cards) &&
-          saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => scenes.has(card.id) &&
-            [card.x,card.y,card.angle].every(Number.isFinite) && ['back','front','response'].includes(card.side))) return saved;
+          saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => scenes.has(card.scene) &&
+            card.id === `${card.scene}:${card.kind}` && faces[card.kind]?.includes(card.side) && [card.x,card.y,card.angle].every(Number.isFinite))) return saved;
+      const old = JSON.parse(localStorage.getItem(oldSaveKey));
+      if (Array.isArray(old?.deck) && Array.isArray(old.cards) && old.deck.every(id => scenes.has(id)) &&
+          old.cards.every(card => scenes.has(card.id) && [card.x,card.y,card.angle].every(Number.isFinite) && ['back','front','response'].includes(card.side))) {
+        return { deck:old.deck, cards:old.cards.flatMap(card => card.side === 'back' ? [piece(card.id,'sleeve',card.x,card.y,card.angle)] : pair(card.id,card.x,card.y,card.angle,true,card.side === 'response')) };
+      }
     } catch { /* Storage is optional. */ }
     return freshTable();
   }
@@ -100,18 +115,22 @@
   }
 
   function face(card) {
-    if (card.side === 'back') return back;
-    const scene = scenes.get(card.id);
+    const scene = scenes.get(card.scene);
+    if (card.side === 'teaser') {
+      return `<div class="face teaser-face"><span class="teaser-kicker">Classics · Scene</span><svg viewBox="0 0 80 100" width="72" height="90" aria-hidden="true"><path d="M40 2 77 50 40 98 3 50Z" fill="none" stroke="currentColor" opacity=".65"/><path d="M26 70V43a14 14 0 0 1 28 0v27M20 70h40m-27 0V43a7 7 0 0 1 14 0v27" fill="none" stroke="currentColor" stroke-width="2"/></svg><div class="teaser-copy"><p>${esc(scene.teaser)}</p><p class="teaser-cost">use 1 torch token to explore</p></div><span class="teaser-footer">${card.kind === 'sleeve' ? 'Sleeved pair' : 'Map on reverse'}</span></div>${card.kind === 'sleeve' ? '<button type="button" class="pull-tab" data-pull aria-label="Pull the cards out of the sleeve" title="Drag to pull out the prose card, or click to open">Pull cards <span aria-hidden="true">↗</span></button>' : ''}`;
+    }
     const heading = `<h2 class="card-title">${esc(scene.name)}</h2>`;
     const footer = `<footer class="card-footer"><span>Classics · ${String(scene.index).padStart(2,'0')}</span><span>${esc(scene.lighting)}</span></footer>`;
+    if (card.side === 'map') {
+      return `<div class="face paper map-face"><span class="card-meta">Scene · Battlemap</span>${heading}${floorplan(scene)}${footer}</div>`;
+    }
     const note = encounterNote(scene);
-    if (card.side === 'response') {
+    if (card.side === 'reveal') {
       const entries = [['Revelation',scene.revelation],['Rule',scene.rule],['Failure',scene.failure],['Terrain',scene.feature?.text],['Monsters',note],['Reward',scene.reward === 'loot' ? 'Loot card' : scene.reward === 'quest' ? 'Quest card' : '']].filter(([,text]) => text);
-      return `<div class="face paper response-face"><span class="card-meta">Scene · Response</span>${heading}<dl class="response-copy">${entries.map(([label,text]) => `<dt>${label}</dt><dd>${esc(text)}</dd>`).join('')}</dl>${footer}</div>`;
+      return `<div class="face paper response-face"><span class="card-meta">Scene · Reveal</span>${heading}<dl class="response-copy">${entries.map(([label,text]) => `<dt>${label}</dt><dd>${esc(text)}</dd>`).join('')}</dl>${footer}</div>`;
     }
     const visibleNote = !scene.revelation ? note : '';
-    const dense = scene.readAloud.length+scene.front.length+visibleNote.length > 245;
-    return `<div class="face paper${dense ? ' dense' : ''}"><span class="card-meta">Scene · ${esc(scene.builtAs)}</span>${heading}${floorplan(scene)}<div class="card-copy"><p>${esc(scene.readAloud)}</p><p>${esc(scene.front)}</p>${visibleNote ? `<p class="encounter-note">${esc(visibleNote)}</p>` : ''}</div>${footer}</div>`;
+    return `<div class="face paper prose-face"><span class="card-meta">Scene · Prose</span>${heading}<div class="card-copy"><p>${esc(scene.readAloud)}</p><p>${esc(scene.front)}</p>${visibleNote ? `<p class="encounter-note">${esc(visibleNote)}</p>` : ''}</div>${footer}</div>`;
   }
 
   function position(node, card, index) {
@@ -135,35 +154,38 @@
       deck.innerHTML = count ? back : '<span class="deck-empty"><span aria-hidden="true">◇</span>Empty deck</span>';
     }
     deck.setAttribute('aria-disabled', String(count === 0));
-    deck.setAttribute('aria-label', count ? `Scene deck, ${count} cards. Draw the top card` : 'Scene deck is empty');
+    deck.setAttribute('aria-label', count ? `Scene deck, ${count} sleeves. Draw the top sleeve` : 'Scene deck is empty');
     table.cards.forEach((card,index) => {
       let node = nodes.get(card.id);
       if (!node) {
         node = document.createElement('div');
         node.className = 'card';
         node.dataset.card = card.id;
+        node.dataset.kind = card.kind;
         node.tabIndex = 0;
-        node.setAttribute('role','button');
+        node.setAttribute('role',card.kind === 'sleeve' ? 'group' : 'button');
         cards.append(node);
         nodes.set(card.id,node);
       }
       if (node.dataset.side !== card.side) {
         node.dataset.side = card.side;
         node.innerHTML = face(card);
-        node.setAttribute('aria-label', card.side === 'back' ? 'Face-down Scene card' : `${scenes.get(card.id).name}, ${card.side === 'response' ? 'Response' : 'front'}`);
+        const scene = scenes.get(card.scene);
+        node.setAttribute('aria-label', card.side === 'teaser' ? `${card.kind === 'sleeve' ? 'Scene sleeve' : 'Teaser'}: ${scene.teaser}. Use 1 torch token to explore.` : `${scene.name}, ${card.side === 'map' ? 'battlemap' : card.side}`);
       }
-      node.setAttribute('aria-pressed', String(card.id === selected));
+      node.dataset.selected = String(card.id === selected);
+      if (card.kind !== 'sleeve') node.setAttribute('aria-pressed', String(card.id === selected));
       node.classList.toggle('dragging', gesture?.card === card && gesture.moved);
       position(node,card,index);
     });
-    $('#count').textContent = `${count} in deck · ${table.cards.length} on felt`;
-    for (const action of ['flip','rotate','rotate-back','response','draw','shuffle','undo']) {
+    const picked = selectedCard();
+    $('#count').textContent = `${count} sleeves in deck · ${table.cards.length} pieces on felt`;
+    for (const action of ['flip','rotate','rotate-back','open','draw','shuffle','undo']) {
       const button = $(`[data-action="${action}"]`);
       if (action === 'undo') button.disabled = !undoStack.length;
       else if (action === 'draw' || action === 'shuffle') button.disabled = count < (action === 'shuffle' ? 2 : 1);
-      else button.disabled = !selectedCard() || (action === 'response' && selectedCard().side === 'back');
+      else button.disabled = !picked || (action === 'open' && picked.kind !== 'sleeve') || (action === 'flip' && picked.kind === 'sleeve');
     }
-    $('[data-action="response"]').textContent = selectedCard()?.side === 'response' ? 'Front' : 'Response';
   }
 
   function updateCamera() {
@@ -201,17 +223,34 @@
   }
 
   function pull(x,y) {
-    const id = table.deck.shift();
-    if (!id) return null;
-    const card = { id,x,y,angle:0,side:'back' };
+    const scene = table.deck.shift();
+    if (!scene) return null;
+    const card = piece(scene,'sleeve',x,y);
     table.cards.push(card);
-    selected = id;
+    selected = card.id;
     return card;
   }
 
+  function openSleeve(sleeve, dragging = false) {
+    const [map,script] = pair(sleeve.scene,sleeve.x,sleeve.y,sleeve.angle);
+    table.cards = table.cards.filter(card => card !== sleeve).concat(map,script);
+    if (dragging) Object.assign(script,{ x:sleeve.x, y:sleeve.y });
+    selected = script.id;
+    message('Sleeve opened. Flip the teaser for the battlemap, or the prose for the reveal.');
+    return script;
+  }
+
   function flip(card) {
-    card.side = card.side === 'back' ? 'front' : 'back';
-    message(card.side === 'back' ? 'Card turned face down.' : `${scenes.get(card.id).name} turned face up.`);
+    const [front,reverse] = faces[card.kind];
+    if (!reverse) return;
+    card.side = card.side === front ? reverse : front;
+    message(`Card turned to its ${card.side === 'map' ? 'battlemap' : card.side} side.`);
+  }
+
+  function keepVisible(card) {
+    const padding = 12;
+    if (camera.x+(card.x+width)*camera.zoom > felt.clientWidth-padding || camera.x+card.x*camera.zoom < padding ||
+        camera.y+(card.y+height)*camera.zoom > felt.clientHeight-padding || camera.y+card.y*camera.zoom < padding) fit();
   }
 
   function action(name) {
@@ -222,15 +261,14 @@
     if (name === 'draw' && table.deck.length) {
       remember();
       const shift = (table.cards.length-1)%6;
-      const x = deckPosition.x+width+28+shift*17;
+      const x = deckPosition.x+2*width+88+shift*17;
       const y = deckPosition.y+12+shift*22;
-      pull(x,y);
-      if (camera.x+(x+width)*camera.zoom > felt.clientWidth || camera.x+x*camera.zoom < 0 || camera.y+(y+height)*camera.zoom > felt.clientHeight || camera.y+y*camera.zoom < 0) fit();
-      message('Drew one face-down Scene.');
+      keepVisible(pull(x,y));
+      message('Drew one Scene sleeve. Only the teaser is showing.');
     } else if (name === 'shuffle' && table.deck.length > 1) {
       remember();
       table.deck = shuffled(table.deck);
-      message('Shuffled the face-down deck.');
+      message('Shuffled the Scene sleeves.');
     } else if (name === 'reset') {
       remember();
       table = freshTable();
@@ -240,15 +278,18 @@
     } else if (name === 'undo' && undoStack.length) {
       ({ table,selected } = undoStack.pop());
       message('Undid the last card action.');
-    } else if (card && ['flip','rotate','rotate-back','response'].includes(name)) {
-      if (name === 'response' && card.side === 'back') return;
+    } else if (card?.kind === 'sleeve' && name === 'open') {
+      remember();
+      keepVisible(openSleeve(card));
+    } else if (card && ['flip','rotate','rotate-back'].includes(name)) {
+      if (name === 'flip' && card.kind === 'sleeve') return;
       remember();
       if (name === 'flip') flip(card);
-      else if (name === 'response') card.side = card.side === 'front' ? 'response' : 'front';
       else card.angle = (card.angle + (name === 'rotate' ? 15 : 345))%360;
     } else return;
     lastTap = null;
     render();
+    if (name === 'open') nodes.get(selected)?.focus({ preventScroll:true });
     save();
   }
 
@@ -257,12 +298,13 @@
     const cardNode = event.target.closest('[data-card]');
     const card = table.cards.find(piece => piece.id === cardNode?.dataset.card);
     const fromDeck = event.target.closest('#deck');
+    const fromTab = card?.kind === 'sleeve' && event.target.closest('[data-pull]');
     if (event.button === 0 && fromDeck && !table.deck.length) return;
-    const kind = event.button === 1 ? 'pan' : fromDeck ? 'deck' : card ? 'card' : 'pan';
-    gesture = { kind, id:event.pointerId, x:event.clientX, y:event.clientY, moved:false, card:kind === 'card' ? card : null };
+    const kind = event.button === 1 ? 'pan' : fromDeck ? 'deck' : fromTab ? 'tab' : card ? 'card' : 'pan';
+    gesture = { kind, id:event.pointerId, x:event.clientX, y:event.clientY, moved:false, card:kind === 'card' || kind === 'tab' ? card : null };
     if (kind === 'pan') Object.assign(gesture,{ originX:camera.x, originY:camera.y });
     else {
-      const origin = kind === 'card' ? card : deckPosition;
+      const origin = card || deckPosition;
       Object.assign(gesture,{ originX:origin.x, originY:origin.y, before:snapshot() });
     }
     felt.setPointerCapture(event.pointerId);
@@ -280,6 +322,7 @@
       lastTap = null;
       if (g.kind === 'pan') felt.classList.add('panning');
       else if (g.kind === 'deck') g.card = pull(g.originX,g.originY);
+      else if (g.kind === 'tab') g.card = openSleeve(g.card,true);
       else lift(g.card);
       render();
     }
@@ -306,14 +349,22 @@
       lastTap = null;
     } else if (g.moved) {
       remember(g.before);
-      if (g.kind === 'deck') message('Drew one face-down Scene.');
+      if (g.kind === 'deck') message('Drew one Scene sleeve. Only the teaser is showing.');
     } else if (g.kind === 'deck') {
       action('draw');
+      return;
+    } else if (g.kind === 'tab') {
+      selected = g.card.id;
+      action('open');
       return;
     } else if (g.card) {
       selected = g.card.id;
       const now = event.timeStamp;
       if (lastTap?.id === selected && now-lastTap.time < 400 && Math.hypot(event.clientX-lastTap.x,event.clientY-lastTap.y) < 18) {
+        if (g.card.kind === 'sleeve') {
+          action('open');
+          return;
+        }
         remember(g.before);
         flip(g.card);
         lastTap = null;
@@ -340,6 +391,11 @@
     const button = event.target.closest('[data-action]');
     if (button && !button.disabled) action(button.dataset.action);
     if (event.target.closest('#deck') && event.detail === 0) action('draw');
+    const tab = event.target.closest('[data-pull]');
+    if (tab && event.detail === 0) {
+      selected = tab.closest('[data-card]').dataset.card;
+      action('open');
+    }
   });
 
   document.addEventListener('focusin', event => {
@@ -356,7 +412,9 @@
     let command = null;
     if (key === 'z' && (event.ctrlKey || event.metaKey)) command = 'undo';
     else if (event.ctrlKey || event.metaKey) return;
-    else if (key === 'f' || (onCard && (key === ' ' || key === 'enter'))) command = 'flip';
+    else if (onCard && (key === ' ' || key === 'enter')) command = card.kind === 'sleeve' ? 'open' : 'flip';
+    else if (key === 'f') command = 'flip';
+    else if (key === 'e') command = 'open';
     else if (key === 'r') command = event.shiftKey ? 'rotate-back' : 'rotate';
     else if (onCard && card && ['arrowleft','arrowright','arrowup','arrowdown'].includes(key)) {
       event.preventDefault();

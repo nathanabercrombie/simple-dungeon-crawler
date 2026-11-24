@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1a1d18">
   <title>Card Table · Delvekeeper</title>
-  <link rel="stylesheet" href="tabletop.css?build=20261101.24">
+  <link rel="stylesheet" href="tabletop.css?build=20261101.25">
 </head>
 <body>
   <header class="masthead">
@@ -15,12 +15,12 @@
   </header>
   <main class="table">
     <div class="table-info">
-      <p>Drag a card off the deck and drop it anywhere. Double-click or tap Flip to turn it over. Drag bare felt to pan.</p>
+      <p>Draw a sleeve to see its teaser. Drag its <strong>Pull cards</strong> tab to separate the pair, then flip either card. Drag bare felt to pan.</p>
       <span id="count"></span>
     </div>
     <div id="felt" class="felt" aria-label="Card table surface">
       <div id="world" class="world">
-        <button type="button" id="deck" class="deck" title="Drag or click to draw a face-down Scene"></button>
+        <button type="button" id="deck" class="deck" title="Drag or click to draw a Scene sleeve"></button>
         <div id="cards" class="cards"></div>
       </div>
     </div>
@@ -34,7 +34,7 @@
         <button type="button" data-action="flip" title="Flip selected card (F)">Flip <kbd>F</kbd></button>
         <button type="button" data-action="rotate-back" title="Rotate counterclockwise (Shift+R)" aria-label="Rotate selected card counterclockwise">↶</button>
         <button type="button" data-action="rotate" title="Rotate clockwise (R)" aria-label="Rotate selected card clockwise">↷</button>
-        <button type="button" data-action="response" title="Turn a revealed Scene to its Response side">Response</button>
+        <button type="button" data-action="open" title="Open the selected sleeve (E)">Open sleeve</button>
         <button type="button" data-action="undo" title="Undo last move or card action (Ctrl+Z)">Undo</button>
       </div>
       <div class="control-group" aria-label="Table view controls" role="group">
@@ -45,7 +45,7 @@
       <p id="status" class="sr-only" role="status"></p>
     </footer>
   </main>
-  <script src="data.js?build=20261101.24"></script>
-  <script src="tabletop.js?build=20261101.24"></script>
+  <script src="data.js?build=20261101.25"></script>
+  <script src="tabletop.js?build=20261101.25"></script>
 </body>
 </html>

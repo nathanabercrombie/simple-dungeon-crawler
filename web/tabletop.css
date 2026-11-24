@@ -37,23 +37,31 @@ h1 { margin: 0; font: 650 11px ui-monospace, Consolas, monospace; letter-spacing
 .deck-empty { display: grid; place-content: center; gap: 6px; height: 100%; border: 2px dashed #a1b3a18c; border-radius: inherit; color: #e3e8d8; font: 650 13px ui-monospace, Consolas, monospace; text-transform: uppercase; letter-spacing: .14em; }
 .deck-empty span { font-size: 26px; color: #b7c5b1; }
 .card { outline: none; box-shadow: 1px 2px 0 #9d876b, 2px 4px 0 #544839, 5px 9px 11px #14251dbb; }
-.card[aria-pressed='true'] { outline: 2px solid #f4ca8a; outline-offset: 3px; }
+.card[data-selected='true'] { outline: 2px solid #f4ca8a; outline-offset: 3px; }
 .card.dragging { cursor: grabbing; outline: none; box-shadow: 2px 3px 0 #9d876b, 9px 17px 22px #0d1a14b8; }
 .felt.panning, .felt.panning .card { cursor: grabbing; }
 .face { width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
 .back { color: #edd09a; border: 2px solid #dbb880; background: repeating-linear-gradient(135deg, #75684d24 0 1px, transparent 1px 5px), radial-gradient(ellipse at center, #764338, #512d28 76%); display: grid; place-items: center; }
 .back svg { display: block; width: 92%; height: 94%; }
+.teaser-face { display: grid; grid-template-rows: auto 1fr auto auto; justify-items: center; align-items: center; gap: 13px; padding: 22px 23px; text-align: center; color: #f1d7a2; border: 2px solid #cba875; background: radial-gradient(ellipse at center, #694639, #4c3128); }
+.teaser-face p { margin: 0; font: 600 27px/1.1 Georgia, serif; overflow-wrap: anywhere; }
+.teaser-face .teaser-cost { margin-top: 9px; font: 700 13px/1.25 system-ui, sans-serif; }
+.teaser-kicker, .teaser-footer { font: 700 10px/1.4 ui-monospace, Consolas, monospace; text-transform: uppercase; letter-spacing: .14em; }
+.teaser-footer { color: #e2bc85; }
+.card[data-kind='sleeve'] { box-shadow: 1px 3px 0 #c1aa8b, 2px 6px 0 #76614a, 3px 8px 0 #bba684, 7px 11px 12px #14251dbb; }
+.card[data-kind='sleeve'] .teaser-face { padding-bottom: 43px; outline: 1px solid #d8d7c88c; outline-offset: -6px; background: linear-gradient(125deg, #f6f9e729 1%, transparent 30%, transparent 72%, #e2e9da17 94%), radial-gradient(ellipse at center, #694639, #4c3128); }
+.pull-tab { position: absolute; left: 28%; right: 28%; bottom: 0; min-height: 36px; padding: 4px; border: 1px solid #d9bd8d; border-bottom: 0; border-radius: 6px 6px 0 0; background: #dfc69b; color: #34281d; cursor: grab; touch-action: none; font-size: 13px; font-weight: 700; }
+.pull-tab:hover { background: #f6dcae; }
+.pull-tab span { margin-left: 3px; }
 .paper { display: flex; flex-direction: column; gap: 6px; overflow: hidden; padding: 11px 12px 9px; border: 1px solid #fff1ce; color: #32271f; background: linear-gradient(145deg, #fff0cf, #ead5af); }
 .card-meta, .card-footer { color: #675136; text-transform: uppercase; letter-spacing: .09em; font: 700 9px/1.3 ui-monospace, Consolas, monospace; }
 .card-title { margin: 0; font: 700 20px/.99 Georgia, serif; letter-spacing: -.03em; }
-.card-map { flex: none; display: grid; place-items: center; height: 122px; border: 1px solid #aa9370; border-radius: 3px; background: radial-gradient(ellipse, #625543, #484235); }
+.card-map { flex: 1; min-height: 0; display: grid; place-items: center; border: 1px solid #aa9370; border-radius: 3px; background: radial-gradient(ellipse, #625543, #484235); }
 .card-map svg { width: 100%; height: 100%; }
-.card-copy { margin: 0; font: 12px/1.29 Georgia, serif; }
-.card-copy p { margin: 0 0 4px; }
+.card-copy { margin: 5px 0 0; font: 15px/1.42 Georgia, serif; }
+.card-copy p { margin: 0 0 10px; }
 .card-copy p:last-child { margin-bottom: 0; }
 .encounter-note { color: #684a30; font-weight: bold; }
-.paper.dense:not(.response-face) { gap: 4px; }
-.paper.dense .card-copy, .paper.dense .response-copy { font-size: 11px; line-height: 1.23; }
 .card-footer { margin-top: auto; padding-top: 4px; border-top: 1px solid #b6a27d; display: flex; gap: 7px; justify-content: space-between; }
 .response-face { border-top: 5px solid #955943; gap: 4px; }
 .response-face .card-meta { color: #804737; }
