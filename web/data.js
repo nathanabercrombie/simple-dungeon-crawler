@@ -128,9 +128,43 @@ window.GAME_MODULES = (() => {
     { name:'Cult at the Black Gate', kind:'monster', reward:'quest', title:'The Final Clamp Is Almost Open', front:'Robed acolytes work around the towering black gate while something strikes its far side. One clamp remains closed.', rule:'The party may attack the cultists or use a Scene-target action to secure the final clamp. Securing it prevents anything beyond the gate from entering.', failure:'The gate opens another handspan and the acolytes take a dungeon action.', encounter:printed('classics:monster:cult-acolytes') }
   ];
 
+  const sceneTeasers = {
+    'entrance-hall':'Cold campfire ash',
+    guardroom:'Coins, please!',
+    'store-cellar':'Slow, heavy breathing',
+    'narrow-passage':'Dragging feet',
+    'crooked-junction':'Stone scrapes softly',
+    'old-shrine':'A voice asks a riddle',
+    'rubble-breach':'Pebbles patter down',
+    'branching-hall':'A trail of scuffs',
+    'pit-bridge':'Creaking planks',
+    'balcony-hall':'Bowstrings snap',
+    'flooded-channel':'Water batters iron',
+    'prison-block':'Psst! Over here!',
+    'well-room':'Wet sucking sounds',
+    armory:'Dust and oiled steel',
+    'goblin-barracks':'Boots hit the floor',
+    'beast-pens':'Rattling bars',
+    'ogre-kitchen':'Grease and roasted meat',
+    'fungus-grotto':'A pale blue glow',
+    workshop:'A pulley ticks',
+    'forgotten-crypt':'Dry bones click',
+    'great-hall':'Voices haggling',
+    'treasury-approach':'Brass glints in dust',
+    'deep-chasm':'Wind rattles chains',
+    'throne-vault':'A voice demands tribute',
+    'wizard-laboratory':'Bands of colored light',
+    'lava-foundry':'Acrid heat',
+    'pillar-maze':'Circling footsteps',
+    floodgate:'Grinding gears, rushing water',
+    'bone-hall':'Bones crack in chorus',
+    'black-gate':'Chanting and pounding'
+  };
+
   const scenes = roomLayouts.map((layout, index) => {
     const { tags:_discardedCompatibilityTags, ...physical } = layout;
-    return { ...physical, ...scenePlans[index], id:`classics:scene:${physical.id.split(':').pop()}` };
+    const slug = physical.id.split(':').pop();
+    return { ...physical, ...scenePlans[index], id:`classics:scene:${slug}`, teaser:sceneTeasers[slug] };
   });
 
   const supplyLoot = [
@@ -227,6 +261,11 @@ window.GAME_MODULES = (() => {
     ['classics:monster:dire-wolves','classics:monster:giant-spider']
   ];
   const activeQuestIds = new Set(['classics:quest:kill-ogre','classics:quest:rescue-prisoner','classics:quest:steal-idol']);
+  const heartTeasers = {
+    'classics:quest:kill-ogre':'“More meat!” roars Gristlemaw',
+    'classics:quest:rescue-prisoner':'“Help me!”',
+    'classics:quest:steal-idol':'The Golden Delver gleams'
+  };
   const extractionRules = {
     'classics:quest:kill-ogre':'Proof: after taking the iron tooth, choose who carries it. If that adventurer dies or leaves it behind, another adventurer must recover it. Escape with the tooth.',
     'classics:quest:rescue-prisoner':'Escort: Ada Stone has 2 HP and cannot take actions. A dungeon action may target her when the fiction permits; an adventurer in the same Scene may take that damage instead. If Ada reaches 0 HP, the Quest fails.',
@@ -235,7 +274,7 @@ window.GAME_MODULES = (() => {
   const activeQuests = quests.filter(questCard => activeQuestIds.has(questCard.id)).map(questCard => {
     const sourceIndex = quests.indexOf(questCard);
     const [layoutIndex,name,front,rule,failure] = heartSceneSpecs[sourceIndex];
-    const heartScene = makeHeartScene(questCard,layoutIndex,name,front,rule,failure);
+    const heartScene = { ...makeHeartScene(questCard,layoutIndex,name,front,rule,failure), teaser:heartTeasers[questCard.id] };
     return { ...questCard, extraction:extractionRules[questCard.id], heartSceneId:heartScene.id, heartScene, bossIds:heartScene.encounter.mode === 'boss' ? heartScene.encounter.monsterIds : [], wanderingAdds:questDeckAdds[sourceIndex] };
   });
   const heartScenes = activeQuests.map(questCard => questCard.heartScene);

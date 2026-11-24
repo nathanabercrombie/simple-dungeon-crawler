@@ -39,6 +39,7 @@ for (const module of Object.values(window.GAME_MODULES)) {
 
   for (const scene of module.allScenes) {
     assert(scene.pack && scene.name && scene.readAloud && scene.front, `${scene.id} is missing authored Scene fields`);
+    assert(typeof scene.teaser === 'string' && scene.teaser.trim() && scene.teaser.trim().split(/\s+/).length <= 6, `${scene.id} needs a short door teaser`);
     assert(scene.map?.includes('E'), `${scene.id} has no entrance glyph`);
     const mappedExits = [...scene.map].filter(glyph => 'X?DU'.includes(glyph)).length;
     assert(mappedExits === scene.exits, `${scene.id} declares ${scene.exits} exits but maps ${mappedExits}`);

@@ -92,13 +92,13 @@
       const questName = quest?.name || '';
       cards.push({
         id:`scene-map:${scene.id}`, category:'Scene Map', quest:questName, title:scene.name,
-        kicker:'Scene Map', frontText:'', rulesText:'',
+        kicker:'Scene Map', teaser:scene.teaser, frontText:'', rulesText:'',
         footer:scene.pack || 'Classics Set', imageType:'map', map:scene.map, lighting:scene.lighting
       });
       cards.push({
         id:`scene-script:${scene.id}`, category:'Scene Script', quest:questName, title:scene.name,
         kicker:questName ? `${questName} · Scene Script` : `Scene Script · ${scene.reward === 'quest' ? 'Quest reward' : 'Loot reward'}`,
-        frontText:text(scene.readAloud, scene.front, scene.encounter?.mode === 'random' ? 'Flip over a Monster card.' : ''),
+        teaser:scene.teaser, frontText:text(scene.readAloud, scene.front, scene.encounter?.mode === 'random' ? 'Flip over a Monster card.' : ''),
         rulesText:sceneRules(scene), footer:scene.pack || 'Classics Set', imageLabel:`Illustration — ${scene.name}`, script:true
       });
     });
@@ -278,7 +278,8 @@
     return `<article class="card-wrap ${card.trimmed ? 'is-trimmed' : ''} ${isEdited(original) ? 'is-edited' : ''} ${flipped ? 'is-flipped' : ''}" data-card-id="${esc(card.id)}">
       <div class="card-flip-shell" role="button" tabindex="0" aria-pressed="${flipped}" aria-label="${flipped ? 'Show front of' : 'Show back of'} ${esc(card.title)}">
         <div class="card-flipper">
-          <div class="game-card card-face card-front ${card.imageType === 'map' ? 'card-map-layout' : ''}">
+          <div class="game-card card-face card-front ${mapOnly ? 'card-map-layout' : ''} ${card.teaser ? 'has-room-teaser' : ''}">
+            ${card.teaser ? `<div class="room-teaser">${esc(card.teaser)}</div>` : ''}
             <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
             ${imageHtml(card)}
             ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(copy)}</div>`}
@@ -309,7 +310,7 @@
       if (selected.status === 'included' && card.trimmed) return false;
       if (selected.status === 'trimmed' && !card.trimmed) return false;
       if (selected.status === 'edited' && !edited) return false;
-      if (selected.search && !`${card.title} ${card.kicker} ${card.frontText} ${card.rulesText} ${card.notes}`.toLowerCase().includes(selected.search)) return false;
+      if (selected.search && !`${card.title} ${card.teaser || ''} ${card.kicker} ${card.frontText} ${card.rulesText} ${card.notes}`.toLowerCase().includes(selected.search)) return false;
       return true;
     });
   }

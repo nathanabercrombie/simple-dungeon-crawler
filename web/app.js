@@ -137,6 +137,37 @@
     return direction ? { ...direction, x:room.x + direction.dx, y:room.y + direction.dy } : null;
   }
 
+  function reservedSceneFor(room, route) {
+    return DATA.allScenes.find(scene => scene.id === room.exitScenes?.[route.key]);
+  }
+
+  function canPlaceExit(room, route) {
+    const target = directRouteTarget(room, route);
+    return target ? !state.rooms.some(candidate => candidate.x === target.x && candidate.y === target.y) : emptyAdjacentSectors(room).length > 0;
+  }
+
+  function reserveExitScenes() {
+    const available = state.rooms.map(room => [room, availableExitRoutes(room)]);
+    // A later branch can permanently cover an exit on the site grid. Keep the
+    // quest finale drawable if that happens; ordinary cards stay set aside.
+    for (const [room, exits] of available) {
+      room.exitScenes ||= {};
+      for (const route of exits) {
+        const scene = reservedSceneFor(room, route);
+        if (scene?.questHeart && !canPlaceExit(room, route)) {
+          delete room.exitScenes[route.key];
+          state.sceneDeck.unshift(scene.id);
+        }
+      }
+    }
+    for (const [room, exits] of available) {
+      for (const route of exits) {
+        if (!state.sceneDeck.length) return;
+        if (!room.exitScenes[route.key] && canPlaceExit(room, route)) room.exitScenes[route.key] = state.sceneDeck.shift();
+      }
+    }
+  }
+
   function routeLabel(room, route) {
     if (route.glyph === 'D') return 'Descending stair';
     if (route.glyph === 'U') return 'Ascending stair';
@@ -144,6 +175,11 @@
     const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
     if (route.glyph === '?') return `Hidden passage${cardinal ? ` ${cardinal.name.toLowerCase()}` : ''}`;
     return `${cardinal?.name || 'Outer'} doorway`;
+  }
+
+  function exitTeaserLabel(room, route) {
+    const teaser = reservedSceneFor(room, route)?.teaser;
+    return teaser ? `${routeLabel(room, route)} - ${teaser}` : routeLabel(room, route);
   }
 
   function hashSeed(seed) {
@@ -558,6 +594,7 @@
       }
     }
     ensureRouteGeometry();
+    reserveExitScenes();
     state.quest.elementsFound = state.rooms.filter(room => isQuestElement(room) && room.quest.claimed).length;
   }
 
@@ -690,17 +727,6 @@
     render();
   }
 
-  function drawSceneCard() {
-    if (!state.sceneDeck.length) {
-      const available = DATA.scenes.filter(scene => !state.usedTemplates.includes(scene.id));
-      state.sceneDeck = shuffle((available.length ? available : DATA.scenes).map(scene => scene.id));
-    }
-    const sceneId = state.sceneDeck.shift();
-    const scene = DATA.allScenes.find(candidate => candidate.id === sceneId) || DATA.scenes[0];
-    state.usedTemplates.push(scene.id);
-    return scene;
-  }
-
   function drawRandomMonsterId() {
     if (!state.monsterDeck.length) {
       state.monsterDeck = shuffle(state.monsterDiscard.length ? state.monsterDiscard : DATA.randomMonsters.map(monster => monster.id));
@@ -761,15 +787,21 @@
   }
 
   function generateRoom(x, y, fromId, fromRouteKey = null, bypassed = false) {
-    const sourceRoom = fromId ? roomById(fromId) : null;
-    if (sourceRoom && liveEnemies(sourceRoom).length && !bypassed) {
+    const parent = fromId ? roomById(fromId) : null;
+    if (parent && liveEnemies(parent).length && !bypassed) {
       return openModal('bypass', { movement:'explore' });
     }
-    if (!spendLight('enter a new room', sourceRoom, { advance:false, allowDark:true })) return null;
-    const template = drawSceneCard();
+    const route = parent && availableExitRoutes(parent).find(candidate => candidate.key === fromRouteKey);
+    const target = route && directRouteTarget(parent, route);
+    if (parent && (!route || Math.abs(x - parent.x) + Math.abs(y - parent.y) !== 1 ||
+      (target && (target.x !== x || target.y !== y)) || state.rooms.some(room => room.x === x && room.y === y))) return null;
+    const template = parent ? reservedSceneFor(parent, route) : DATA.allScenes.find(scene => scene.id === state.sceneDeck[0]);
+    if (!template || !spendLight('enter a new room', parent, { advance:false, allowDark:true })) return null;
+    if (parent) delete parent.exitScenes[route.key];
+    else state.sceneDeck.shift();
+    state.usedTemplates.push(template.id);
     const quest = questResultForScene(template);
     const index = template.index;
-    const parent = fromId ? roomById(fromId) : null;
     const rotation = parent ? rotationToward(parent.x-x, parent.y-y) : 0;
     const opportunityRoll = die(8);
     const room = {
@@ -777,7 +809,7 @@
       opportunityRoll,
       quest, status: passiveScene(template) ? 'conquered' : 'dangerous', securedLight: template.lighting === 'Inherent',
       notes: '', connections: fromId ? [fromId] : [], remainingExits: template.exits,
-      rotation, routeAssignments: {}, enemies: [], opportunityClaimed: false,
+      rotation, routeAssignments: {}, exitScenes: {}, enemies: [], opportunityClaimed: false,
       searchState: { attempted:false, success:false, claimed:false, opportunityRoll:0, opportunityVariant:0 },
       cardState: { resolutionRevealed:passiveScene(template), rewardsRevealed:passiveScene(template) }
     };
@@ -800,11 +832,11 @@
     room.sceneRef = buildSceneRef(room);
     state.rooms.push(room);
     if (parent) {
-      const route = fromRouteKey || availableExitRoutes(parent)[0]?.key;
       parent.connections.push(room.id);
-      if (route) parent.routeAssignments[room.id] = route;
+      parent.routeAssignments[room.id] = route.key;
       parent.remainingExits = availableExitRoutes(parent).length;
     }
+    reserveExitScenes();
     state.activeRoomId = room.id;
     advanceTurns(1, false);
     log(`Drew Scene ${room.number}: ${template.name}.${encounter.mode === 'random' ? ' Drew a random Monster card.' : encounter.mode === 'boss' ? ' Placed the set-aside Boss cards.' : ''}`);
@@ -1966,9 +1998,9 @@
     const roomTarget = targetForRoom(room);
     const cards = roomCardState(room);
     const enemiesPresent = liveEnemies(room).length > 0;
-    const exitsRemain = availableExitRoutes(room).length > 0;
+    const exitsRemain = availableExitRoutes(room).some(route => canPlaceExit(room, route) && reservedSceneFor(room, route));
     const unconquered = room.status !== 'conquered';
-    const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent || unconquered ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : unconquered ? 'Conquer the active Scene to continue' : ''}">${enemiesPresent ? 'Exits blocked' : unconquered ? 'Conquer Scene first' : 'Draw next Scene'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass</button>' : ''}`;
+    const exploreButton = `<button class="btn btn-primary" data-action="explore" ${!exitsRemain || enemiesPresent || unconquered ? 'disabled' : ''} title="${enemiesPresent ? 'Active creatures block the exits' : unconquered ? 'Conquer the active Scene to continue' : !exitsRemain ? 'No unexplored exits with a Scene card here' : ''}">${enemiesPresent ? 'Exits blocked' : unconquered ? 'Conquer Scene first' : 'Choose an exit'}</button>${enemiesPresent && exitsRemain ? '<button class="btn" data-action="bypass-movement" data-movement="explore">Sneak or bypass</button>' : ''}`;
     const heartIncomplete = room.quest.name === 'Heart' && !room.quest.claimed;
     const conquestBlocked = !cards.resolutionRevealed || !unconquered || enemiesPresent || heartIncomplete;
     const conquerLabel = !cards.resolutionRevealed && unconquered ? 'Reveal response' : enemiesPresent ? 'Resolve creatures' : heartIncomplete ? 'Secure objective' : 'Conquer Scene';
@@ -2036,9 +2068,12 @@
               const direction = rotateDirection(route.direction, room.rotation);
               const cardinal = direction && cardinalForVector(direction.dx, direction.dy);
               const target = directRouteTarget(room, route);
-              const occupied = target && state.rooms.some(candidate => candidate.x === target.x && candidate.y === target.y);
-              if (target) return `<button class="btn direction-card" data-action="choose-direction" data-route="${esc(route.key)}" data-x="${target.x}" data-y="${target.y}" ${occupied ? 'disabled' : ''}><strong>${cardinal.arrow} ${esc(routeLabel(room, route))}</strong><small>${occupied ? 'That map position is already occupied' : `Explore directly ${cardinal.name.toLowerCase()}`}</small></button>`;
-              return `<button class="btn direction-card" data-action="choose-exit" data-route="${esc(route.key)}"><strong>${route.glyph === 'D' ? '↓' : '↑'} ${esc(routeLabel(room, route))}</strong><small>${route.glyph === 'D' ? 'Choose where the lower level is diagrammed' : 'Choose where the upper level is diagrammed'}</small></button>`;
+              const blocked = !canPlaceExit(room, route);
+              const exhausted = !reservedSceneFor(room, route);
+              const unavailable = blocked ? 'That map position is already occupied' : exhausted ? 'No Scene card available' : '';
+              const label = esc(exitTeaserLabel(room, route));
+              if (target) return `<button class="btn direction-card" data-action="choose-direction" data-route="${esc(route.key)}" data-x="${target.x}" data-y="${target.y}" ${unavailable ? 'disabled' : ''}><strong>${cardinal.arrow} ${label}</strong><small>${unavailable || `Explore directly ${cardinal.name.toLowerCase()}`}</small></button>`;
+              return `<button class="btn direction-card" data-action="choose-exit" data-route="${esc(route.key)}" ${unavailable ? 'disabled' : ''}><strong>${route.glyph === 'D' ? '↓' : '↑'} ${label}</strong><small>${unavailable || (route.glyph === 'D' ? 'Choose where the lower level is diagrammed' : 'Choose where the upper level is diagrammed')}</small></button>`;
             }).join('')}</div>` : '<div class="empty-state">Every generated exit from this room has already been assigned.</div>';
         root.innerHTML = modalShell('Choose an exit', `${exits.length} uncharted exit${exits.length === 1 ? '' : 's'} remain. A cardinal doorway always places the next room in that direction.`, body);
       } else {

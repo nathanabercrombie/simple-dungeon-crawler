@@ -19,7 +19,8 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 ## Current capabilities
 
 - selectable, seeded Adventure Sets, beginning with Classics;
-- one shuffled thirty-card Classics Scene deck plus eight Quest finale Scenes;
+- one shuffled thirty-card Classics Scene deck plus three Quest finale Scenes;
+- short clues above Scene titles; the web game draws a card for each available exit and keeps it there until explored;
 - complete Scene cards combining irregular floorplans, terrain, lighting, prose, situations, Responses, and rewards;
 - ordinary monsters printed directly on Scenes when their identity matters;
 - random Monster draws for monster-agnostic premises such as sleeping, trapped, hidden, or guarding creatures;
