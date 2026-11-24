@@ -16,6 +16,12 @@ python -m http.server 8000 --directory web
 
 Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the Pages workflow](../.github/workflows/pages.yml).
 
+## Tabletop Playtest
+
+Open **Tabletop Playtest** from the welcome screen, or open [tabletop.html](tabletop.html) directly. This standalone prototype starts with the Entrance and eight shuffled Classics Scenes. Choose a doorway, draw, turn the held floorplan until its entrance faces that doorway, then place it or drag the held tile onto the doorway. Use the corridor controls to adjust spacing. Click a placed room to read its Scene script; the Response has a separate reveal.
+
+Drag the mat to pan; use the zoom buttons, mouse wheel, or **Fit map**. The controls also work without dragging, and `R` rotates a held Scene. The table saves separately from guided play. Undo restores the table before your last draw, placement, reveal, or reset. This is a mapping prototype: it doesn't run encounters, quests, or resources.
+
 ## Current capabilities
 
 - selectable, seeded Adventure Sets, beginning with Classics;

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191d1b">
+  <title>Tabletop Playtest · Delvekeeper</title>
+  <link rel="stylesheet" href="tabletop.css?build=20261101.23">
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="index.html" aria-label="Delvekeeper guided play"><span class="brand-mark" aria-hidden="true">◇</span> Delvekeeper</a>
+    <span class="mast-divider"></span>
+    <span class="edition">Tabletop playtest</span>
+    <a class="back-link" href="index.html">← Guided play</a>
+  </header>
+  <main class="workbench">
+    <section class="table" aria-label="Dungeon table">
+      <div class="table-heading">
+        <p class="eyebrow">01 / Mapping table</p>
+        <h1>Build the dungeon.</h1>
+        <p id="table-help" role="status"></p>
+      </div>
+      <svg id="board" class="board" aria-label="Dungeon floorplan" aria-describedby="table-help" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M0 24V0H24" fill="none" stroke="#8dad9b" stroke-opacity=".13" stroke-width="1"/></pattern>
+          <pattern id="mat-grid" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="url(#paper-grid)"/><path d="M0 120V0H120" fill="none" stroke="#8dad9b" stroke-opacity=".20" stroke-width="1"/></pattern>
+          <pattern id="pit-hatch" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M-1 1l2-2m-2 8 8-8m-2 8 2-2" stroke="#858076" stroke-width="1" opacity=".32"/></pattern>
+          <filter id="tile-shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".4"/></filter>
+        </defs>
+        <rect x="-10000" y="-10000" width="20000" height="20000" fill="url(#mat-grid)"/>
+        <g id="pieces"></g>
+        <g id="preview" pointer-events="none" aria-hidden="true"></g>
+        <g id="doorways"></g>
+      </svg>
+      <div class="board-tools" aria-label="Map controls">
+        <button type="button" data-action="zoom-out" aria-label="Zoom out">−</button>
+        <button type="button" data-action="zoom-in" aria-label="Zoom in">+</button>
+        <button type="button" data-action="fit">Fit map</button>
+      </div>
+      <div class="table-caption"><span class="legend-door" aria-hidden="true"></span> Open doorway <span class="caption-divider">/</span> Drag the mat to pan</div>
+      <div class="compass" aria-hidden="true"><span>N</span><svg width="27" height="39" viewBox="0 0 27 39"><path d="M13.5 2 24 31 13.5 24 3 31Z" fill="none" stroke="currentColor"/><path d="M13.5 2v22L3 31Z" fill="currentColor"/><path d="M0 20h5m17 0h5M13.5 35v4" stroke="currentColor"/></svg></div>
+    </section>
+    <aside class="tray" aria-label="Scene cards">
+      <div class="tray-head">
+        <div><p class="eyebrow">02 / Card tray</p><h2>Scene deck</h2></div>
+        <button class="quiet-button" type="button" data-action="reset">New table</button>
+      </div>
+      <div id="deck" class="deck"></div>
+      <div id="placement" class="placement" hidden></div>
+      <div id="script" class="script"></div>
+      <div class="tray-footer"><span id="table-count"></span><button type="button" class="quiet-button" data-action="undo">↶ Undo</button></div>
+    </aside>
+  </main>
+  <script src="data.js?build=20261101.23"></script>
+  <script src="tabletop.js?build=20261101.23"></script>
+</body>
+</html>
