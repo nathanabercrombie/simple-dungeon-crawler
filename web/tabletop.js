@@ -64,6 +64,9 @@
   let selected = null;
   let camera = { x:0, y:0, zoom:1 };
   let gesture = null;
+  const touches = new Map();
+  let pinching = false;
+  let pinch = null;
   let lastTap = null;
 
   function save() {
@@ -93,18 +96,24 @@
 
   const terrain = { '#':'#6c5c46', '~':'#8eb3aa', P:'#443d38', L:'#b3673e', B:'#c4b394', '^':'#cfb88b', C:'#c8b48e' };
   const marks = { E:'↓', X:'·', '?':'?', O:'■', R:'◆', '=':'≡', '^':'⌃', B:'═', C:'▥', F:'▲', G:'⚙', M:'◇', T:'♜', '+':'+', '-':'—' };
-  const mapSize = { x:Math.max(...data.scenes.flatMap(scene => scene.map.split('\n').map(row => row.length))), y:Math.max(...data.scenes.map(scene => scene.map.split('\n').length)) };
-
   function floorplan(scene) {
     const rows = scene.map.split('\n');
     const cols = Math.max(...rows.map(row => row.length));
+    const square = 19;
+    const left = (width-cols*square)/2;
+    const top = (height-rows.length*square)/2;
+    const entryRow = rows.findIndex(row => row.includes('E'));
+    const entryX = left + (rows[entryRow]?.indexOf('E') ?? 0)*square;
+    const entryY = top+(entryRow+1)*square;
+    // The floorplans face north and enter from the south. Extend that doorway to the card edge.
+    const tunnel = entryRow < 0 ? '' : `<path class="entrance-tunnel" d="M${entryX} ${entryY-.5}H${entryX+square}V${height}H${entryX}Z" fill="#e4cca0"/><path d="M${entryX} ${entryY}V${height}M${entryX+square} ${entryY}V${height}" fill="none" stroke="#6c5c46"/>`;
     const grid = rows.flatMap((row,y) => [...row].flatMap((glyph,x) => {
       if (glyph === ' ') return [];
       const fill = terrain[glyph] || ((x+y)%2 ? '#e4cca0' : '#f0dcb6');
       const symbol = marks[glyph];
-      return `<g transform="translate(${x*14} ${y*14})"><rect width="14" height="14" fill="${fill}" stroke="#493c30" stroke-opacity=".45" stroke-width=".65"/>${symbol ? `<text x="7" y="10.8" text-anchor="middle" font-size="10" font-weight="700" fill="#503923">${symbol}</text>` : ''}</g>`;
+      return `<g transform="translate(${x*square} ${y*square})"><rect width="${square}" height="${square}" fill="${fill}" stroke="#493c30" stroke-opacity=".45" stroke-width=".65"/>${symbol ? `<text x="${square/2}" y="${square/2+3.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#503923">${symbol}</text>` : ''}</g>`;
     })).join('');
-    return `<div class="card-map"><svg viewBox="0 0 ${mapSize.x*14+8} ${mapSize.y*14+8}" role="img" aria-label="Scene floorplan"><g transform="translate(${(mapSize.x-cols)*7+4} ${(mapSize.y-rows.length)*7+4})">${grid}</g></svg></div>`;
+    return `<svg class="card-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Scene floorplan"><g transform="translate(${left} ${top})">${grid}</g>${tunnel}</svg>`;
   }
 
   function encounterNote(scene) {
@@ -192,13 +201,16 @@
     world.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
   }
 
-  function zoomAt(factor, x = felt.clientWidth/2, y = felt.clientHeight/2) {
-    const zoom = clamp(camera.zoom*factor,.26,2.8);
+  function setZoom(zoom, x, y, anchorX = x, anchorY = y) {
     const ratio = zoom/camera.zoom;
-    camera.x = x-(x-camera.x)*ratio;
-    camera.y = y-(y-camera.y)*ratio;
+    camera.x = x-(anchorX-camera.x)*ratio;
+    camera.y = y-(anchorY-camera.y)*ratio;
     camera.zoom = zoom;
     updateCamera();
+  }
+
+  function zoomAt(factor, x = felt.clientWidth/2, y = felt.clientHeight/2) {
+    setZoom(clamp(camera.zoom*factor,.26,2.8),x,y);
   }
 
   function fit() {
@@ -254,7 +266,7 @@
   }
 
   function action(name) {
-    if (gesture) return;
+    if (gesture || pinching) return;
     const card = selectedCard();
     if (name === 'fit') return fit();
     if (name === 'zoom-in' || name === 'zoom-out') return zoomAt(name === 'zoom-in' ? 1.2 : 1/1.2);
@@ -285,7 +297,7 @@
       if (name === 'flip' && card.kind === 'sleeve') return;
       remember();
       if (name === 'flip') flip(card);
-      else card.angle = (card.angle + (name === 'rotate' ? 15 : 345))%360;
+      else card.angle = (card.angle + (name === 'rotate' ? 90 : 270))%360;
     } else return;
     lastTap = null;
     render();
@@ -293,7 +305,34 @@
     save();
   }
 
+  function pinchPoints() {
+    const [a,b] = touches.values();
+    if (!b) return null;
+    const rect = felt.getBoundingClientRect();
+    return { x:(a.x+b.x)/2-rect.left, y:(a.y+b.y)/2-rect.top, distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)) };
+  }
+
+  function startTouch(event) {
+    touches.set(event.pointerId,{ x:event.clientX, y:event.clientY });
+    felt.setPointerCapture(event.pointerId);
+    if (touches.size < 2) return;
+    if (!pinching) {
+      pinching = true;
+      // Roll back any card move, draw, or sleeve pull that began before the second finger landed.
+      if (gesture?.moved && gesture.before) ({ table,selected } = gesture.before);
+      gesture = null;
+      lastTap = null;
+      felt.classList.remove('panning');
+      render();
+    }
+    pinch = pinchPoints();
+  }
+
   function cardPointer(event) {
+    if (event.pointerType === 'touch') {
+      startTouch(event);
+      if (pinching) return;
+    }
     if (gesture || !event.isPrimary || (event.button !== 0 && event.button !== 1)) return;
     const cardNode = event.target.closest('[data-card]');
     const card = table.cards.find(piece => piece.id === cardNode?.dataset.card);
@@ -312,6 +351,15 @@
   }
 
   function movePointer(event) {
+    if (touches.has(event.pointerId)) {
+      touches.set(event.pointerId,{ x:event.clientX, y:event.clientY });
+      if (pinching) {
+        const next = pinchPoints();
+        if (pinch && next) setZoom(clamp(camera.zoom*next.distance/pinch.distance,.26,2.8),next.x,next.y,pinch.x,pinch.y);
+        pinch = next;
+        return;
+      }
+    }
     const g = gesture;
     if (g?.id !== event.pointerId) return;
     const dx = event.clientX-g.x;
@@ -338,6 +386,12 @@
   }
 
   function endPointer(event) {
+    if (touches.delete(event.pointerId) && pinching) {
+      // A finger left on the table after a pinch must not turn into a new drag or tap.
+      pinching = touches.size > 0;
+      pinch = pinchPoints();
+      return;
+    }
     const g = gesture;
     if (g?.id !== event.pointerId) return;
     gesture = null;
@@ -382,7 +436,7 @@
 
   felt.addEventListener('wheel', event => {
     event.preventDefault();
-    if (gesture) return;
+    if (gesture || pinching) return;
     const rect = felt.getBoundingClientRect();
     zoomAt(Math.exp(-event.deltaY*.0018),event.clientX-rect.left,event.clientY-rect.top);
   },{ passive:false });
@@ -399,13 +453,13 @@
   });
 
   document.addEventListener('focusin', event => {
-    if (gesture || !event.target.dataset.card) return;
+    if (gesture || pinching || !event.target.dataset.card) return;
     selected = event.target.dataset.card;
     render();
   });
 
   document.addEventListener('keydown', event => {
-    if (event.altKey || gesture) return;
+    if (event.altKey || gesture || pinching) return;
     const key = event.key.toLowerCase();
     const card = selectedCard();
     const onCard = event.target.dataset.card === selected;

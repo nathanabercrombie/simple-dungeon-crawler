@@ -20,7 +20,7 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 
 Open **Card Table** from the welcome screen, or open [tabletop.html](tabletop.html) directly. The Entrance sleeve starts on the felt, and the other Classics Scene sleeves start in a shuffled deck. Drag the top sleeve off the stack or use **Draw**; only the teaser is visible until you open it. Drag the **Pull cards** tab to pull the prose card away, or use **Open sleeve** to lay out both cards.
 
-Each sleeve holds a teaser card with the battlemap on its reverse, and a prose card with the reveal on its reverse. Double-click either loose card or select it and use **Flip**. Move, rotate, fan, and stack the cards independently. Use `R` / `Shift+R` to rotate and arrow keys to move a focused piece. Drag bare felt to pan and use the wheel, zoom buttons, or **Fit**. Card positions, stacking order, deck order and faces save separately from guided play. This prototype handles cards only, not encounters, quests, or resources.
+Each sleeve holds a teaser card with the battlemap on its reverse, and a prose card with the reveal on its reverse. Double-click either loose card or select it and use **Flip**. Move, rotate, fan, and stack the cards independently. Use `R` / `Shift+R` for 90° turns and arrow keys to move a focused piece. Drag bare felt to pan; pinch with two fingers, use the mouse wheel or zoom buttons, or choose **Fit**. Card positions, stacking order, deck order and faces save separately from guided play. This prototype handles cards only, not encounters, quests, or resources.
 
 ## Current capabilities
 
