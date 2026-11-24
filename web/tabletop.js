@@ -2,458 +2,380 @@
   'use strict';
 
   const data = window.GAME_DATA;
-  const cell = 24;
-  const saveKey = 'delvekeeper.tabletop.v1';
-  const directions = [[0,-1], [1,0], [0,1], [-1,0]];
-  const directionNames = ['North', 'East', 'South', 'West'];
-  const seedCards = ['guardroom','store-cellar','crooked-junction','rubble-breach','branching-hall','pit-bridge','flooded-channel','armory'];
+  const saveKey = 'delvekeeper.cardTable.v1';
   const scenes = new Map(data.scenes.map(scene => [scene.id, scene]));
-  const entranceId = data.scenes[0].id;
+  const entrance = data.scenes[0];
   const $ = selector => document.querySelector(selector);
-  const board = $('#board');
-  const pieces = $('#pieces');
+  const felt = $('#felt');
+  const world = $('#world');
   const deck = $('#deck');
-  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const key = ({ x, y }) => `${x},${y}`;
+  const cards = $('#cards');
+  const width = deck.offsetWidth;
+  const height = deck.offsetHeight;
+  const deckPosition = { x:32, y:34 };
+  const nodes = new Map();
+  const undoStack = [];
+  const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
+  const copy = value => JSON.parse(JSON.stringify(value));
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
 
-  function floorplan(scene) {
-    const rows = scene.map.split('\n');
-    const width = Math.max(...rows.map(row => row.length));
-    const cells = rows.flatMap((row,y) => [...row].flatMap((glyph,x) => glyph === ' ' ? [] : [{ x,y,glyph }]));
-    const occupied = new Map(cells.map(square => [key(square), square.glyph]));
-    const doors = cells.flatMap((square, index) => {
-      const { x,y,glyph } = square;
-      if (!'EX?'.includes(glyph)) return [];
-      // Prefer an outward edge opposite a walkable square; some maps have ragged margins.
-      const edgeDistance = [y,width-1-x,rows.length-1-y,x];
-      const scores = directions.map(([dx,dy], dir) => {
-        const behind = occupied.get(key({ x:x-dx, y:y-dy }));
-        const ahead = occupied.get(key({ x:x+dx, y:y+dy }));
-        return edgeDistance[dir] + (behind && behind !== '#' ? 0 : 20) + (ahead ? 10 : 0);
-      });
-      const dir = scores.indexOf(Math.min(...scores));
-      return [{ ...square, dir, index }];
-    });
-    return { cells, occupied, doors, width, height:rows.length };
-  }
-
-  const plans = new Map([...scenes].map(([id, scene]) => [id, floorplan(scene)]));
-
-  function shuffledStack() {
-    const ids = seedCards.map(id => `classics:scene:${id}`);
-    for (let i = ids.length-1; i > 0; i--) {
-      const j = Math.floor(Math.random()*(i+1));
-      [ids[i], ids[j]] = [ids[j], ids[i]];
+  function shuffled(ids) {
+    const result = [...ids];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
     }
-    return ids;
+    return result;
   }
 
-  const newTable = () => ({
-    stack:shuffledStack(), rooms:[{ id:1, scene:entranceId, x:0, y:0, turn:0 }],
-    hand:null, selected:1, target:null, revealed:[]
-  });
+  function freshTable() {
+    return {
+      deck:shuffled(data.scenes.slice(1).map(scene => scene.id)),
+      cards:[{ id:entrance.id, x:deckPosition.x+width+48, y:52, angle:0, side:'front' }]
+    };
+  }
 
   function load() {
     try {
-      const save = JSON.parse(localStorage.getItem(saveKey));
-      if (save?.table?.rooms?.length && Array.isArray(save.table.stack)) return save;
-    } catch { /* An unavailable save must not prevent play. */ }
-    return { table:newTable(), history:[] };
+      const saved = JSON.parse(localStorage.getItem(saveKey));
+      if (Array.isArray(saved?.deck) && Array.isArray(saved.cards) &&
+          saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => scenes.has(card.id) &&
+            [card.x,card.y,card.angle].every(Number.isFinite) && ['back','front','response'].includes(card.side))) return saved;
+    } catch { /* Storage is optional. */ }
+    return freshTable();
   }
 
-  let { table, history } = load();
-  let camera = { x:60, y:60, zoom:1 };
-  let pan = null;
-  let drag = null;
-  let dragHint = false;
+  let table = load();
+  let selected = null;
+  let camera = { x:0, y:0, zoom:1 };
+  let gesture = null;
+  let lastTap = null;
 
   function save() {
-    try { localStorage.setItem(saveKey, JSON.stringify({ table, history })); }
-    catch { /* The current table still works without storage. */ }
+    try { localStorage.setItem(saveKey, JSON.stringify(table)); }
+    catch { /* Keep playing without persistence. */ }
   }
 
-  function checkpoint() {
-    history = [...history.slice(-14), JSON.parse(JSON.stringify(table))];
+  function snapshot() { return { table:copy(table), selected }; }
+
+  function remember(before = snapshot()) {
+    undoStack.push(before);
+    if (undoStack.length > 24) undoStack.shift();
   }
 
-  function rotate({ x,y }, turn) {
-    if (turn === 1) return { x:-y, y:x };
-    if (turn === 2) return { x:-x, y:-y };
-    if (turn === 3) return { x:y, y:-x };
-    return { x,y };
+  const selectedCard = () => table.cards.find(card => card.id === selected);
+  const message = text => { $('#status').textContent = text; };
+
+  const back = `<div class="face back" aria-hidden="true"><svg viewBox="0 0 200 287" fill="none">
+    <rect x="4" y="4" width="192" height="279" rx="10" stroke="currentColor"/>
+    <rect x="10" y="10" width="180" height="267" rx="7" stroke="currentColor" opacity=".55"/>
+    <path d="M16 40V18h22m124 0h22v22M16 247v22h22m124 0h22v-22M72 47h56M72 240h56M100 37v20m0 173v20" stroke="currentColor" opacity=".8"/>
+    <path d="M100 65l65 79-65 79-65-79zM100 75l56 69-56 69-56-69z" stroke="currentColor"/>
+    <path d="M70 171v-41a30 30 0 0 1 60 0v41m-68 0h76m-56 0v-41a18 18 0 0 1 36 0v41m-33 8h30m-26 7h22" stroke="currentColor" stroke-width="2"/>
+    <path d="M68 143h14m36 0h14m-62 13h12m36 0h12m-55-44 10 6m30 0 10-6" stroke="currentColor" opacity=".7"/>
+    <g fill="currentColor" font-family="Georgia,serif" text-anchor="middle"><text x="100" y="29" font-size="11" letter-spacing="3">DELVEKEEPER</text><text x="100" y="263" font-size="10" letter-spacing="3">CLASSICS · SCENE</text></g>
+  </svg></div>`;
+
+  const terrain = { '#':'#6c5c46', '~':'#8eb3aa', P:'#443d38', L:'#b3673e', B:'#c4b394', '^':'#cfb88b', C:'#c8b48e' };
+  const marks = { E:'↓', X:'·', '?':'?', O:'■', R:'◆', '=':'≡', '^':'⌃', B:'═', C:'▥', F:'▲', G:'⚙', M:'◇', T:'♜', '+':'+', '-':'—' };
+  const mapSize = { x:Math.max(...data.scenes.flatMap(scene => scene.map.split('\n').map(row => row.length))), y:Math.max(...data.scenes.map(scene => scene.map.split('\n').length)) };
+
+  function floorplan(scene) {
+    const rows = scene.map.split('\n');
+    const cols = Math.max(...rows.map(row => row.length));
+    const grid = rows.flatMap((row,y) => [...row].flatMap((glyph,x) => {
+      if (glyph === ' ') return [];
+      const fill = terrain[glyph] || ((x+y)%2 ? '#e4cca0' : '#f0dcb6');
+      const symbol = marks[glyph];
+      return `<g transform="translate(${x*14} ${y*14})"><rect width="14" height="14" fill="${fill}" stroke="#493c30" stroke-opacity=".45" stroke-width=".65"/>${symbol ? `<text x="7" y="10.8" text-anchor="middle" font-size="10" font-weight="700" fill="#503923">${symbol}</text>` : ''}</g>`;
+    })).join('');
+    return `<div class="card-map"><svg viewBox="0 0 ${mapSize.x*14+8} ${mapSize.y*14+8}" role="img" aria-label="Scene floorplan"><g transform="translate(${(mapSize.x-cols)*7+4} ${(mapSize.y-rows.length)*7+4})">${grid}</g></svg></div>`;
   }
 
-  function world(room, square) {
-    const p = rotate(square, room.turn);
-    return { x:room.x+p.x, y:room.y+p.y };
-  }
-
-  function openDoors() {
-    const linked = new Set(table.rooms.map(room => room.link).filter(Boolean));
-    return table.rooms.flatMap(room => plans.get(room.scene).doors.flatMap(door => {
-      const id = `${room.id}:${door.index}`;
-      if (door.glyph === 'E' || linked.has(id)) return [];
-      const dir = (door.dir+room.turn)%4;
-      return [{ ...world(room, door), dir, id, room:room.id, label:`${directionNames[dir]} ${door.glyph === '?' ? 'passage' : 'door'} · Room ${room.id}` }];
-    }));
-  }
-
-  function proposal(door, hand) {
-    if (!door || !hand) return null;
-    const plan = plans.get(hand.scene);
-    const entrance = plan.doors.find(port => port.glyph === 'E');
-    const [dx,dy] = directions[door.dir];
-    const entry = rotate(entrance, hand.turn);
-    const length = hand.length;
-    const hall = Array.from({ length }, (_,i) => ({ x:door.x+dx*(i+1), y:door.y+dy*(i+1), dir:door.dir }));
-    const room = {
-      id:table.rooms.length+1, scene:hand.scene, turn:hand.turn, link:door.id, hall,
-      x:door.x+dx*(length+1)-entry.x, y:door.y+dy*(length+1)-entry.y
-    };
-    const occupied = new Set(table.rooms.flatMap(placed => [...(placed.hall || []), ...plans.get(placed.scene).cells.map(square => world(placed,square))].map(key)));
-    const aligned = (entrance.dir+hand.turn+2)%4 === door.dir;
-    const overlaps = [...hall, ...plan.cells.map(square => world(room,square))].some(square => occupied.has(key(square)));
-    return { room, aligned, overlaps, valid:aligned && !overlaps };
-  }
-
-  const targetDoor = () => openDoors().find(door => door.id === table.target);
-  const heldDoor = () => drag?.active ? drag.door : targetDoor();
-  const preview = () => proposal(heldDoor(), table.hand);
-
-  const baseFill = {
-    '#':'#574f40', '~':'#7c9e98', P:'#544b45', L:'#ad603b',
-    B:'#baad89', '^':'#cfbb92', C:'#cbba94', '=':'#c3a578'
-  };
-  const fills = square => baseFill[square.glyph] || (square.glyph === '.' && (square.x+square.y)%2 ? '#dfcba3' : '#e6d4ad');
-  const etched = 'fill="none" stroke="#5d4e39" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"';
-  const symbols = {
-    O:`<rect x="7" y="7" width="10" height="10" rx="2" fill="#9f8054" stroke="#5d4e39"/><path d="M8 15l7-7" stroke="#cdba91"/>`,
-    R:`<path d="m4 16 3-6 5 2 2 6zM12 10l3-5 5 4-2 5z" fill="#ae9a76" stroke="#68563f"/>`,
-    P:`<rect width="24" height="24" fill="url(#pit-hatch)"/>`,
-    '~':`<path d="M4 10q4-4 8 0t8 0M4 15q4-4 8 0t8 0" fill="none" stroke="#425e5a" opacity=".65"/>`,
-    L:`<path d="m3 15 4-4 5 1 4-5 5 1" fill="none" stroke="#e7a56a"/>`,
-    '=':`<path d="M4 4h16M4 9h16M4 15h16M4 20h16" ${etched}/>`,
-    '^':`<path d="m5 14 7-6 7 6M5 18l7-6 7 6" ${etched}/>`,
-    B:`<path d="M4 5h16m-16 3h16" ${etched}/>`,
-    C:`<rect x="5" y="5" width="14" height="14" rx="2" ${etched}/><path d="M9 5v14m6-14v14" ${etched}/>`,
-    '-':`<path d="M0 12h24M5 8v8m7-8v8m7-8v8" ${etched}/>`,
-    '+':`<path d="M2 12h20M6 7v10m6-10v10m6-10v10" ${etched}/>`,
-    T:`<path d="M6 17V7h12v10M6 13h12M8 17v3m8-3v3" ${etched}/>`,
-    F:`<path d="M6 18V8h12v10z" fill="#a57143" stroke="#5d4e39"/><path d="M10 15q-2-3 3-6 0 3 2 4 1 4-3 4Z" fill="#e1a467"/>`,
-    G:`<circle cx="12" cy="12" r="6" ${etched}/><path d="M12 4v16M4 12h16" ${etched}/>`,
-    M:`<path d="m12 4 6 8-6 8-6-8z" fill="#a394ad" stroke="#5d4e39"/>`,
-    '#':`<path d="M2 12h20M9 2v10m7 0v10" stroke="#ae9c7b" opacity=".25"/>`
-  };
-
-  function tile(plan) {
-    const ports = new Map(plan.doors.map(door => [key(door), door.dir]));
-    return plan.cells.map(square => {
-      const { x,y,glyph } = square;
-      const border = [
-        [x,y-1,'M0 0h24'], [x+1,y,'M24 0v24'], [x,y+1,'M0 24h24'], [x-1,y,'M0 0v24']
-      ].filter(([a,b]) => !plan.occupied.has(key({ x:a,y:b }))).map(([, ,path]) => path).join(' ');
-      return `<g transform="translate(${x*cell} ${y*cell})">
-        <rect width="24" height="24" fill="${fills(square)}"/>
-        <path d="M0 24V0H24" fill="none" stroke="#544932" stroke-opacity=".22"/>
-        ${symbols[glyph] || ''}${glyph === 'E' ? `<g transform="rotate(${ports.get(key(square))*90} 12 12)"><path d="M3 3h18" stroke="#9d6237" stroke-width="2"/><path d="M12 7v10m-4-4 4 4 4-4" ${etched}/></g>` : ''}${border ? `<path class="room-outline" d="${border}" fill="none" stroke="#ad9167" stroke-width="1.25"/>` : ''}
-      </g>`;
-    }).join('');
-  }
-
-  const tiles = new Map(seedCards.map(id => `classics:scene:${id}`).concat(entranceId).map(id => [id, tile(plans.get(id))]));
-
-  function mapTile(room) {
-    return `<g transform="translate(${(room.x+.5)*cell} ${(room.y+.5)*cell}) rotate(${room.turn*90}) translate(-12 -12)">${tiles.get(room.scene)}</g>`;
-  }
-
-  function corridor(room) {
-    return (room.hall || []).map(({ x,y,dir }) => `<g transform="translate(${x*cell} ${y*cell})"><rect width="24" height="24" fill="#cfba92" stroke="#a88e63"/><path d="M12 0v24" transform="rotate(${(dir || 0)*90} 12 12)" stroke="#83704f" stroke-dasharray="2 4"/></g>`).join('');
-  }
-
-  function label(room) {
-    const plan = plans.get(room.scene);
-    const square = plan.cells.find(p => p.x === 1 && p.y === 1 && p.glyph === '.') || plan.cells.find(p => p.glyph === '.');
-    if (!square) return '';
-    const pos = world(room,square);
-    return `<g pointer-events="none" transform="translate(${(pos.x+.5)*cell} ${(pos.y+.5)*cell})"><circle r="8.5" fill="#3b493a" stroke="#efe0b9" stroke-width="1.3"/><text y=".5" dominant-baseline="central" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#fff0d0">${room.id}</text></g>`;
-  }
-
-  function entranceMarker() {
-    const start = table.rooms[0];
-    const entrance = plans.get(start.scene).doors.find(port => port.glyph === 'E');
-    const x = (entrance.x+.5)*cell;
-    const y = (entrance.y+1)*cell;
-    return `<g pointer-events="none" transform="translate(${x} ${y})"><path d="M0 4v13m-4-5 4 5 4-5" fill="none" stroke="#ecc58a"/><text y="34" fill="#c4baa0" font-size="10" font-family="ui-monospace,monospace" text-anchor="middle" letter-spacing="2">ENTRANCE</text></g>`;
-  }
-
-  function renderBoard() {
-    pieces.innerHTML = `${table.rooms.map(corridor).join('')}${table.rooms.map(room => `
-      <g class="room" role="button" tabindex="0" data-room="${room.id}" aria-label="Room ${room.id}: ${esc(scenes.get(room.scene).name)}" aria-pressed="${!table.hand && table.selected === room.id}">${mapTile(room)}${label(room)}</g>`).join('')}${entranceMarker()}`;
-    $('#doorways').innerHTML = openDoors().map(door => `<g class="door" role="button" tabindex="0" data-door="${door.id}" aria-label="${esc(door.label)}" transform="translate(${(door.x+.5)*cell} ${(door.y+.5)*cell})">
-        <circle r="16" fill="transparent"/><circle class="door-disc" r="8" fill="#303b31" stroke="#e7b674" stroke-width="1.6"/>
-        <path class="door-arrow" d="M0 4v-8m-3 3 3-3 3 3" transform="rotate(${door.dir*90})" fill="none" stroke="#f4ca8f" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
-      </g>`).join('');
-    renderPreview();
-  }
-
-  function renderPreview() {
-    const candidate = preview();
-    const target = heldDoor();
-    const floating = !candidate && drag?.active && drag.over ? mapTile({ ...table.hand, x:drag.px+1, y:drag.py+1 }) : '';
-    $('#preview').innerHTML = candidate ? `<g class="preview ${candidate.valid ? 'fits' : 'blocked'}" opacity=".65">${corridor(candidate.room)}${mapTile(candidate.room)}</g>` : `<g opacity=".5">${floating}</g>`;
-    for (const port of $('#doorways').children) {
-      const chosen = target?.id === port.dataset.door;
-      port.classList.toggle('chosen', chosen);
-      port.setAttribute('aria-pressed', String(chosen));
-    }
-  }
-
-  const backArt = `<svg viewBox="0 0 53 76" aria-hidden="true"><rect x="2" y="2" width="49" height="72" rx="3" fill="none" stroke="currentColor" opacity=".7"/><path d="m26.5 14 17 24-17 24-17-24Z" fill="none" stroke="currentColor"/><path d="M18 47V36a8.5 8.5 0 0 1 17 0v11m-17 0h17m-13 0V36a4.5 4.5 0 0 1 9 0v11" fill="none" stroke="currentColor"/><path d="M26.5 6v5m-2.5-2.5h5m-2.5 57v5m-2.5-2.5h5" stroke="currentColor"/></svg>`;
-
-  function renderDeck() {
-    const hand = table.hand;
-    if (hand) {
-      const plan = plans.get(hand.scene);
-      const span = Math.max(plan.width,plan.height)*cell;
-      deck.innerHTML = `<button type="button" class="hand-tile" data-action="rotate" aria-label="Rotate held Scene clockwise; drag to an open doorway to place" title="Drag to a doorway or click to rotate"><svg viewBox="${-span/2-4} ${-span/2-4} ${span+8} ${span+8}" aria-hidden="true"><g transform="rotate(${hand.turn*90}) translate(${-plan.width*cell/2} ${-plan.height*cell/2})">${tiles.get(hand.scene)}</g></svg></button>
-        <div class="deck-copy"><strong>Scene in hand</strong><p>${esc(scenes.get(hand.scene).name)}</p><p>${table.stack.length} face down in the deck</p></div>`;
-    } else {
-      deck.innerHTML = `<div class="card-back" aria-hidden="true">${backArt}</div><div class="deck-copy"><strong>Classics · Map sampler</strong><p>${table.stack.length} ${table.stack.length === 1 ? 'card' : 'cards'} face down</p><button type="button" class="primary" data-action="draw" ${!table.target || !table.stack.length ? 'disabled' : ''}>Draw Scene</button></div>`;
-    }
-  }
-
-  function renderPlacement() {
-    const el = $('#placement');
-    const hand = table.hand;
-    const door = heldDoor();
-    const candidate = preview();
-    el.hidden = !hand;
-    if (!hand) return;
-    const message = !door ? 'Pick an open doorway.' : !candidate.aligned ? 'Turn the tile so its entrance faces the doorway.' : candidate.overlaps ? 'Pieces overlap. Extend the corridor or try another doorway.' : 'The tile fits. Place it when you’re ready.';
-    el.innerHTML = `<p><strong>${esc(door?.label || 'Held tile')}</strong><br>${message}</p>
-      <div class="placement-controls"><button type="button" class="quiet-button" data-action="rotate">↻ Rotate</button><button type="button" class="quiet-button" data-action="shorter" aria-label="Shorten corridor" ${hand.length <= 1 ? 'disabled' : ''}>−</button><button type="button" class="quiet-button" data-action="longer" aria-label="Extend corridor" ${hand.length >= 8 ? 'disabled' : ''}>+</button><span>Corridor: ${hand.length}</span></div>
-      <button type="button" class="primary" data-action="place" ${!candidate?.valid ? 'disabled' : ''}>Place Scene</button>`;
-  }
-
-  function renderScript() {
-    const room = table.rooms.find(item => item.id === table.selected) || table.rooms[0];
-    const scene = scenes.get(table.hand?.scene || room.scene);
-    const roomId = table.hand ? 'hand' : room.id;
-    const revealed = scene.kind === 'opportunity' || table.revealed.includes(roomId);
+  function encounterNote(scene) {
     const encounter = scene.encounter;
-    const encounterNote = encounter.mode === 'random' ? `Draw ${encounter.count} random Monster ${encounter.count === 1 ? 'card' : 'cards'}.` : encounter.mode === 'printed' && !scene.revelation ? encounter.monsterIds.map(id => data.monsters.find(monster => monster.id === id)?.name).filter(Boolean).join(', ') : '';
-    $('#script').innerHTML = `<p class="eyebrow">${table.hand ? 'In hand' : `Room ${String(room.id).padStart(2,'0')}`} / Scene script</p><h3>${esc(scene.name)}</h3><p>${esc(scene.readAloud)}</p><p>${esc(scene.front)}</p>
-      ${encounterNote ? `<dl><dt>Monsters</dt><dd>${esc(encounterNote)}</dd></dl>` : ''}
-      <div class="response">${revealed ? `<dl>${[['Revelation',scene.revelation],['Terrain',scene.feature?.text],['Rule',scene.rule],['Failure',scene.failure]].filter(([, value]) => value).map(([name,value]) => `<dt>${name}</dt><dd>${esc(value)}</dd>`).join('')}</dl>` : '<button type="button" class="quiet-button" data-action="reveal">Reveal Response</button>'}</div>`;
+    if (encounter.mode === 'random') return `Draw ${encounter.count} random Monster ${encounter.count === 1 ? 'card' : 'cards'}.`;
+    if (encounter.mode === 'printed') return encounter.monsterIds.map(id => data.monsters.find(monster => monster.id === id)?.name).filter(Boolean).join(', ');
+    return '';
+  }
+
+  function face(card) {
+    if (card.side === 'back') return back;
+    const scene = scenes.get(card.id);
+    const heading = `<h2 class="card-title">${esc(scene.name)}</h2>`;
+    const footer = `<footer class="card-footer"><span>Classics · ${String(scene.index).padStart(2,'0')}</span><span>${esc(scene.lighting)}</span></footer>`;
+    const note = encounterNote(scene);
+    if (card.side === 'response') {
+      const entries = [['Revelation',scene.revelation],['Rule',scene.rule],['Failure',scene.failure],['Terrain',scene.feature?.text],['Monsters',note],['Reward',scene.reward === 'loot' ? 'Loot card' : scene.reward === 'quest' ? 'Quest card' : '']].filter(([,text]) => text);
+      return `<div class="face paper response-face"><span class="card-meta">Scene · Response</span>${heading}<dl class="response-copy">${entries.map(([label,text]) => `<dt>${label}</dt><dd>${esc(text)}</dd>`).join('')}</dl>${footer}</div>`;
+    }
+    const visibleNote = !scene.revelation ? note : '';
+    const dense = scene.readAloud.length+scene.front.length+visibleNote.length > 245;
+    return `<div class="face paper${dense ? ' dense' : ''}"><span class="card-meta">Scene · ${esc(scene.builtAs)}</span>${heading}${floorplan(scene)}<div class="card-copy"><p>${esc(scene.readAloud)}</p><p>${esc(scene.front)}</p>${visibleNote ? `<p class="encounter-note">${esc(visibleNote)}</p>` : ''}</div>${footer}</div>`;
+  }
+
+  function position(node, card, index) {
+    node.style.left = `${card.x}px`;
+    node.style.top = `${card.y}px`;
+    node.style.transform = `rotate(${card.angle}deg)`;
+    node.style.zIndex = String(index+1);
   }
 
   function render() {
-    const active = document.activeElement;
-    const attr = ['room','door','action'].find(name => active?.dataset?.[name]);
-    const value = active?.dataset?.[attr];
-    const region = active?.closest('#deck, #placement, #script, #board')?.id;
-    renderBoard();
-    renderDeck();
-    renderPlacement();
-    renderScript();
-    const door = targetDoor();
-    $('#table-help').textContent = table.hand ? 'Rotate the tile, then place it. You can also drag it from the tray to a doorway.' : !table.stack.length ? 'The Scene deck is empty. Click a room to look back through your dungeon.' : !openDoors().length ? 'No open doorways remain. Undo a placement or start a new table.' : door ? `${door.label} selected. Draw the top Scene from the tray.` : 'Pick an open doorway to draw the next Scene.';
-    $('#table-count').textContent = `${table.rooms.length} ${table.rooms.length === 1 ? 'room' : 'rooms'} on the table`;
-    $('[data-action="undo"]').disabled = !history.length;
-    if (region && attr) {
-      const match = $(`#${region}`).querySelectorAll(`[data-${attr}]`);
-      [...match].find(node => node.dataset[attr] === value && !node.disabled)?.focus({ preventScroll:true });
+    const present = new Set(table.cards.map(card => card.id));
+    for (const [id,node] of nodes) {
+      if (present.has(id)) continue;
+      node.remove();
+      nodes.delete(id);
     }
-    save();
-  }
-
-  function cameraView() {
-    const w = board.clientWidth || 800;
-    const h = board.clientHeight || 600;
-    const { x,y,zoom } = camera;
-    return { x:x-w/(2*zoom), y:y-h/(2*zoom), w:w/zoom, h:h/zoom };
+    const count = table.deck.length;
+    const layers = count > 3 ? 'many' : count > 1 ? 'few' : count === 1 ? 'one' : 'empty';
+    if (deck.dataset.layers !== layers) {
+      deck.dataset.layers = layers;
+      deck.innerHTML = count ? back : '<span class="deck-empty"><span aria-hidden="true">◇</span>Empty deck</span>';
+    }
+    deck.setAttribute('aria-disabled', String(count === 0));
+    deck.setAttribute('aria-label', count ? `Scene deck, ${count} cards. Draw the top card` : 'Scene deck is empty');
+    table.cards.forEach((card,index) => {
+      let node = nodes.get(card.id);
+      if (!node) {
+        node = document.createElement('div');
+        node.className = 'card';
+        node.dataset.card = card.id;
+        node.tabIndex = 0;
+        node.setAttribute('role','button');
+        cards.append(node);
+        nodes.set(card.id,node);
+      }
+      if (node.dataset.side !== card.side) {
+        node.dataset.side = card.side;
+        node.innerHTML = face(card);
+        node.setAttribute('aria-label', card.side === 'back' ? 'Face-down Scene card' : `${scenes.get(card.id).name}, ${card.side === 'response' ? 'Response' : 'front'}`);
+      }
+      node.setAttribute('aria-pressed', String(card.id === selected));
+      node.classList.toggle('dragging', gesture?.card === card && gesture.moved);
+      position(node,card,index);
+    });
+    $('#count').textContent = `${count} in deck · ${table.cards.length} on felt`;
+    for (const action of ['flip','rotate','rotate-back','response','draw','shuffle','undo']) {
+      const button = $(`[data-action="${action}"]`);
+      if (action === 'undo') button.disabled = !undoStack.length;
+      else if (action === 'draw' || action === 'shuffle') button.disabled = count < (action === 'shuffle' ? 2 : 1);
+      else button.disabled = !selectedCard() || (action === 'response' && selectedCard().side === 'back');
+    }
+    $('[data-action="response"]').textContent = selectedCard()?.side === 'response' ? 'Front' : 'Response';
   }
 
   function updateCamera() {
-    const { x,y,w,h } = cameraView();
-    board.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+    world.style.transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.zoom})`;
   }
 
-  function fitMap() {
-    const rooms = [...table.rooms];
-    const candidate = preview();
-    if (candidate) rooms.push(candidate.room);
-    const cells = rooms.flatMap(room => [...(room.hall || []), ...plans.get(room.scene).cells.map(p => world(room,p))]);
-    const loX = Math.min(...cells.map(p => p.x))*cell;
-    const hiX = (Math.max(...cells.map(p => p.x))+1)*cell;
-    const loY = Math.min(...cells.map(p => p.y))*cell;
-    const hiY = (Math.max(...cells.map(p => p.y))+1)*cell;
-    const w = board.clientWidth || 800;
-    const h = board.clientHeight || 600;
-    const heading = $('.table-heading');
-    const top = heading.offsetTop + heading.offsetHeight + 12 || 105;
-    const bottom = 88;
-    const zoom = clamp(Math.min((w-52)/(hiX-loX), (h-top-bottom)/(hiY-loY), 1.3), .18, 2.6);
-    camera = { x:(loX+hiX)/2, y:(loY+hiY)/2+(bottom-top)/(2*zoom), zoom };
-    updateCamera();
-  }
-
-  function zoomAt(ratio, x, y) {
-    const bounds = board.getBoundingClientRect();
-    const offsetX = x === undefined ? 0 : x-bounds.left-bounds.width/2;
-    const offsetY = y === undefined ? 0 : y-bounds.top-bounds.height/2;
-    const zoom = clamp(camera.zoom*ratio, .18, 2.6);
-    camera.x += offsetX*(1/camera.zoom-1/zoom);
-    camera.y += offsetY*(1/camera.zoom-1/zoom);
+  function zoomAt(factor, x = felt.clientWidth/2, y = felt.clientHeight/2) {
+    const zoom = clamp(camera.zoom*factor,.26,2.8);
+    const ratio = zoom/camera.zoom;
+    camera.x = x-(x-camera.x)*ratio;
+    camera.y = y-(y-camera.y)*ratio;
     camera.zoom = zoom;
     updateCamera();
   }
 
-  function ensureVisible() {
-    const candidate = preview();
-    if (!candidate) return;
-    const { x,y,w,h } = cameraView();
-    const margin = 16/camera.zoom;
-    const cells = plans.get(candidate.room.scene).cells.map(square => world(candidate.room,square));
-    if (cells.some(p => p.x*cell < x+margin || (p.x+1)*cell > x+w-margin || p.y*cell < y+margin+90/camera.zoom || (p.y+1)*cell > y+h-margin-56/camera.zoom)) fitMap();
+  function fit() {
+    const bounds = [{ ...deckPosition, angle:0 }, ...table.cards].map(({x,y,angle}) => {
+      const radians = angle*Math.PI/180;
+      const w = Math.abs(Math.cos(radians))*width + Math.abs(Math.sin(radians))*height;
+      const h = Math.abs(Math.sin(radians))*width + Math.abs(Math.cos(radians))*height;
+      return [x+(width-w)/2, y+(height-h)/2, x+(width+w)/2, y+(height+h)/2];
+    });
+    const x0 = Math.min(...bounds.map(rect => rect[0]));
+    const y0 = Math.min(...bounds.map(rect => rect[1]));
+    const w = Math.max(...bounds.map(rect => rect[2]))-x0;
+    const h = Math.max(...bounds.map(rect => rect[3]))-y0;
+    const zoom = clamp(Math.min((felt.clientWidth-40)/w,(felt.clientHeight-34)/h,1),.26,1);
+    camera = { x:Math.max(12,(felt.clientWidth-w*zoom)*.32)-x0*zoom, y:Math.max(12,(felt.clientHeight-h*zoom)*.25)-y0*zoom, zoom };
+    updateCamera();
   }
 
-  function place(candidate) {
-    if (!candidate?.valid) return false;
-    checkpoint();
-    const room = candidate.room;
-    table.rooms.push(room);
-    if (table.revealed.includes('hand')) table.revealed = [...table.revealed.filter(id => id !== 'hand'), room.id];
-    table.hand = null;
-    table.target = null;
-    table.selected = room.id;
-    return true;
+  function lift(card) {
+    table.cards = table.cards.filter(piece => piece !== card).concat(card);
+    selected = card.id;
   }
 
-  function act(action) {
-    const hand = table.hand;
-    const door = targetDoor();
-    if (action === 'fit') return fitMap();
-    if (action === 'zoom-in' || action === 'zoom-out') return zoomAt(action === 'zoom-in' ? 1.25 : .8);
-    if (action === 'draw' && !hand && door && table.stack.length) {
-      checkpoint();
-      table.hand = { scene:table.stack.shift(), turn:0, length:2 };
-    } else if (action === 'rotate' && hand) hand.turn = (hand.turn+1)%4;
-    else if (action === 'shorter' && hand) hand.length = Math.max(1,hand.length-1);
-    else if (action === 'longer' && hand) hand.length = Math.min(8,hand.length+1);
-    else if (action === 'place') { if (!place(preview())) return; }
-    else if (action === 'reveal') {
-      checkpoint();
-      table.revealed.push(hand ? 'hand' : table.selected);
-    } else if (action === 'undo' && history.length) table = history.pop();
-    else if (action === 'reset') { checkpoint(); table = newTable(); }
-    else return;
+  function pull(x,y) {
+    const id = table.deck.shift();
+    if (!id) return null;
+    const card = { id,x,y,angle:0,side:'back' };
+    table.cards.push(card);
+    selected = id;
+    return card;
+  }
+
+  function flip(card) {
+    card.side = card.side === 'back' ? 'front' : 'back';
+    message(card.side === 'back' ? 'Card turned face down.' : `${scenes.get(card.id).name} turned face up.`);
+  }
+
+  function action(name) {
+    if (gesture) return;
+    const card = selectedCard();
+    if (name === 'fit') return fit();
+    if (name === 'zoom-in' || name === 'zoom-out') return zoomAt(name === 'zoom-in' ? 1.2 : 1/1.2);
+    if (name === 'draw' && table.deck.length) {
+      remember();
+      const shift = (table.cards.length-1)%6;
+      const x = deckPosition.x+width+28+shift*17;
+      const y = deckPosition.y+12+shift*22;
+      pull(x,y);
+      if (camera.x+(x+width)*camera.zoom > felt.clientWidth || camera.x+x*camera.zoom < 0 || camera.y+(y+height)*camera.zoom > felt.clientHeight || camera.y+y*camera.zoom < 0) fit();
+      message('Drew one face-down Scene.');
+    } else if (name === 'shuffle' && table.deck.length > 1) {
+      remember();
+      table.deck = shuffled(table.deck);
+      message('Shuffled the face-down deck.');
+    } else if (name === 'reset') {
+      remember();
+      table = freshTable();
+      selected = null;
+      fit();
+      message('Started a fresh table. Undo to restore the previous one.');
+    } else if (name === 'undo' && undoStack.length) {
+      ({ table,selected } = undoStack.pop());
+      message('Undid the last card action.');
+    } else if (card && ['flip','rotate','rotate-back','response'].includes(name)) {
+      if (name === 'response' && card.side === 'back') return;
+      remember();
+      if (name === 'flip') flip(card);
+      else if (name === 'response') card.side = card.side === 'front' ? 'response' : 'front';
+      else card.angle = (card.angle + (name === 'rotate' ? 15 : 345))%360;
+    } else return;
+    lastTap = null;
     render();
-    if (action === 'undo' || action === 'reset') fitMap();
-    else if (['draw','rotate','shorter','longer'].includes(action)) ensureVisible();
-    if (action === 'draw') $('#placement [data-action="rotate"]').focus({ preventScroll:true });
-    if (action === 'place') $(`[data-room="${table.selected}"]`).focus({ preventScroll:true });
+    save();
   }
 
-  function pick(target) {
-    if (target.dataset.door) {
-      table.target = target.dataset.door;
-      table.selected = targetDoor().room;
-      render();
-      ensureVisible();
-    } else if (target.dataset.room && !table.hand) {
-      table.selected = Number(target.dataset.room);
+  function cardPointer(event) {
+    if (gesture || !event.isPrimary || (event.button !== 0 && event.button !== 1)) return;
+    const cardNode = event.target.closest('[data-card]');
+    const card = table.cards.find(piece => piece.id === cardNode?.dataset.card);
+    const fromDeck = event.target.closest('#deck');
+    if (event.button === 0 && fromDeck && !table.deck.length) return;
+    const kind = event.button === 1 ? 'pan' : fromDeck ? 'deck' : card ? 'card' : 'pan';
+    gesture = { kind, id:event.pointerId, x:event.clientX, y:event.clientY, moved:false, card:kind === 'card' ? card : null };
+    if (kind === 'pan') Object.assign(gesture,{ originX:camera.x, originY:camera.y });
+    else {
+      const origin = kind === 'card' ? card : deckPosition;
+      Object.assign(gesture,{ originX:origin.x, originY:origin.y, before:snapshot() });
+    }
+    felt.setPointerCapture(event.pointerId);
+    if (event.button === 1) event.preventDefault();
+  }
+
+  function movePointer(event) {
+    const g = gesture;
+    if (g?.id !== event.pointerId) return;
+    const dx = event.clientX-g.x;
+    const dy = event.clientY-g.y;
+    if (!g.moved) {
+      if (Math.hypot(dx,dy) < 5) return;
+      g.moved = true;
+      lastTap = null;
+      if (g.kind === 'pan') felt.classList.add('panning');
+      else if (g.kind === 'deck') g.card = pull(g.originX,g.originY);
+      else lift(g.card);
       render();
     }
+    if (g.kind === 'pan') {
+      camera.x = g.originX+dx;
+      camera.y = g.originY+dy;
+      updateCamera();
+    } else if (g.card) {
+      g.card.x = g.originX+dx/camera.zoom;
+      g.card.y = g.originY+dy/camera.zoom;
+      position(nodes.get(g.card.id),g.card,table.cards.length-1);
+    }
   }
+
+  function endPointer(event) {
+    const g = gesture;
+    if (g?.id !== event.pointerId) return;
+    gesture = null;
+    felt.classList.remove('panning');
+    if (event.type !== 'pointerup') {
+      if (g.moved && g.before) ({ table,selected } = g.before);
+    } else if (g.kind === 'pan') {
+      if (!g.moved) selected = null;
+      lastTap = null;
+    } else if (g.moved) {
+      remember(g.before);
+      if (g.kind === 'deck') message('Drew one face-down Scene.');
+    } else if (g.kind === 'deck') {
+      action('draw');
+      return;
+    } else if (g.card) {
+      selected = g.card.id;
+      const now = event.timeStamp;
+      if (lastTap?.id === selected && now-lastTap.time < 400 && Math.hypot(event.clientX-lastTap.x,event.clientY-lastTap.y) < 18) {
+        remember(g.before);
+        flip(g.card);
+        lastTap = null;
+      } else lastTap = { id:selected,time:now,x:event.clientX,y:event.clientY };
+    }
+    render();
+    save();
+  }
+
+  felt.addEventListener('pointerdown',cardPointer);
+  felt.addEventListener('pointermove',movePointer);
+  felt.addEventListener('pointerup',endPointer);
+  felt.addEventListener('pointercancel',endPointer);
+  felt.addEventListener('lostpointercapture',endPointer);
+
+  felt.addEventListener('wheel', event => {
+    event.preventDefault();
+    if (gesture) return;
+    const rect = felt.getBoundingClientRect();
+    zoomAt(Math.exp(-event.deltaY*.0018),event.clientX-rect.left,event.clientY-rect.top);
+  },{ passive:false });
 
   document.addEventListener('click', event => {
-    const action = event.target.closest('[data-action]');
-    if (action) {
-      if (dragHint && action.classList.contains('hand-tile')) return;
-      if (!action.disabled) act(action.dataset.action);
-      return;
-    }
-    const target = event.target.closest('[data-door], [data-room]');
-    if (target) pick(target);
+    const button = event.target.closest('[data-action]');
+    if (button && !button.disabled) action(button.dataset.action);
+    if (event.target.closest('#deck') && event.detail === 0) action('draw');
+  });
+
+  document.addEventListener('focusin', event => {
+    if (gesture || !event.target.dataset.card) return;
+    selected = event.target.dataset.card;
+    render();
   });
 
   document.addEventListener('keydown', event => {
-    if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
-    const target = event.target.closest('[data-room], [data-door]');
-    if (target && ['Enter',' '].includes(event.key)) {
+    if (event.altKey || gesture) return;
+    const key = event.key.toLowerCase();
+    const card = selectedCard();
+    const onCard = event.target.dataset.card === selected;
+    let command = null;
+    if (key === 'z' && (event.ctrlKey || event.metaKey)) command = 'undo';
+    else if (event.ctrlKey || event.metaKey) return;
+    else if (key === 'f' || (onCard && (key === ' ' || key === 'enter'))) command = 'flip';
+    else if (key === 'r') command = event.shiftKey ? 'rotate-back' : 'rotate';
+    else if (onCard && card && ['arrowleft','arrowright','arrowup','arrowdown'].includes(key)) {
       event.preventDefault();
-      pick(target);
-    } else if (event.key.toLowerCase() === 'r' && table.hand) act('rotate');
-  });
-
-  board.addEventListener('wheel', event => {
+      if (!event.repeat) remember();
+      const step = event.shiftKey ? 24 : 6;
+      lift(card);
+      card.x += key === 'arrowleft' ? -step : key === 'arrowright' ? step : 0;
+      card.y += key === 'arrowup' ? -step : key === 'arrowdown' ? step : 0;
+      render();
+      save();
+      return;
+    }
+    if (!command || event.repeat) return;
     event.preventDefault();
-    zoomAt(Math.exp(-event.deltaY*.0018), event.clientX,event.clientY);
-  }, { passive:false });
-
-  board.addEventListener('pointerdown', event => {
-    if (event.button !== 0 || event.target.closest('[data-room], [data-door]')) return;
-    pan = { id:event.pointerId, x:event.clientX, y:event.clientY, camera:{ ...camera } };
-    board.setPointerCapture(event.pointerId);
-    board.classList.add('panning');
+    action(command);
   });
-  board.addEventListener('pointermove', event => {
-    if (pan?.id !== event.pointerId) return;
-    camera.x = pan.camera.x-(event.clientX-pan.x)/camera.zoom;
-    camera.y = pan.camera.y-(event.clientY-pan.y)/camera.zoom;
-    updateCamera();
-  });
-  board.addEventListener('lostpointercapture', () => { pan = null; board.classList.remove('panning'); });
-
-  deck.addEventListener('pointerdown', event => {
-    if (event.button !== 0 || !event.target.closest('.hand-tile') || !table.hand) return;
-    dragHint = false;
-    drag = { id:event.pointerId, x:event.clientX, y:event.clientY, active:false, door:null };
-  });
-  document.addEventListener('pointermove', event => {
-    if (drag?.id !== event.pointerId) return;
-    if (!drag.active && Math.hypot(event.clientX-drag.x,event.clientY-drag.y) < 7) return;
-    if (!drag.active) {
-      deck.setPointerCapture(event.pointerId);
-      drag.active = true;
-    }
-    const b = board.getBoundingClientRect();
-    const v = cameraView();
-    const px = ((event.clientX-b.left)/camera.zoom+v.x)/cell-.5;
-    const py = ((event.clientY-b.top)/camera.zoom+v.y)/cell-.5;
-    const over = event.clientX >= b.left && event.clientX <= b.right && event.clientY >= b.top && event.clientY <= b.bottom;
-    const options = over ? openDoors().map(door => ({ door, distance:Math.hypot(px-door.x,py-door.y) }))
-      .filter(option => option.distance*cell*camera.zoom < Math.max(28,cell*camera.zoom*1.25))
-      .sort((a,b) => a.distance-b.distance) : [];
-    const next = options[0]?.door || null;
-    const changed = next?.id !== drag.door?.id;
-    if (!changed && next && drag.over === over) return;
-    Object.assign(drag, { door:next, px, py, over });
-    renderPreview();
-    if (changed) renderPlacement();
-  });
-
-  function finishDrag(event) {
-    if (drag?.id !== event.pointerId) return;
-    const held = drag;
-    const candidate = held.active ? preview() : null;
-    drag = null;
-    if (!held.active) return;
-    dragHint = true;
-    if (held.door && event.type === 'pointerup') {
-      table.target = held.door.id;
-      table.selected = held.door.room;
-      place(candidate);
-    }
-    render();
-    ensureVisible();
-  }
-  document.addEventListener('pointerup', finishDrag);
-  document.addEventListener('pointercancel', finishDrag);
 
   render();
-  fitMap();
-  window.addEventListener('resize', updateCamera);
+  fit();
+  save();
+  window.addEventListener('resize',fit);
 })();

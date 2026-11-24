@@ -16,11 +16,11 @@ python -m http.server 8000 --directory web
 
 Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the Pages workflow](../.github/workflows/pages.yml).
 
-## Tabletop Playtest
+## Card Table
 
-Open **Tabletop Playtest** from the welcome screen, or open [tabletop.html](tabletop.html) directly. This standalone prototype starts with the Entrance and eight shuffled Classics Scenes. Choose a doorway, draw, turn the held floorplan until its entrance faces that doorway, then place it or drag the held tile onto the doorway. Use the corridor controls to adjust spacing. Click a placed room to read its Scene script; the Response has a separate reveal.
+Open **Card Table** from the welcome screen, or open [tabletop.html](tabletop.html) directly. The Entrance starts face up and the rest of the Classics Scenes start in a shuffled deck. Drag the top card off the stack to draw it face down, or use **Draw**. Cards are loose pieces: drop them anywhere and drag to fan, overlap, or stack them. There is no doorway selection, snapping, or placement validation.
 
-Drag the mat to pan; use the zoom buttons, mouse wheel, or **Fit map**. The controls also work without dragging, and `R` rotates a held Scene. The table saves separately from guided play. Undo restores the table before your last draw, placement, reveal, or reset. This is a mapping prototype: it doesn't run encounters, quests, or resources.
+Double-click a card or select it and use **Flip** to show or hide its printed floorplan and text. **Response** turns a face-up Scene to its rules side. Use the rotate buttons or `R` / `Shift+R` to turn the selected card. To move a focused card without dragging, use the arrow keys. Drag bare felt to pan and use the wheel, zoom buttons, or **Fit**. Card positions, stacking order, deck order and faces save separately from guided play. This prototype handles cards only, not encounters, quests, or resources.
 
 ## Current capabilities
 
