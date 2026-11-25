@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1a1d18">
   <title>Card Table · Delvekeeper</title>
-  <link rel="stylesheet" href="tabletop.css?build=20261101.26">
+  <link rel="stylesheet" href="tabletop.css?build=20261101.28">
 </head>
 <body>
   <header class="masthead">
@@ -15,17 +15,20 @@
   </header>
   <main class="table">
     <div class="table-info">
-      <p>Draw a sleeve to see its teaser. Drag its <strong>Pull cards</strong> tab to separate the pair, then flip either card. Drag bare felt to pan.</p>
+      <p>Tap or drag from a deck. Tap a loose card before dragging to move it; drag elsewhere to pan. Use <strong>Pull cards</strong> to open a Scene sleeve.</p>
       <span id="count"></span>
     </div>
     <div id="felt" class="felt" aria-label="Card table surface">
       <div id="world" class="world">
-        <button type="button" id="deck" class="deck" title="Drag or click to draw a Scene sleeve"></button>
+        <button type="button" id="deck" class="deck" data-deck="scene" title="Drag or click to draw a Scene sleeve"></button>
+        <div id="character-decks" class="character-decks" role="group" aria-label="Character decks"></div>
         <div id="cards" class="cards"></div>
       </div>
     </div>
     <footer class="controls">
       <div class="control-group" aria-label="Deck controls" role="group">
+        <label class="sr-only" for="draw-deck">Deck to draw from or shuffle</label>
+        <select id="draw-deck"></select>
         <button type="button" data-action="draw">Draw</button>
         <button type="button" data-action="shuffle">Shuffle deck</button>
         <button type="button" data-action="reset">New table</button>
@@ -45,7 +48,7 @@
       <p id="status" class="sr-only" role="status"></p>
     </footer>
   </main>
-  <script src="data.js?build=20261101.26"></script>
-  <script src="tabletop.js?build=20261101.26"></script>
+  <script src="data.js?build=20261101.28"></script>
+  <script src="tabletop.js?build=20261101.28"></script>
 </body>
 </html>

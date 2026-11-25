@@ -20,7 +20,9 @@ Pushes to `main` deploy the same `web/` directory to GitHub Pages through [the P
 
 Open **Card Table** from the welcome screen, or open [tabletop.html](tabletop.html) directly. The Entrance sleeve starts on the felt, and the other Classics Scene sleeves start in a shuffled deck. Drag the top sleeve off the stack or use **Draw**; only the teaser is visible until you open it. Drag the **Pull cards** tab to pull the prose card away, or use **Open sleeve** to lay out both cards.
 
-Each sleeve holds a teaser card with the battlemap on its reverse, and a prose card with the reveal on its reverse. Double-click either loose card or select it and use **Flip**. Move, rotate, fan, and stack the cards independently. Use `R` / `Shift+R` for 90° turns and arrow keys to move a focused piece. Drag bare felt to pan; pinch with two fingers, use the mouse wheel or zoom buttons, or choose **Fit**. Card positions, stacking order, deck order and faces save separately from guided play. This prototype handles cards only, not encounters, quests, or resources.
+Each sleeve holds a teaser card with the battlemap on its reverse, and a prose card with the reveal on its reverse. Double-click either loose card or select it and use **Flip**. Tap a card to select it, then drag it to move it; dragging anywhere else pans the table. Tap the felt to deselect. Use `R` / `Shift+R` for 90° turns and arrow keys to move a focused piece. Pinch with two fingers, use the mouse wheel or zoom buttons, or choose **Fit**. Card positions, stacking order, deck order and faces save separately from guided play. This prototype handles cards only, not encounters, quests, or resources.
+
+The character decks beside Scenes hold Weapons, Armor (one pile for each primary attribute), Pasts, Knacks, and Supplies. Draw a Weapon, then use the Armor deck matching the Weapon's +3 attribute. Tap or drag directly from any pile to draw a face-down card, or choose the pile in the deck selector to draw or shuffle it. Flip the card to read it and arrange character cards on the felt by hand.
 
 ## Current capabilities
 

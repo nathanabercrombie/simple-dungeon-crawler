@@ -14,6 +14,9 @@
   const width = deck.offsetWidth;
   const height = deck.offsetHeight;
   const deckPosition = { x:32, y:34 };
+  const mini = { width:94, height:130, gap:12, x:deckPosition.x+2*width+88, y:34 };
+  const characterDecks = new Map();
+  const characterCards = new Map();
   const nodes = new Map();
   const undoStack = [];
   const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
@@ -29,8 +32,59 @@
     return result;
   }
 
-  const faces = { sleeve:['teaser'], map:['teaser','map'], script:['prose','reveal'] };
+  function characterDeck(id,name,label,color,icon,entries) {
+    const ids = entries.map(([key,title,lines]) => {
+      const cardId = `core:character:${id}:${key}`;
+      characterCards.set(cardId,{ title,lines,deck:id });
+      return cardId;
+    });
+    characterDecks.set(id,{ name,label,color,icon,ids });
+  }
+
+  const slug = name => name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  characterDeck('weapon','Weapons',['Weapons'],'#663733','⚔',data.gear.map(([name,attribute,passive,hands,technique,rule,cost]) => [slug(name),name,[
+    ['Primary',`${attribute} +3 · ${hands} ${hands === 1 ? 'hand' : 'hands'}`],['Weapon',passive],[`${technique} · ${cost} Skill ${cost === 1 ? 'Token' : 'Tokens'}`,rule]
+  ]]));
+  for (const attribute of ['Strength','Agility','Mind']) {
+    characterDeck(`armor-${attribute.toLowerCase()}`,`Armor · ${attribute}`,['Armor',attribute],'#455567','⬟',data.armor.filter(armor => armor.primary === attribute).map(armor => [slug(armor.name),armor.name,[
+      ['Primary',`${armor.primary} +3`],['Burden',`${armor.burden} · ${armor.weak} −2`],['Protection',armor.rule]
+    ]]));
+  }
+  characterDeck('past','Pasts',['Pasts'],'#655236','✦',data.pasts.map(past => [slug(past),past,[
+    ['Background',data.pastProse[past]],['Invoke','Spend 1 Skill Token to gain +2 on a check when this Past applies.']
+  ]]));
+  characterDeck('knack','Knacks',['Knacks'],'#523e58','✧',data.knacks.map(knack => [slug(knack.name),knack.name,[
+    [`${knack.cost} Skill Tokens`,knack.effect]
+  ]]));
+  // The supply list includes physical copies of repeat items, with distinct card IDs.
+  const supplies = [...new Map(Object.values(data.sceneOpportunities).flat().filter(card => card.kind === 'Supply').map(card => [card.id,card])).values()];
+  characterDeck('supply','Supplies',['Supplies'],'#405c45','✚',supplies.map(supply => [supply.id,supply.title,[
+    ['Supply',supply.prose],['Take',supply.effect],['Use',data.itemRules[supply.item]]
+  ]]));
+
+  const deckNodes = new Map([['scene',deck]]);
+  const deckPositions = new Map([['scene',{ ...deckPosition,width,height }]]);
+  for (const [id,def] of characterDecks) {
+    const index = deckNodes.size-1;
+    const pos = { x:mini.x+(index%4)*(mini.width+mini.gap), y:mini.y+Math.floor(index/4)*(mini.height+mini.gap), width:mini.width,height:mini.height };
+    const node = document.createElement('button');
+    node.type = 'button';
+    node.className = 'deck mini-deck';
+    node.dataset.deck = id;
+    node.title = `Drag or click to draw from ${def.name}`;
+    node.style.cssText = `left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px`;
+    $('#character-decks').append(node);
+    deckNodes.set(id,node);
+    deckPositions.set(id,pos);
+  }
+  const deckPicker = $('#draw-deck');
+  deckPicker.append(new Option('Scenes','scene'));
+  for (const [id,def] of characterDecks) deckPicker.append(new Option(def.name,id));
+
+  const faces = { sleeve:['teaser'], map:['teaser','map'], script:['prose','reveal'], character:['back','front'] };
   const piece = (scene,kind,x,y,angle = 0,side = faces[kind][0]) => ({ id:`${scene}:${kind}`, scene,kind,x,y,angle,side });
+  const characterPiece = (id,x,y) => ({ id,kind:'character',x,y,angle:0,side:'back' });
+  const freshCharacterDecks = () => Object.fromEntries([...characterDecks].map(([id,def]) => [id,shuffled(def.ids)]));
 
   function pair(scene,x,y,angle,showMap = false,showReveal = false) {
     const radians = angle*Math.PI/180;
@@ -41,6 +95,7 @@
   function freshTable() {
     return {
       deck:shuffled(data.scenes.slice(1).map(scene => scene.id)),
+      characterDecks:freshCharacterDecks(),
       cards:[piece(entrance.id,'sleeve',deckPosition.x+width+48,52)]
     };
   }
@@ -49,12 +104,20 @@
     try {
       const saved = JSON.parse(localStorage.getItem(saveKey));
       if (Array.isArray(saved?.deck) && Array.isArray(saved.cards) &&
-          saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => scenes.has(card.scene) &&
-            card.id === `${card.scene}:${card.kind}` && faces[card.kind]?.includes(card.side) && [card.x,card.y,card.angle].every(Number.isFinite))) return saved;
+          saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => card && [card.x,card.y,card.angle].every(Number.isFinite) &&
+            faces[card.kind]?.includes(card.side) && (card.kind === 'character' ? characterCards.has(card.id) : scenes.has(card.scene) && card.id === `${card.scene}:${card.kind}`))) {
+        const onFelt = new Set(saved.cards.map(card => card.id));
+        saved.characterDecks = Object.fromEntries([...characterDecks].map(([id,def]) => {
+          const available = def.ids.filter(cardId => !onFelt.has(cardId));
+          const pile = saved.characterDecks?.[id];
+          return [id,Array.isArray(pile) && new Set(pile).size === available.length && pile.length === available.length && pile.every(cardId => available.includes(cardId)) ? pile : shuffled(available)];
+        }));
+        return saved;
+      }
       const old = JSON.parse(localStorage.getItem(oldSaveKey));
       if (Array.isArray(old?.deck) && Array.isArray(old.cards) && old.deck.every(id => scenes.has(id)) &&
           old.cards.every(card => scenes.has(card.id) && [card.x,card.y,card.angle].every(Number.isFinite) && ['back','front','response'].includes(card.side))) {
-        return { deck:old.deck, cards:old.cards.flatMap(card => card.side === 'back' ? [piece(card.id,'sleeve',card.x,card.y,card.angle)] : pair(card.id,card.x,card.y,card.angle,true,card.side === 'response')) };
+        return { deck:old.deck, characterDecks:freshCharacterDecks(), cards:old.cards.flatMap(card => card.side === 'back' ? [piece(card.id,'sleeve',card.x,card.y,card.angle)] : pair(card.id,card.x,card.y,card.angle,true,card.side === 'response')) };
       }
     } catch { /* Storage is optional. */ }
     return freshTable();
@@ -82,6 +145,7 @@
   }
 
   const selectedCard = () => table.cards.find(card => card.id === selected);
+  const pileFor = id => id === 'scene' ? table.deck : table.characterDecks[id];
   const message = text => { $('#status').textContent = text; };
 
   const back = `<div class="face back" aria-hidden="true"><svg viewBox="0 0 200 287" fill="none">
@@ -94,26 +158,58 @@
     <g fill="currentColor" font-family="Georgia,serif" text-anchor="middle"><text x="100" y="29" font-size="11" letter-spacing="3">DELVEKEEPER</text><text x="100" y="263" font-size="10" letter-spacing="3">CLASSICS · SCENE</text></g>
   </svg></div>`;
 
+  function characterBack(def,count) {
+    return `<div class="face character-back" style="--deck-ink:${def.color}" aria-hidden="true"><span class="deck-kicker">Core set</span><span class="deck-icon">${def.icon}</span><span class="deck-label">${def.label.map(label => `<span>${label}</span>`).join('')}</span>${count === undefined ? '' : `<span class="deck-remaining">${count || 'Empty'}</span>`}</div>`;
+  }
+
+  function characterFace(card) {
+    const item = characterCards.get(card.id);
+    const def = characterDecks.get(item.deck);
+    if (card.side === 'back') return characterBack(def);
+    const dense = item.lines.reduce((length,[label,text]) => length+label.length+text.length,0) > 330;
+    return `<div class="face paper character-face${dense ? ' dense' : ''}" style="--deck-ink:${def.color}"><span class="card-meta">${esc(def.name)}</span><h2 class="card-title">${esc(item.title)}</h2><dl class="character-rules">${item.lines.map(([label,text]) => `<dt>${esc(label)}</dt><dd>${esc(text)}</dd>`).join('')}</dl><footer class="card-footer"><span>Core set</span><span aria-hidden="true">${def.icon}</span></footer></div>`;
+  }
+
   const terrain = { '#':'#6c5c46', '~':'#8eb3aa', P:'#443d38', L:'#b3673e', B:'#c4b394', '^':'#cfb88b', C:'#c8b48e' };
   const marks = { E:'↓', X:'·', '?':'?', O:'■', R:'◆', '=':'≡', '^':'⌃', B:'═', C:'▥', F:'▲', G:'⚙', M:'◇', T:'♜', '+':'+', '-':'—' };
+  function exitEdge(rows,x,y) {
+    const row = rows[y];
+    if (y === 0) return 'north';
+    if (y === rows.length-1) return 'south';
+    return row.slice(0,x).trim() ? 'east' : 'west';
+  }
+
+  function mapTunnel(edge,glyph,x,y,square) {
+    const horizontal = edge === 'west' || edge === 'east';
+    const toStart = edge === 'west' || edge === 'north';
+    const along = horizontal ? x : y;
+    const cross = horizontal ? y : x;
+    const start = toStart ? 0 : along+square-.5;
+    const end = toStart ? along+.5 : horizontal ? width : height;
+    const rect = horizontal ? [start,cross,end-start,square] : [cross,start,square,end-start];
+    const sides = horizontal ? `M${start} ${cross}H${end}M${start} ${cross+square}H${end}` : `M${cross} ${start}V${end}M${cross+square} ${start}V${end}`;
+    return `<rect class="${glyph === 'E' ? 'entrance' : 'exit'}-tunnel" data-edge="${edge}" x="${rect[0]}" y="${rect[1]}" width="${rect[2]}" height="${rect[3]}" fill="#e4cca0"/><path d="${sides}" fill="none" stroke="#6c5c46"/>`;
+  }
+
   function floorplan(scene) {
     const rows = scene.map.split('\n');
     const cols = Math.max(...rows.map(row => row.length));
     const square = 19;
     const left = (width-cols*square)/2;
     const top = (height-rows.length*square)/2;
-    const entryRow = rows.findIndex(row => row.includes('E'));
-    const entryX = left + (rows[entryRow]?.indexOf('E') ?? 0)*square;
-    const entryY = top+(entryRow+1)*square;
-    // The floorplans face north and enter from the south. Extend that doorway to the card edge.
-    const tunnel = entryRow < 0 ? '' : `<path class="entrance-tunnel" d="M${entryX} ${entryY-.5}H${entryX+square}V${height}H${entryX}Z" fill="#e4cca0"/><path d="M${entryX} ${entryY}V${height}M${entryX+square} ${entryY}V${height}" fill="none" stroke="#6c5c46"/>`;
+    const tunnels = [];
     const grid = rows.flatMap((row,y) => [...row].flatMap((glyph,x) => {
       if (glyph === ' ') return [];
+      if ('EX?'.includes(glyph)) {
+        // Entrance glyphs face south, including the recessed entrance of the shrine.
+        const edge = glyph === 'E' ? 'south' : exitEdge(rows,x,y);
+        tunnels.push(mapTunnel(edge,glyph,left+x*square,top+y*square,square));
+      }
       const fill = terrain[glyph] || ((x+y)%2 ? '#e4cca0' : '#f0dcb6');
       const symbol = marks[glyph];
       return `<g transform="translate(${x*square} ${y*square})"><rect width="${square}" height="${square}" fill="${fill}" stroke="#493c30" stroke-opacity=".45" stroke-width=".65"/>${symbol ? `<text x="${square/2}" y="${square/2+3.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#503923">${symbol}</text>` : ''}</g>`;
     })).join('');
-    return `<svg class="card-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Scene floorplan"><g transform="translate(${left} ${top})">${grid}</g>${tunnel}</svg>`;
+    return `<svg class="card-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Scene floorplan"><g transform="translate(${left} ${top})">${grid}</g>${tunnels.join('')}</svg>`;
   }
 
   function encounterNote(scene) {
@@ -124,6 +220,7 @@
   }
 
   function face(card) {
+    if (card.kind === 'character') return characterFace(card);
     const scene = scenes.get(card.scene);
     if (card.side === 'teaser') {
       return `<div class="face teaser-face"><span class="teaser-kicker">Classics · Scene</span><svg viewBox="0 0 80 100" width="72" height="90" aria-hidden="true"><path d="M40 2 77 50 40 98 3 50Z" fill="none" stroke="currentColor" opacity=".65"/><path d="M26 70V43a14 14 0 0 1 28 0v27M20 70h40m-27 0V43a7 7 0 0 1 14 0v27" fill="none" stroke="currentColor" stroke-width="2"/></svg><div class="teaser-copy"><p>${esc(scene.teaser)}</p><p class="teaser-cost">use 1 torch token to explore</p></div><span class="teaser-footer">${card.kind === 'sleeve' ? 'Sleeved pair' : 'Map on reverse'}</span></div>${card.kind === 'sleeve' ? '<button type="button" class="pull-tab" data-pull aria-label="Pull the cards out of the sleeve" title="Drag to pull out the prose card, or click to open">Pull cards <span aria-hidden="true">↗</span></button>' : ''}`;
@@ -156,14 +253,17 @@
       node.remove();
       nodes.delete(id);
     }
-    const count = table.deck.length;
-    const layers = count > 3 ? 'many' : count > 1 ? 'few' : count === 1 ? 'one' : 'empty';
-    if (deck.dataset.layers !== layers) {
-      deck.dataset.layers = layers;
-      deck.innerHTML = count ? back : '<span class="deck-empty"><span aria-hidden="true">◇</span>Empty deck</span>';
+    for (const [id,node] of deckNodes) {
+      const count = pileFor(id).length;
+      const def = characterDecks.get(id);
+      if (node.dataset.count !== String(count)) {
+        node.dataset.count = String(count);
+        node.dataset.layers = count > 3 ? 'many' : count > 1 ? 'few' : count === 1 ? 'one' : 'empty';
+        node.innerHTML = def ? characterBack(def,count) : count ? back : '<span class="deck-empty"><span aria-hidden="true">◇</span>Empty deck</span>';
+      }
+      node.setAttribute('aria-disabled',String(count === 0));
+      node.setAttribute('aria-label',`${def?.name ?? 'Scene'} deck, ${count ? `${count} ${def ? 'cards' : 'sleeves'}. Draw the top ${def ? 'card' : 'sleeve'}` : 'empty'}`);
     }
-    deck.setAttribute('aria-disabled', String(count === 0));
-    deck.setAttribute('aria-label', count ? `Scene deck, ${count} sleeves. Draw the top sleeve` : 'Scene deck is empty');
     table.cards.forEach((card,index) => {
       let node = nodes.get(card.id);
       if (!node) {
@@ -179,8 +279,13 @@
       if (node.dataset.side !== card.side) {
         node.dataset.side = card.side;
         node.innerHTML = face(card);
-        const scene = scenes.get(card.scene);
-        node.setAttribute('aria-label', card.side === 'teaser' ? `${card.kind === 'sleeve' ? 'Scene sleeve' : 'Teaser'}: ${scene.teaser}. Use 1 torch token to explore.` : `${scene.name}, ${card.side === 'map' ? 'battlemap' : card.side}`);
+        if (card.kind === 'character') {
+          const item = characterCards.get(card.id);
+          node.setAttribute('aria-label',card.side === 'back' ? `Face-down card from ${characterDecks.get(item.deck).name}` : item.title);
+        } else {
+          const scene = scenes.get(card.scene);
+          node.setAttribute('aria-label', card.side === 'teaser' ? `${card.kind === 'sleeve' ? 'Scene sleeve' : 'Teaser'}: ${scene.teaser}. Use 1 torch token to explore.` : `${scene.name}, ${card.side === 'map' ? 'battlemap' : card.side}`);
+        }
       }
       node.dataset.selected = String(card.id === selected);
       if (card.kind !== 'sleeve') node.setAttribute('aria-pressed', String(card.id === selected));
@@ -188,7 +293,8 @@
       position(node,card,index);
     });
     const picked = selectedCard();
-    $('#count').textContent = `${count} sleeves in deck · ${table.cards.length} pieces on felt`;
+    $('#count').textContent = `${table.deck.length} Scene sleeves · ${table.cards.length} pieces on felt`;
+    const count = pileFor(deckPicker.value).length;
     for (const action of ['flip','rotate','rotate-back','open','draw','shuffle','undo']) {
       const button = $(`[data-action="${action}"]`);
       if (action === 'undo') button.disabled = !undoStack.length;
@@ -214,12 +320,12 @@
   }
 
   function fit() {
-    const bounds = [{ ...deckPosition, angle:0 }, ...table.cards].map(({x,y,angle}) => {
+    const bounds = [...[...deckPositions.values()].map(({x,y,width:w,height:h}) => [x,y,x+w,y+h]), ...table.cards.map(({x,y,angle}) => {
       const radians = angle*Math.PI/180;
       const w = Math.abs(Math.cos(radians))*width + Math.abs(Math.sin(radians))*height;
       const h = Math.abs(Math.sin(radians))*width + Math.abs(Math.cos(radians))*height;
       return [x+(width-w)/2, y+(height-h)/2, x+(width+w)/2, y+(height+h)/2];
-    });
+    })];
     const x0 = Math.min(...bounds.map(rect => rect[0]));
     const y0 = Math.min(...bounds.map(rect => rect[1]));
     const w = Math.max(...bounds.map(rect => rect[2]))-x0;
@@ -234,13 +340,17 @@
     selected = card.id;
   }
 
-  function pull(x,y) {
-    const scene = table.deck.shift();
-    if (!scene) return null;
-    const card = piece(scene,'sleeve',x,y);
+  function pull(pile,x,y) {
+    const id = pileFor(pile).shift();
+    if (!id) return null;
+    const card = pile === 'scene' ? piece(id,'sleeve',x,y) : characterPiece(id,x,y);
     table.cards.push(card);
     selected = card.id;
     return card;
+  }
+
+  function announceDraw(pile) {
+    message(pile === 'scene' ? 'Drew one Scene sleeve. Only the teaser is showing.' : `Drew one face-down card from ${characterDecks.get(pile).name}. Flip it to read it.`);
   }
 
   function openSleeve(sleeve, dragging = false) {
@@ -265,22 +375,24 @@
         camera.y+(card.y+height)*camera.zoom > felt.clientHeight-padding || camera.y+card.y*camera.zoom < padding) fit();
   }
 
-  function action(name) {
+  function action(name,pile = deckPicker.value) {
     if (gesture || pinching) return;
     const card = selectedCard();
     if (name === 'fit') return fit();
     if (name === 'zoom-in' || name === 'zoom-out') return zoomAt(name === 'zoom-in' ? 1.2 : 1/1.2);
-    if (name === 'draw' && table.deck.length) {
+    if (name === 'draw' && pileFor(pile).length) {
       remember();
       const shift = (table.cards.length-1)%6;
-      const x = deckPosition.x+2*width+88+shift*17;
-      const y = deckPosition.y+12+shift*22;
-      keepVisible(pull(x,y));
-      message('Drew one Scene sleeve. Only the teaser is showing.');
-    } else if (name === 'shuffle' && table.deck.length > 1) {
+      const x = (pile === 'scene' ? mini.x : mini.x+4*(mini.width+mini.gap)+20)+shift*17;
+      const y = (pile === 'scene' ? mini.y+2*(mini.height+mini.gap)+24 : mini.y+6)+shift*22;
+      keepVisible(pull(pile,x,y));
+      announceDraw(pile);
+    } else if (name === 'shuffle' && pileFor(pile).length > 1) {
       remember();
-      table.deck = shuffled(table.deck);
-      message('Shuffled the Scene sleeves.');
+      const shuffledPile = shuffled(pileFor(pile));
+      if (pile === 'scene') table.deck = shuffledPile;
+      else table.characterDecks[pile] = shuffledPile;
+      message(pile === 'scene' ? 'Shuffled the Scene sleeves.' : `Shuffled ${characterDecks.get(pile).name}.`);
     } else if (name === 'reset') {
       remember();
       table = freshTable();
@@ -336,14 +448,19 @@
     if (gesture || !event.isPrimary || (event.button !== 0 && event.button !== 1)) return;
     const cardNode = event.target.closest('[data-card]');
     const card = table.cards.find(piece => piece.id === cardNode?.dataset.card);
-    const fromDeck = event.target.closest('#deck');
+    const fromDeck = event.target.closest('[data-deck]');
     const fromTab = card?.kind === 'sleeve' && event.target.closest('[data-pull]');
-    if (event.button === 0 && fromDeck && !table.deck.length) return;
-    const kind = event.button === 1 ? 'pan' : fromDeck ? 'deck' : fromTab ? 'tab' : card ? 'card' : 'pan';
-    gesture = { kind, id:event.pointerId, x:event.clientX, y:event.clientY, moved:false, card:kind === 'card' || kind === 'tab' ? card : null };
+    const pile = fromDeck?.dataset.deck;
+    const kind = event.button === 1 ? 'pan' : pile && pileFor(pile).length ? 'deck' : fromTab ? 'tab' : card && card.id === selected ? 'card' : 'pan';
+    gesture = { kind, pile, id:event.pointerId, x:event.clientX, y:event.clientY, moved:false, card, tap: event.button === 0 };
     if (kind === 'pan') Object.assign(gesture,{ originX:camera.x, originY:camera.y });
     else {
-      const origin = card || deckPosition;
+      let origin = card;
+      if (kind === 'deck') {
+        const pos = deckPositions.get(pile);
+        const rect = fromDeck.getBoundingClientRect();
+        origin = { x:pos.x+(event.clientX-rect.left)/camera.zoom*(1-width/pos.width), y:pos.y+(event.clientY-rect.top)/camera.zoom*(1-height/pos.height) };
+      }
       Object.assign(gesture,{ originX:origin.x, originY:origin.y, before:snapshot() });
     }
     felt.setPointerCapture(event.pointerId);
@@ -369,7 +486,10 @@
       g.moved = true;
       lastTap = null;
       if (g.kind === 'pan') felt.classList.add('panning');
-      else if (g.kind === 'deck') g.card = pull(g.originX,g.originY);
+      else if (g.kind === 'deck') {
+        g.card = pull(g.pile,g.originX,g.originY);
+        deckPicker.value = g.pile;
+      }
       else if (g.kind === 'tab') g.card = openSleeve(g.card,true);
       else lift(g.card);
       render();
@@ -399,33 +519,35 @@
     if (event.type !== 'pointerup') {
       if (g.moved && g.before) ({ table,selected } = g.before);
     } else if (g.kind === 'pan') {
-      if (!g.moved) selected = null;
-      lastTap = null;
+      if (!g.moved && g.tap && g.card) tapCard(g.card,event);
+      else {
+        if (!g.moved && g.tap) selected = null;
+        lastTap = null;
+      }
     } else if (g.moved) {
       remember(g.before);
-      if (g.kind === 'deck') message('Drew one Scene sleeve. Only the teaser is showing.');
+      if (g.kind === 'deck') announceDraw(g.pile);
     } else if (g.kind === 'deck') {
-      action('draw');
+      deckPicker.value = g.pile;
+      action('draw',g.pile);
       return;
     } else if (g.kind === 'tab') {
       selected = g.card.id;
       action('open');
       return;
     } else if (g.card) {
-      selected = g.card.id;
-      const now = event.timeStamp;
-      if (lastTap?.id === selected && now-lastTap.time < 400 && Math.hypot(event.clientX-lastTap.x,event.clientY-lastTap.y) < 18) {
-        if (g.card.kind === 'sleeve') {
-          action('open');
-          return;
-        }
-        remember(g.before);
-        flip(g.card);
-        lastTap = null;
-      } else lastTap = { id:selected,time:now,x:event.clientX,y:event.clientY };
+      tapCard(g.card,event);
     }
     render();
     save();
+  }
+
+  function tapCard(card,event) {
+    selected = card.id;
+    const now = event.timeStamp;
+    if (lastTap?.id === selected && now-lastTap.time < 400 && Math.hypot(event.clientX-lastTap.x,event.clientY-lastTap.y) < 18) {
+      action(card.kind === 'sleeve' ? 'open' : 'flip');
+    } else lastTap = { id:selected,time:now,x:event.clientX,y:event.clientY };
   }
 
   felt.addEventListener('pointerdown',cardPointer);
@@ -444,13 +566,19 @@
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-action]');
     if (button && !button.disabled) action(button.dataset.action);
-    if (event.target.closest('#deck') && event.detail === 0) action('draw');
+    const pile = event.target.closest('[data-deck]')?.dataset.deck;
+    if (pile && event.detail === 0) {
+      deckPicker.value = pile;
+      action('draw',pile);
+    }
     const tab = event.target.closest('[data-pull]');
     if (tab && event.detail === 0) {
       selected = tab.closest('[data-card]').dataset.card;
       action('open');
     }
   });
+
+  deckPicker.addEventListener('change',render);
 
   document.addEventListener('focusin', event => {
     if (gesture || pinching || !event.target.dataset.card) return;
@@ -459,7 +587,7 @@
   });
 
   document.addEventListener('keydown', event => {
-    if (event.altKey || gesture || pinching) return;
+    if (event.altKey || gesture || pinching || event.target === deckPicker) return;
     const key = event.key.toLowerCase();
     const card = selectedCard();
     const onCard = event.target.dataset.card === selected;
