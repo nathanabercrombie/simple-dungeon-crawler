@@ -232,10 +232,10 @@
     }
     const note = encounterNote(scene);
     if (card.side === 'reveal') {
-      const entries = [['Revelation',scene.revelation],['Rule',scene.rule],['Failure',scene.failure],['Terrain',scene.feature?.text],['Monsters',note],['Reward',scene.reward === 'loot' ? 'Loot card' : scene.reward === 'quest' ? 'Quest card' : '']].filter(([,text]) => text);
-      return `<div class="face paper response-face"><span class="card-meta">Scene · Reveal</span>${heading}<dl class="response-copy">${entries.map(([label,text]) => `<dt>${label}</dt><dd>${esc(text)}</dd>`).join('')}</dl>${footer}</div>`;
+      const entries = [['Revelation',scene.revelation],['Rule',scene.rule],['Failure',scene.failure],['Terrain',scene.feature?.text],['Monster',scene.hiddenEncounter ? note : ''],['Reward',scene.reward === 'loot' ? (scene.supplyOnly ? 'Supply card' : 'Loot card') : scene.reward === 'quest' ? 'Quest card' : '']].filter(([,text]) => text);
+      return `<div class="face paper response-face"><span class="card-meta">Scene · Response</span>${heading}<dl class="response-copy">${entries.map(([label,text]) => `<dt>${label}</dt><dd>${esc(text)}</dd>`).join('')}</dl>${footer}</div>`;
     }
-    const visibleNote = !scene.revelation ? note : '';
+    const visibleNote = !scene.hiddenEncounter ? note : '';
     return `<div class="face paper prose-face"><span class="card-meta">Scene · Prose</span>${heading}<div class="card-copy"><p>${esc(scene.readAloud)}</p><p>${esc(scene.front)}</p>${visibleNote ? `<p class="encounter-note">${esc(visibleNote)}</p>` : ''}</div>${footer}</div>`;
   }
 

@@ -41,7 +41,7 @@
 
   function encounterText(scene) {
     const encounter = scene.encounter || { mode:'none' };
-    if (encounter.mode === 'random') return `Encounter\nFlip over ${encounter.count > 1 ? encounter.count : 'one'} Monster card${encounter.count > 1 ? 's' : ''}.`;
+    if (encounter.mode === 'random') return '';
     const ids = [...(encounter.monsterIds || []), ...(encounter.printedMonsterIds || [])];
     if (!ids.length) return '';
     const entries = ids.map(id => monsterById(id)).filter(Boolean).map(monster => {
@@ -52,7 +52,7 @@
   }
 
   function rewardText(scene) {
-    if (scene.reward === 'loot') return 'Reward\nOne Loot card.';
+    if (scene.reward === 'loot') return scene.supplyOnly ? 'Reward\nOne Supply card.' : 'Reward\nOne Loot card.';
     if (scene.reward === 'quest') return 'Reward\nOne Quest card.';
     if (scene.reward === 'heart') return 'Objective\nComplete the Quest instruction on this card.';
     return '';
@@ -60,10 +60,10 @@
 
   function sceneRules(scene) {
     return text(
-      scene.feature && `${scene.feature.title}\n${scene.feature.text}`,
       scene.revelation && `Revelation\n${scene.revelation}`,
-      scene.rule && `Resolution\n${scene.rule}`,
+      scene.rule && `Rule\n${scene.rule}`,
       scene.failure && `Failure\n${scene.failure}`,
+      scene.feature && `Terrain — ${scene.feature.title}\n${scene.feature.text}`,
       encounterText(scene),
       rewardText(scene)
     );
@@ -97,8 +97,8 @@
       });
       cards.push({
         id:`scene-script:${scene.id}`, category:'Scene Script', quest:questName, title:scene.name,
-        kicker:questName ? `${questName} · Scene Script` : `Scene Script · ${scene.reward === 'quest' ? 'Quest reward' : 'Loot reward'}`,
-        teaser:scene.teaser, frontText:text(scene.readAloud, scene.front, scene.encounter?.mode === 'random' ? 'Flip over a Monster card.' : ''),
+        kicker:questName ? `${questName} · Scene Script` : 'Scene Script',
+        teaser:scene.teaser, frontText:text(scene.readAloud, scene.front, scene.encounter?.mode === 'random' ? `Draw ${scene.encounter.count === 1 ? 'one random Monster card' : `${scene.encounter.count} random Monster cards`}.` : ''),
         rulesText:sceneRules(scene), footer:scene.pack || 'Classics Set', imageLabel:`Illustration — ${scene.name}`, script:true
       });
     });

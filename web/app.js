@@ -63,7 +63,13 @@
     const hpEach = displayPartyFormula(enemy.scale?.hpEach || enemy.unitHp || 1);
     return `${count} ${enemy.name} · ${hpEach} HP each`;
   }
-  const liveEnemies = room => room.enemies.filter(enemy => enemy.hp > 0);
+  const visibleEnemies = room => {
+    const scene = templateFor(room);
+    return scene?.hiddenEncounter && !roomCardState(room).resolutionRevealed
+      ? room.enemies.filter(enemy => !scene.encounter.monsterIds.includes(enemy.monsterId))
+      : room.enemies;
+  };
+  const liveEnemies = room => visibleEnemies(room).filter(enemy => enemy.hp > 0);
   const roomCardState = room => room.cardState || (room.cardState = {
     resolutionRevealed: room.status === 'conquered',
     rewardsRevealed: room.status === 'conquered'
@@ -443,10 +449,10 @@
       revelation:sourceChallenge.revelation || '',
       active:sourceChallenge.active || ''
     };
-    const opportunity = normalizeLoot(canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[room.opportunityRoll]), room.opportunityRoll);
+    const lootRoll = template.supplyOnly ? 1 : room.opportunityRoll;
+    const opportunity = normalizeLoot(canonicalVariant(room, 'opportunityVariant', DATA.sceneOpportunities[lootRoll]), lootRoll);
     const questScene = buildQuestScene(room);
-    const liveEnemies = room.enemies.filter(enemy => enemy.hp > 0);
-    const occupants = liveEnemies.map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
+    const occupants = liveEnemies(room).map(enemy => `${enemy.units} ${enemy.name} (${enemy.hp} current HP, Defense ${enemy.defense})`);
     const readAloudParts = [
       { source:`Scene card · ${String(template.index).padStart(2,'0')} · ${template.name}`, text:template.readAloud }
     ].filter(part => part?.text);
@@ -1331,7 +1337,7 @@
   function statusIcon(room) {
     const icons = [];
     if (room.securedLight) icons.push('✦');
-    if (room.enemies.some(enemy => enemy.hp > 0)) icons.push('⚔');
+    if (liveEnemies(room).length) icons.push('⚔');
     if (room.quest.name === 'Heart') icons.push('♥');
     return icons.join('');
   }
@@ -1800,18 +1806,18 @@
     const difficulty = difficultyForTarget(target);
     const encounterMode = template.encounter?.mode || 'none';
     const responseRows = [
-      template.feature && `<li><strong>Terrain — ${esc(template.feature.title)}:</strong> ${esc(template.feature.text)}</li>`,
       template.revelation && `<li><strong>Revelation:</strong> ${esc(template.revelation)}</li>`,
       template.rule && `<li class="scene-rule"><strong>Rule:</strong> ${esc(template.rule)}</li>`,
-      template.failure && `<li><strong>Failure:</strong> ${esc(template.failure)}</li>`
+      template.failure && `<li><strong>Failure:</strong> ${esc(template.failure)}</li>`,
+      template.feature && `<li><strong>Terrain — ${esc(template.feature.title)}:</strong> ${esc(template.feature.text)}</li>`
     ].filter(Boolean).join('');
     const setupText = encounterMode === 'random'
-      ? 'Flip over a Monster card.'
+      ? `Draw ${template.encounter.count === 1 ? 'one random Monster card' : `${template.encounter.count} random Monster cards`}.`
       : encounterMode === 'boss'
         ? `Place ${template.encounter.monsterIds.map(id => DATA.bosses.find(monster => monster.id === id)?.name).filter(Boolean).join(' and ')} from the Boss pile.`
         : '';
     const inlineMonsters = encounterMode === 'printed' || encounterMode === 'boss'
-      ? room.enemies.map(enemy => `<div class="inline-monster"><strong>${esc(enemy.name)}</strong><span>${esc(canonicalEnemySetup(enemy))} = ${enemy.units} creature${enemy.units === 1 ? '' : 's'} · Defense ${enemy.defense}</span><small>${esc(enemy.instinct)}</small></div>`).join('')
+      ? visibleEnemies(room).map(enemy => `<div class="inline-monster"><strong>${esc(enemy.name)}</strong><span>${esc(canonicalEnemySetup(enemy))} = ${enemy.units} creature${enemy.units === 1 ? '' : 's'} · Defense ${enemy.defense}</span><small>${esc(enemy.instinct)}</small></div>`).join('')
       : '';
     const lootCard = (loot, searched = false) => {
       const claimed = searched ? search.claimed : room.opportunityClaimed;
@@ -1825,7 +1831,7 @@
       ? '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong><small>Commit to an approach before revealing the Response and rolling.</small></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>'
       : isHeart
         ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div><ul class="facilitator-rules">${responseRows}</ul><div class="reward-instruction"><strong>Objective:</strong> ${esc(heartAction())}.</div><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">Objective secured · Quest complete</span>' : `<button class="btn btn-small btn-primary" data-action="complete-heart">${esc(heartAction())} · complete Quest</button>`}</div><p>Completing the objective does not remove surviving Boss cards or conquer this Scene.</p></div>`
-        : `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}${rewardType ? `<div class="reward-instruction"><strong>Reward:</strong> ${rewardType === 'quest' ? 'One Quest card' : 'One Loot card'}.</div>` : '<div class="reward-instruction">No reward card.</div>'}</div>`;
+        : `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}${rewardType ? `<div class="reward-instruction"><strong>Reward:</strong> ${rewardType === 'quest' ? 'One Quest card' : template.supplyOnly ? 'One Supply card' : 'One Loot card'}.</div>` : '<div class="reward-instruction">No reward card.</div>'}</div>`;
     return `<main class="pane pane-room"><div class="section-head"><h2>Scene in play</h2><span>${difficulty} · Scene ${room.number}</span></div><div class="card-table">
       <article class="game-card room-card card-scene"><header class="card-titlebar room-header"><div><div class="eyebrow">Scene ${room.number} · ${esc(template.pack)}</div><h2>${esc(template.name)}</h2></div><strong>${target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><section class="scene-prose"><p><em>${esc(`${template.readAloud} ${template.front}`)}</em></p></section>${setupText ? `<p class="scene-draw-instruction">${esc(setupText)}</p>` : ''}${inlineMonsters ? `<div class="inline-monster-list">${inlineMonsters}</div>` : ''}${response}</div><footer class="card-footer">${esc(template.id)}</footer></article>
       ${rewardType === 'quest' && !cards.rewardsRevealed ? '<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>Quest card facedown</strong></div><footer class="card-footer">Scene reward</footer></article>' : ''}
@@ -1843,7 +1849,7 @@
     const scene = buildRoomScene(room, templateFor(room));
     const cards = roomCardState(room);
     const rewardType = challengeRewardType(room);
-    const live = room.enemies.filter(enemy => enemy.hp > 0);
+    const live = liveEnemies(room);
     return `<aside class="pane pane-encounter"><section><div class="section-head"><h2>Monster cards</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div><div class="enemy-list">${live.length ? live.map(renderEnemyLegacy).join('') : '<div class="empty-state">The Challenge has not revealed a Monster card.</div>'}</div></section>
       <section><div class="subhead">Quest cards</div><div class="quest-list">${rewardType === 'quest' && cards.rewardsRevealed ? `<article class="game-card compact-game-card quest-card"><header class="card-titlebar"><div><div class="eyebrow">Quest · ${esc(state.quest.name)} pack</div><h3>${esc(scene.quest.title)}</h3></div><strong>?</strong></header><div class="card-art card-art-placeholder quest-art"><span>Quest artwork</span><small>Placeholder</small></div><div class="card-text"><p>${esc(scene.quest.prose)}</p>${scene.quest.placement ? `<p><strong>Where it is:</strong> ${esc(scene.quest.placement)}</p><p><strong>Deck roll:</strong> ${room.quest.value} selected this card; it is not a check.</p><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">✓ Quest element claimed</span>' : '<button class="btn btn-small btn-primary" data-action="claim-quest-element">Claim Quest Element</button>'}</div>` : ''}<p><strong>Effect:</strong> ${esc(scene.quest.effect)}</p></div><footer class="card-footer">${esc(room.quest.name)} · Quest deck roll ${room.quest.value}</footer></article>` : `<div class="empty-state">${rewardType === 'quest' ? 'The guaranteed Quest card remains facedown until conquest.' : 'This Challenge does not guarantee a Quest card.'}</div>`}</div></section></aside>`;
   }
@@ -1867,7 +1873,7 @@
 
   function renderEncounterCards() {
     const room = activeRoom();
-    const live = room.enemies.filter(enemy => enemy.hp > 0);
+    const live = liveEnemies(room);
     const renderedMonsters = live.map(renderActiveEnemyCard).join('');
     return `<section class="pane pane-encounter"><div class="section-head"><h2>Monsters in play</h2><button class="btn btn-small btn-quiet" data-action="add-enemy">+ Monster</button></div>${live.length ? `<div class="supplemental-card-grid">${renderedMonsters}</div>` : '<div class="empty-state">No Monster cards are currently in play.</div>'}</section>`;
   }
@@ -2123,7 +2129,7 @@
       const followUp = followUps.join('');
       root.innerHTML = modalShell(r.success ? 'Success' : 'Failure', r.success ? 'The adventurers retain momentum.' : 'The dungeon receives one meaningful action.', `<div class="roll-result"><strong>${r.total}</strong><span>${r.attribute ? `${esc(r.attribute)} · ` : ''}${r.dice.join(' / ')} · kept ${r.kept} · ${signed(r.bonus)} bonus · target ${r.target}</span></div>`, followUp);
     } else if (modal.type === 'dungeon') {
-      const live = activeRoom().enemies.filter(e=>e.hp>0);
+      const live = liveEnemies(activeRoom());
       const damage = Number(modal.damage || 1);
       const escortTarget = state.quest.id === 'classics:quest:rescue-prisoner' && state.quest.completed && !state.quest.failed
         ? `<option value="quest-escort">Ada Stone · ${state.quest.escortHp ?? 2}/2 HP</option>` : '';

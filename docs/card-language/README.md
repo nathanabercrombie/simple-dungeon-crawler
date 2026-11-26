@@ -35,13 +35,16 @@ In the guided app, the unrevealed Scene presentation is deliberately quieter: fl
 Response:
 
 - optional **Revelation** genuinely learned after commitment;
-- the exact **Rule** governing the situation, including different targets for particular approaches when warranted;
-- **Failure** consequence;
+- the exact **Rule** governing the situation, with one short line per approach or trigger;
+- **Failure** on the same line when specific to an approach, or once below the Rule when shared;
+- optional **Terrain** for persistent rules not already covered by the Response;
 - exceptional persistent trigger only when necessary.
 
 Do not print Examine menus, preferred solution lists, compatibility tags, generation tables, or a bespoke conquest clause.
 
 For approach-specific checks, use **S** for the current Scene target. `Agi S + 2` means roll Agility against a target two higher than S, not add two to the roll. Show the clues and any obvious stakes on the front; reveal the numbers after commitment. The printed rulings aren't an action menu. Adjudicate unlisted methods normally and skip the roll when the method makes the outcome certain.
+
+If a creature's identity is a Revelation, keep its Monster entry on the Response side. Don't use a named Monster instruction on the front in that case.
 
 ## Monster placement rules
 

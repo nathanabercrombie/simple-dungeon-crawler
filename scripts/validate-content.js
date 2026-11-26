@@ -44,6 +44,14 @@ for (const module of Object.values(window.GAME_MODULES)) {
     const mappedExits = [...scene.map].filter(glyph => 'X?DU'.includes(glyph)).length;
     assert(mappedExits === scene.exits, `${scene.id} declares ${scene.exits} exits but maps ${mappedExits}`);
     assert(['none','printed','random','boss'].includes(scene.encounter?.mode), `${scene.id} has an invalid monster instruction`);
+    assert(typeof scene.rule === 'string' && scene.rule.trim(), `${scene.id} needs a Response rule`);
+    const sceneCopy = `${scene.teaser} ${scene.readAloud} ${scene.front}`;
+    const approachCheck = /\b(?:Str|Agi|Mind) S(?: [−+-] [0-9]+)?\b/;
+    assert(!approachCheck.test(sceneCopy), `${scene.id} gives away an approach target on the front`);
+    if (approachCheck.test(scene.rule)) assert(scene.rule.startsWith('S = Scene target.\n'), `${scene.id} does not define S before listing approach targets`);
+    if (scene.hiddenEncounter) assert(scene.encounter?.mode === 'printed' && scene.revelation, `${scene.id} needs a printed Monster and a Revelation for its hidden encounter`);
+    if (scene.supplyOnly) assert(scene.reward === 'loot', `${scene.id} specifies Supply without a Loot reward`);
+    if (scene.kind === 'opportunity') assert(!scene.failure && !approachCheck.test(scene.rule), `${scene.id} is an opportunity but requires a check or has a failure rule`);
     assert(!('tags' in scene) && !('requiresAny' in scene) && !('forbidsAny' in scene), `${scene.id} still uses compatibility tags`);
     if (scene.encounter?.mode === 'printed' || scene.encounter?.mode === 'boss') {
       assert(scene.encounter.monsterIds?.length, `${scene.id} names no printed or Boss monster`);
