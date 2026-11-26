@@ -228,6 +228,7 @@ button.map-cell:hover { border-color: var(--gold-soft); }
 .quest-hidden { margin-top:0; }
 .facilitator-rules { display:grid; gap:7px; margin:12px 0 15px !important; padding:0 !important; list-style:none; font:12px/1.5 var(--sans) !important; }
 .facilitator-rules li { padding:9px 11px; border-left:2px solid var(--line-bright); background:#1a1b16; color:#c9c2b2; }
+.facilitator-rules .scene-rule { white-space:pre-line; }
 .facilitator-rules li:nth-child(1) { border-left-color:var(--blue); }
 .facilitator-rules li:nth-child(2) { border-left-color:var(--gold); color:#e2d8bf; }
 .facilitator-rules li:nth-child(3) { border-left-color:var(--blood); }

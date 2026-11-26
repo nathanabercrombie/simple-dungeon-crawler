@@ -35,11 +35,13 @@ In the guided app, the unrevealed Scene presentation is deliberately quieter: fl
 Response:
 
 - optional **Revelation** genuinely learned after commitment;
-- the exact **Rule** governing the situation;
+- the exact **Rule** governing the situation, including different targets for particular approaches when warranted;
 - **Failure** consequence;
 - exceptional persistent trigger only when necessary.
 
 Do not print Examine menus, preferred solution lists, compatibility tags, generation tables, or a bespoke conquest clause.
+
+For approach-specific checks, use **S** for the current Scene target. `Agi S + 2` means roll Agility against a target two higher than S, not add two to the roll. Show the clues and any obvious stakes on the front; reveal the numbers after commitment. The printed rulings aren't an action menu. Adjudicate unlisted methods normally and skip the roll when the method makes the outcome certain.
 
 ## Monster placement rules
 

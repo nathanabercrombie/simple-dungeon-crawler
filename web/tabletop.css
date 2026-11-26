@@ -82,7 +82,7 @@ h1 { margin: 0; font: 650 11px ui-monospace, Consolas, monospace; letter-spacing
 .response-face .card-meta { color: #804737; }
 .response-copy { margin: 0; font: 11px/1.23 Georgia, serif; }
 .response-copy dt { font: 700 9px/1.28 ui-monospace, Consolas, monospace; color: #804737; text-transform: uppercase; letter-spacing: .06em; margin: 4px 0 1px; }
-.response-copy dd { margin: 0; }
+.response-copy dd { margin: 0; white-space: pre-line; }
 .character-face { border-top: 5px solid var(--deck-ink); }
 .character-face .card-meta { color: var(--deck-ink); }
 .character-rules { margin: 6px 0 0; font: 14px/1.34 Georgia, serif; }

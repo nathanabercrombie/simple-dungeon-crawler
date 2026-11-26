@@ -1204,16 +1204,19 @@
 
   function resolveRoll(form) {
     const afterSuccess = modal?.afterSuccess || null;
+    const room = activeRoom();
     const hero = state.party.find(item => item.id === form.heroId);
     const attribute = form.attribute || '';
     if (!hero || !attribute) return;
     const abilityBonus = Number(form.abilityBonus || 0);
     const abilityCost = Number(form.abilityCost || 0);
     const failureDamage = Number(form.failureDamage || 1);
+    const adjustment = roomCardState(room).resolutionRevealed ? Number(form.targetAdjustment || 0) : 0;
+    if (!Number.isInteger(adjustment) || adjustment < -3 || adjustment > 3) return showToast('Choose a target adjustment from −3 to +3.');
+    const target = targetForRoom(room) + adjustment;
     if (abilityCost > hero.tokens) return showToast(`${hero.name} needs ${abilityCost} Skill Token${abilityCost === 1 ? '' : 's'}.`);
     if (abilityCost) hero.tokens -= abilityCost;
     const bonus = Number(hero.attributes[attribute] || 0) + abilityBonus;
-    const target = targetForRoom(activeRoom());
     let mode = form.mode;
     const forcedDisadvantage = Boolean(hero.wound) || (state.light.remaining <= 0 && !activeRoom().securedLight);
     if (mode === 'rules') mode = forcedDisadvantage ? 'disadvantage' : 'normal';
@@ -1799,7 +1802,7 @@
     const responseRows = [
       template.feature && `<li><strong>Terrain — ${esc(template.feature.title)}:</strong> ${esc(template.feature.text)}</li>`,
       template.revelation && `<li><strong>Revelation:</strong> ${esc(template.revelation)}</li>`,
-      template.rule && `<li><strong>Rule:</strong> ${esc(template.rule)}</li>`,
+      template.rule && `<li class="scene-rule"><strong>Rule:</strong> ${esc(template.rule)}</li>`,
       template.failure && `<li><strong>Failure:</strong> ${esc(template.failure)}</li>`
     ].filter(Boolean).join('');
     const setupText = encounterMode === 'random'
@@ -1818,11 +1821,11 @@
         : `<button class="btn btn-small btn-primary" data-action="${action}">Take Loot</button>`;
       return `<article class="game-card supplemental-card loot-card ${searched ? 'search-loot-card' : ''}"><header class="card-titlebar"><div><div class="eyebrow">Loot · ${esc(loot.kind)} · ${esc(loot.pack || DATA.pack)}</div><h3>${esc(loot.title)}</h3></div><strong>${loot.gold ? `${loot.gold}g` : '?'}</strong></header><div class="card-text"><p>${esc(loot.prose)}</p><div class="effect-line"><strong>Take:</strong> ${esc(loot.effect)}</div>${controls}</div></article>`;
     };
-    const response = isHeart
-      ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div><ul class="facilitator-rules">${responseRows}</ul><div class="reward-instruction"><strong>Objective:</strong> ${esc(heartAction())}.</div><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">Objective secured · Quest complete</span>' : `<button class="btn btn-small btn-primary" data-action="complete-heart">${esc(heartAction())} · complete Quest</button>`}</div><p>Completing the objective does not remove surviving Boss cards or conquer this Scene.</p></div>`
-      : cards.resolutionRevealed
-        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}${rewardType ? `<div class="reward-instruction"><strong>Reward:</strong> ${rewardType === 'quest' ? 'One Quest card' : 'One Loot card'}.</div>` : '<div class="reward-instruction">No reward card.</div>'}</div>`
-        : '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>';
+    const response = !cards.resolutionRevealed
+      ? '<div class="facedown-card resolution-hidden"><div><span class="card-back-mark">?</span><strong>Response side hidden</strong><small>Commit to an approach before revealing the Response and rolling.</small></div><button class="btn btn-primary" data-action="reveal-challenge">Reveal Response</button></div>'
+      : isHeart
+        ? `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div><ul class="facilitator-rules">${responseRows}</ul><div class="reward-instruction"><strong>Objective:</strong> ${esc(heartAction())}.</div><div class="card-actions">${room.quest.claimed ? '<span class="tag lit">Objective secured · Quest complete</span>' : `<button class="btn btn-small btn-primary" data-action="complete-heart">${esc(heartAction())} · complete Quest</button>`}</div><p>Completing the objective does not remove surviving Boss cards or conquer this Scene.</p></div>`
+        : `<div class="resolution-panel"><div class="eyebrow">Response side · revealed</div>${responseRows ? `<ul class="facilitator-rules">${responseRows}</ul>` : ''}${rewardType ? `<div class="reward-instruction"><strong>Reward:</strong> ${rewardType === 'quest' ? 'One Quest card' : 'One Loot card'}.</div>` : '<div class="reward-instruction">No reward card.</div>'}</div>`;
     return `<main class="pane pane-room"><div class="section-head"><h2>Scene in play</h2><span>${difficulty} · Scene ${room.number}</span></div><div class="card-table">
       <article class="game-card room-card card-scene"><header class="card-titlebar room-header"><div><div class="eyebrow">Scene ${room.number} · ${esc(template.pack)}</div><h2>${esc(template.name)}</h2></div><strong>${target}</strong></header><div class="card-art room-card-art">${renderFloorplan(template, room.id)}</div><div class="card-text"><section class="scene-prose"><p><em>${esc(`${template.readAloud} ${template.front}`)}</em></p></section>${setupText ? `<p class="scene-draw-instruction">${esc(setupText)}</p>` : ''}${inlineMonsters ? `<div class="inline-monster-list">${inlineMonsters}</div>` : ''}${response}</div><footer class="card-footer">${esc(template.id)}</footer></article>
       ${rewardType === 'quest' && !cards.rewardsRevealed ? '<article class="game-card facedown-card reward-card-hidden"><div><span class="card-back-mark">?</span><strong>Quest card facedown</strong></div><footer class="card-footer">Scene reward</footer></article>' : ''}
@@ -2108,7 +2111,9 @@
       const heroButtons = heroes.map(hero => `<label class="check-hero-choice"><input type="radio" name="heroId" value="${hero.id}" data-action="check-hero" ${hero.id === selectedId ? 'checked' : ''}><span>${esc(hero.name)}</span><small>${hero.wound ? 'Wounded' : dark ? 'In darkness' : hero.hp < hero.maxHp ? 'Low HP' : 'Ready'}</small></label>`).join('');
       const statPanels = heroes.map(hero => `<div class="check-stat-grid ${hero.id === selectedId ? '' : 'hidden'}" data-check-stats="${hero.id}">${Object.entries(hero.attributes).map(([attribute,bonus]) => `<button class="check-stat-choice ${hero.id === selectedId && selectedAttribute === attribute ? 'selected' : ''}" type="button" data-action="select-check-stat" data-attribute="${esc(attribute)}"><span>${esc(attribute)}</span><strong>${signed(bonus + Number(modal.abilityBonus || 0))}</strong></button>`).join('')}</div>`).join('');
       const abilityFields = modal.abilityTitle ? `<input type="hidden" name="abilityTitle" value="${esc(modal.abilityTitle)}"><input type="hidden" name="abilityCost" value="${Number(modal.abilityCost || 0)}"><input type="hidden" name="abilityBonus" value="${Number(modal.abilityBonus || 0)}"><input type="hidden" name="failureDamage" value="${Number(modal.failureDamage || 1)}">` : '';
-      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Scene check</small><strong>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer and the attribute being used, then roll.</p></div><div class="modal-body">${abilityFields}<input type="hidden" name="attribute" value="${esc(selectedAttribute)}"><div class="check-hero-grid">${heroButtons}</div>${statPanels}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for an active Wound or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button type="submit" class="btn btn-primary">Roll against ${target}</button></div></form>`;
+      const targetField = roomCardState(room).resolutionRevealed
+        ? `<div class="field check-mode"><label for="target-adjustment">Target adjustment</label><select id="target-adjustment" name="targetAdjustment" data-action="adjust-check-target" data-base="${target}">${[-3,-2,-1,0,1,2,3].map(offset => `<option value="${offset}"${offset === 0 ? ' selected' : ''}>${offset === 0 ? `S (${target})` : `S ${offset < 0 ? '−' : '+'} ${Math.abs(offset)} (${target + offset})`}</option>`).join('')}</select><small>Use the adjustment for your committed approach, if the Response lists one.</small></div>` : '';
+      root.innerHTML = `<form class="modal check-modal" id="roll-form"><div class="modal-head"><div class="check-target"><small>Check target</small><strong data-check-target>${target}</strong></div><h2>${modal.abilityTitle ? esc(modal.abilityTitle) : 'Make a check'}</h2><p>Choose an adventurer and the attribute being used, then roll.</p></div><div class="modal-body">${abilityFields}<input type="hidden" name="attribute" value="${esc(selectedAttribute)}"><div class="check-hero-grid">${heroButtons}</div>${statPanels}${targetField}<div class="field check-mode"><label>Roll mode</label><select name="mode"><option value="rules" selected>Follow rules automatically</option><option value="normal">Normal</option><option value="advantage">Advantage</option><option value="disadvantage">Disadvantage</option></select><small>${dark ? 'The Scene is dark: automatic mode uses disadvantage.' : 'Automatic mode uses disadvantage for an active Wound or darkness.'}</small></div></div><div class="modal-foot"><button type="button" class="btn btn-quiet" data-action="close-modal">Cancel</button><button type="submit" class="btn btn-primary" data-check-submit>Roll against ${target}</button></div></form>`;
     } else if (modal.type === 'rollResult') {
       const r = modal.result;
       const followUps = [];
@@ -2280,7 +2285,12 @@
   }
 
   function handleInput(event) {
-    if (event.target.dataset.action === 'check-hero') {
+    if (event.target.dataset.action === 'adjust-check-target') {
+      const form = event.target.closest('#roll-form');
+      const target = Number(event.target.dataset.base) + Number(event.target.value);
+      form.querySelector('[data-check-target]').textContent = target;
+      form.querySelector('[data-check-submit]').textContent = `Roll against ${target}`;
+    } else if (event.target.dataset.action === 'check-hero') {
       const form = event.target.closest('#roll-form');
       form?.querySelectorAll('[data-check-stats]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.checkStats !== event.target.value));
       const visiblePanel = form?.querySelector(`[data-check-stats="${event.target.value}"]`);
