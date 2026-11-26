@@ -62,7 +62,7 @@ This creates three nested rhythms:
 ### Accepted room procedure
 
 1. Enter the next room or area.
-2. Spend one exploration turn and reduce the remaining duration of active light sources accordingly.
+2. Spend one exploration turn and advance the Torch Track one space (the starting Entrance doesn’t advance it).
 3. Generate its physical features and contents: monsters, traps, treasure, puzzles, clues, empty space, or combinations of these.
 4. Describe intentions and take actions freely rather than selecting from a fixed action menu.
 5. Use a GM or oracle to establish uncertain facts and judge how the world responds.
@@ -79,37 +79,31 @@ Entering and generating a new room always consumes one exploration turn. Lengthy
 
 ### Light and darkness
 
-Each expedition begins with **one torch** shared by the party. Put 12 Light tokens on it. Light is spent by named expedition actions rather than every ordinary turn: moving to an adjacent room, entering a new room, resting, searching, treating a Wound, and permanently illuminating suitable fixtures each cost 1 Light. These actions cost no portable Light while the party is in a permanently illuminated room. Additional torches can be chosen as extra items or found as Supply or Loot; each fresh torch receives 12 Light unless its card says otherwise.
+Each expedition shares one **Torch Track**. Start at space **0 (Easy), 2 (Standard), or 4 (Hard)**. Advance one space after exploring a new room, moving one connection to a known room, searching, or resting. Ordinary checks, combat, and other turns don’t advance it. No Supply or Loot resets the track.
+
+Use the current space’s DC for Scene checks. The DC starts at 9 and rises by one every three spaces, to 15 at space 18. Resolve a search with the light and DC you had before advancing. Spaces 0–11 are **Bright**, 12–17 are **Fading**, and 18 is **Darkness**. The marker stays on 18 once it gets there.
 
 A burning torch occupies one hand. Its bearer cannot use a bow, two-handed weapon, shield-and-weapon combination, or any other equipment requiring both hands. Another adventurer may carry the torch. A lone adventurer must set it down, secure it nearby, or accept darkness to use two-handed equipment. Position and the fiction determine whether a placed torch remains useful, becomes inaccessible, or can be extinguished.
 
-Without sufficient light, every adventurer check has disadvantage. The party may still enter new rooms, travel through known rooms, and search in darkness; a lack of Light never traps them in place. Rest, Wound treatment, and lighting permanent fixtures still require portable or secured light. Automatic monster attacks remain automatic. A specific ability, sense, or item can explicitly ignore darkness.
+In **Darkness**, checks in unlit rooms have disadvantage. Exploration, travel, and searching are still possible; rest and Wound treatment require enough light. Automatic monster attacks remain automatic.
 
-Every room template has an authored **Lighting** entry based on its architecture and terrain:
-
-- **Fixtures:** the layout contains sconces, braziers, lamps, fireplaces, or similar room-wide lighting. Spend 1 Light to ignite accessible fixtures permanently.
-- **Inherent:** the layout contains an active light source such as furnaces or lava and begins illuminated unless its generated state explicitly suppresses that source.
-- **None:** the layout has no persistent room-wide light. Portable light still works normally.
-
-Fixture and Inherent lighting create **secured light**. Once lit, fixtures remain lit for the expedition unless something explicitly extinguishes them. Adventurers in secured light do not suffer darkness disadvantage. Secured light also prevents wandering enemies: do not make the room's known-room danger roll, and wandering enemies do not enter while the light persists. Original inhabitants and challenges already present in the room are unaffected.
-
-A carried or placed torch illuminates the immediate situation but does not count as secured room light and does not suppress wandering enemies.
+Some rooms are printed **Illuminated**. Such a room prevents darkness disadvantage, and searching and resting there don’t advance the track. Movement still advances it, and the room doesn’t change the current DC or prevent wandering enemies. There is no action to permanently illuminate a room.
 
 ### Travel through known rooms
 
-Move through known rooms one connection at a time. Each adjacent move spends 1 Light when available unless it begins in a permanently illuminated room. At 0 Light, movement continues in darkness. The app may resolve a longer selected route as several consecutive adjacent moves.
+Move through known rooms one connection at a time, advancing the Torch Track on every move (it stays at 18 in Darkness). The app may resolve a longer selected route as several consecutive adjacent moves.
 
-Roll a d6 each time the party enters a conquered room during this movement. On a 1, wandering enemies arrive in the room and movement stops. Roll on the site's Wandering Enemy table and have the result enter through a plausible passage, shaft, hiding place, or supernatural route. The room remains conquered, and resolving the wanderers does not award its conquest Skill Tokens again.
+After moving into a cleared room and advancing the track, check the new space. In **Bright**, don’t roll. In **Fading** or **Darkness**, roll a d6. On a 1, wandering enemies arrive and movement stops. Draw a random Monster (or use the site’s Wandering Enemy table). The room remains conquered, and resolving the wanderers doesn’t award its conquest Skill Tokens again. Exploring, searching, and resting don’t trigger this roll.
 
 Movement also stops upon reaching an unconquered room or a room that is already actively dangerous. The same procedure applies while advancing, backtracking, or extracting from the site.
 
 The exploration turn spent entering and generating a new room includes the first necessary traversal of its persistent physical features. Do not charge another turn merely because the newly entered room contains a pit, difficult climb, deep water, unstable rubble, narrow ledge, or comparable obstacle.
 
-Conquest does not remove those features. On a later visit, a conquered room with a persistent traversal feature cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, reduce active light by one turn, and make its normal conquered-room danger roll. Make a traversal check only when the crossing remains uncertain and failure would matter.
+Conquest does not remove those features. On a later visit, a conquered room with a persistent traversal feature cannot be included in ordinary fast travel. Spend one full exploration turn to cross that room, advance the track for the move, and follow the normal backtracking rule. Make a traversal check only when the crossing remains uncertain and failure would matter.
 
 A durable improvement such as securing a rope, lowering a bridge, draining water, clearing rubble, or opening a shortcut removes that feature's recurring traversal cost and allows the room to be included in ordinary fast travel when the fiction supports it.
 
-The three-room allowance and the 1-in-6 danger chance are initial playtest values.
+Track length, starting spaces, and the Fading threshold are initial playtest values.
 
 ### Wandering enemies
 
@@ -118,8 +112,6 @@ Wandering enemies are real mobile occupants of the site, not the conquered room 
 An ordinary wandering group has at least **2 total HP per active adventurer when its card enters play**. A specific entry can exceed this floor. Monster cards express scaling as equations using `P` for that party size: `P×2 Goblins — 1 HP each`, for example. Resolve the equation when the card enters play and track every creature's HP separately. Later deaths do not resize an encounter already in play. Wanderers use their own Defense, HP, Instinct, and Wound rather than inheriting the current room's original challenge.
 
 If the adventurers escape, record where the wanderers remain. They may pursue according to their Instinct, occupy the room, move elsewhere when the fiction warrants it, or interact with other inhabitants. They do not disappear merely because the encounter ends.
-
-Wandering enemies do not enter a lit room. Reaching persistent room light therefore provides a safe boundary from pursuit unless a specific non-wandering threat is already present there.
 
 ### Skill Tokens
 
@@ -171,7 +163,7 @@ Likely design consequences:
 
 Two related pressures are under consideration:
 
-- **Light clock:** a visible countdown measured in exploration turns and attached to a torch or other light source. Certain costly roll results can consume additional light time. This makes darkness an approaching state rather than a forgotten inventory detail.
+- **Torch Track:** a shared marker advances with expedition actions. It shows the current Scene DC, when to roll for wandering enemies, and when the light runs out.
 - **Dungeon alert:** noise, greed, delays, and disruptive actions make the site increasingly hostile. At intervals or on specific triggers, the dungeon answers with encounters, complications, or worsening conditions.
 
 These pressures should interact but do different jobs: light limits safe exploration time, while alert records how strongly the dungeon is reacting to the intruders.
@@ -217,7 +209,7 @@ This makes every risky roll an initiative decision. Adventurers can maintain mom
 
 The handoff is the default systemic cost of failure. Do not automatically add an unrelated penalty before the dungeon acts. Some actions still have inherent stakes—a failed leap may cause a fall—but a failed attempt should not be punished twice merely because a roll occurred.
 
-A natural 1 is the explicit exception: its additional exploration turn is part of the critical-failure rule. It does not automatically spend Light unless the action or consequence names a Light cost.
+A natural 1 is the explicit exception: its additional exploration turn is part of the critical-failure rule. That extra turn does not advance the Torch Track.
 
 The attribute and skill ranges remain to be defined. The target ladder is an initial playtest value and may be recalibrated after those ranges are known.
 
@@ -233,7 +225,7 @@ Character creation will use a few linked random tables. The current proposal rol
 
 - Damage reduces HP, to a minimum of 0.
 - HP does not replenish automatically when a fight or Challenge ends.
-- In a conquered room with no active threat, the party may rest. Spend 1 Light and restore every living adventurer to full HP; permanent room lighting waives the Light cost.
+- In a conquered room with no active threat and enough light, the party may rest. Restore every living adventurer to full HP, then advance the Torch Track unless the room is Illuminated.
 - An adventurer at 0 HP is **exposed**.
 - Damage never spills through HP. A hit that reduces HP to 0 causes no lasting harm by itself.
 - A later hit received while already exposed causes a **Wound** determined by the attacker or hazard.
@@ -259,7 +251,7 @@ For example, treating a Bleeding Wound from a sword might leave a Strength −1 
 
 Scars are not active Wounds, so a scarred adventurer does not die merely from receiving one later Wound.
 
-A **medkit** is a single-use treatment item. Spend 1 Light unless the room is permanently illuminated, spend one exploration turn, and consume the medkit to convert one Wound into its Scar. No check is required when the adventurer has enough safety and time to work.
+A **medkit** is a single-use treatment item. With enough light to work, spend one exploration turn and consume the medkit to convert one Wound into its Scar. Treatment doesn’t advance the Torch Track. No check is required when the adventurer has enough safety and time to work.
 
 Attempting treatment during immediate danger requires an appropriate check and still consumes one exploration turn. On success, consume the medkit and convert the Wound. On failure, the Wound remains and control passes to the dungeon; the medkit is not consumed unless the fiction specifically causes it to be lost or ruined. A lone adventurer may treat their own Wound.
 

@@ -6,6 +6,11 @@ require('../web/data.js');
 
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
+const track = window.TORCH_TRACK;
+assert(track.spaces.length === track.end + 1, 'Torch Track is missing spaces');
+assert(track.at(track.fading - 1).band === 'Bright' && track.at(track.fading).band === 'Fading' && track.at(track.end).band === 'Darkness', 'Torch Track has incorrect band boundaries');
+assert(Object.values(track.starts).every(step => track.at(step).band === 'Bright'), 'All Torch Track starts must be Bright');
+assert(track.spaces.every((space, index) => space.step === index && space.dc >= 9 && space.dc <= 15 && (index === 0 || space.dc >= track.spaces[index-1].dc)), 'Torch Track has invalid DCs');
 const unique = (items, label) => {
   const seen = new Set();
   for (const item of items) {
@@ -39,11 +44,7 @@ for (const module of Object.values(window.GAME_MODULES)) {
 
   for (const scene of module.allScenes) {
     assert(scene.pack && scene.name && scene.readAloud && scene.front, `${scene.id} is missing authored Scene fields`);
-    assert(typeof scene.teaser === 'string' && scene.teaser.trim() && scene.teaser.trim().split(/\s+/).length <= 6, `${scene.id} needs a short door teaser`);
-    assert(scene.map?.includes('E'), `${scene.id} has no entrance glyph`);
-    const mappedExits = [...scene.map].filter(glyph => 'X?DU'.includes(glyph)).length;
-    assert(mappedExits === scene.exits, `${scene.id} declares ${scene.exits} exits but maps ${mappedExits}`);
-    assert(['none','printed','random','boss'].includes(scene.encounter?.mode), `${scene.id} has an invalid monster instruction`);
+    assert(['Illuminated','Unlit'].includes(scene.lighting), `${scene.id} needs printed lighting`);
     assert(typeof scene.rule === 'string' && scene.rule.trim(), `${scene.id} needs a Response rule`);
     const sceneCopy = `${scene.teaser} ${scene.readAloud} ${scene.front}`;
     const approachCheck = /\b(?:Str|Agi|Mind) S(?: [−+-] [0-9]+)?\b/;
@@ -52,6 +53,11 @@ for (const module of Object.values(window.GAME_MODULES)) {
     if (scene.hiddenEncounter) assert(scene.encounter?.mode === 'printed' && scene.revelation, `${scene.id} needs a printed Monster and a Revelation for its hidden encounter`);
     if (scene.supplyOnly) assert(scene.reward === 'loot', `${scene.id} specifies Supply without a Loot reward`);
     if (scene.kind === 'opportunity') assert(!scene.failure && !approachCheck.test(scene.rule), `${scene.id} is an opportunity but requires a check or has a failure rule`);
+    assert(typeof scene.teaser === 'string' && scene.teaser.trim() && scene.teaser.trim().split(/\s+/).length <= 6, `${scene.id} needs a short door teaser`);
+    assert(scene.map?.includes('E'), `${scene.id} has no entrance glyph`);
+    const mappedExits = [...scene.map].filter(glyph => 'X?DU'.includes(glyph)).length;
+    assert(mappedExits === scene.exits, `${scene.id} declares ${scene.exits} exits but maps ${mappedExits}`);
+    assert(['none','printed','random','boss'].includes(scene.encounter?.mode), `${scene.id} has an invalid monster instruction`);
     assert(!('tags' in scene) && !('requiresAny' in scene) && !('forbidsAny' in scene), `${scene.id} still uses compatibility tags`);
     if (scene.encounter?.mode === 'printed' || scene.encounter?.mode === 'boss') {
       assert(scene.encounter.monsterIds?.length, `${scene.id} names no printed or Boss monster`);
@@ -90,6 +96,7 @@ for (const module of Object.values(window.GAME_MODULES)) {
   }
 
   for (const card of loot) {
+    assert(card.item !== 'Fresh torch', `${card.id} offers a backup torch`);
     assert(card.pack && ['Supply','Treasure'].includes(card.kind), `${card.id} has invalid Loot ownership or kind`);
     assert(card.effect && (card.item || card.gold), `${card.id} has no concrete Take effect`);
   }

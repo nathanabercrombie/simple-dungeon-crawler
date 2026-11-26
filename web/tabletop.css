@@ -27,6 +27,33 @@ h1 { margin: 0; font: 650 11px ui-monospace, Consolas, monospace; letter-spacing
 .felt::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .21; background: repeating-linear-gradient(115deg, #d7e6c81a 0 1px, transparent 1px 3px), repeating-linear-gradient(25deg, #0003 0 1px, transparent 1px 3px); }
 .world { position: absolute; inset: 0; transform-origin: 0 0; pointer-events: none; }
 .cards, .character-decks { position: absolute; inset: 0; pointer-events: none; }
+.torch-track { position: absolute; width: 1030px; padding: 20px 24px 16px; pointer-events: auto; border: 1px solid #ead4a4; border-radius: 15px; color: #30231b; background: repeating-linear-gradient(130deg,#8c5c3020 0 1px,transparent 1px 6px), linear-gradient(115deg,#f6e6c6,#ead0a0 62%,#d6b586); box-shadow: inset 0 0 0 5px #69452c, inset 0 0 0 7px #ba8d58, 2px 4px #412e23, 5px 9px 16px #14251dbb; }
+.torch-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin: 0 0 14px; }
+.torch-heading h2 { margin: 0; font: 700 37px/1 Georgia, serif; letter-spacing: -.035em; }
+.torch-kicker { display: block; margin-bottom: 3px; color: #734c2d; text-transform: uppercase; letter-spacing: .14em; font: 700 10px/1.2 ui-monospace, Consolas, monospace; }
+.torch-heading p, .torch-notes p { margin: 0; font: 15px/1.3 Georgia, serif; }
+.torch-bands { display: grid; overflow: hidden; border: 1px solid #674b36; border-radius: 6px 6px 0 0; background: #423637; color: #fff1d7; text-align: center; }
+.torch-bands span { padding: 4px 0; font: 700 11px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .04em; text-transform: uppercase; }
+.torch-bands span:nth-child(1) { background: #785125; }
+.torch-bands span:nth-child(2) { background: #805045; }
+.torch-bands small { font-size: inherit; font-weight: 500; }
+.torch-spaces { display: grid; grid-template-columns: repeat(var(--track-spaces), minmax(0,1fr)); border: 1px solid #674b36; border-top: 0; border-radius: 0 0 6px 6px; }
+.torch-space { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 3px 0 4px; border: 0; border-right: 1px solid #9a795b; background: #f6dfb3; color: #34261e; touch-action: none; }
+.torch-space:nth-child(3n + 1) { box-shadow: inset 2px 0 #8c674c; }
+.torch-space:first-child { border-bottom-left-radius: 5px; box-shadow: none; }
+.torch-space.fading { background: #d9aa93; }
+.torch-space.darkness { background: #514247; color: #fff1d7; border-right: 0; border-bottom-right-radius: 5px; }
+.torch-space:hover, .torch-space[aria-pressed='true'] { box-shadow: inset 0 0 0 2px #a97039; }
+.torch-space:focus-visible { outline-offset: -2px; outline-color: #542d1c; }
+.torch-space.darkness:focus-visible { outline-color: #ffd58d; }
+.torch-step, .torch-space small { font: 700 10px/1.1 ui-monospace, Consolas, monospace; }
+.torch-space strong { font: 700 12px/1.1 ui-monospace, Consolas, monospace; }
+.torch-space small { min-height: 11px; text-transform: uppercase; }
+.torch-socket { display: grid; position: relative; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid #69452c85; background: #3d28211c; }
+.torch-marker { position: absolute; display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; border: 2px solid #754316; color: #48270e; background: radial-gradient(circle at 35% 25%,#ffe6a0,#d4933b 69%,#af6b2d); box-shadow: inset 0 0 0 2px #ffce6f, 1px 2px 4px #311c12ba; cursor: grab; }
+.torch-marker:active { cursor: grabbing; }
+.torch-marker svg { width: 22px; height: 22px; pointer-events: none; }
+.torch-notes { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; padding-top: 9px; }
 .deck, .card { position: absolute; width: 264px; height: 372px; border-radius: 12px; padding: 0; pointer-events: auto; touch-action: none; cursor: grab; -webkit-tap-highlight-color: transparent; }
 .deck { left: 32px; top: 34px; border: 0; background: transparent; isolation: isolate; }
 .deck[aria-disabled='true'] { cursor: default; }
@@ -76,6 +103,7 @@ h1 { margin: 0; font: 650 11px ui-monospace, Consolas, monospace; letter-spacing
 .card-copy { margin: 5px 0 0; font: 15px/1.42 Georgia, serif; }
 .card-copy p { margin: 0 0 10px; }
 .card-copy p:last-child { margin-bottom: 0; }
+.map-face .room-light-note { align-self: start; max-width: 112px; padding: 4px 5px; border-radius: 4px; font: 700 11px/1.2 Georgia, serif; color: #ffe5b4; background: #392b23; text-transform: none; letter-spacing: 0; }
 .encounter-note { color: #684a30; font-weight: bold; }
 .card-footer { margin-top: auto; padding-top: 4px; border-top: 1px solid #b6a27d; display: flex; gap: 7px; justify-content: space-between; }
 .response-face { border-top: 5px solid #955943; gap: 4px; }

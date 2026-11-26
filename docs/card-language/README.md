@@ -69,11 +69,11 @@ Loot is either **Supply** or **Treasure** and always uses **Take**. Supply is pr
 
 ### Gear and armor
 
-Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. A Torch is a full Light reference card.
+Gear uses Attack, Passive, and Technique. Armor uses Protection and Burden. The Torch Track is a shared oversized reference card with one marker, a DC on each space, and the Bright, Fading, and Darkness rules printed on it.
 
 ## Defined terms
 
-The expedition's **Scene target** is 9 for Scenes 1-2, then rises by 1 every two Scenes to a maximum of 15. A Quest finale is 1 point harder within that cap. This live value replaces authored per-card difficulty.
+Use the current **Scene target** as S. On the Torch Track, this is the DC printed on the marker's current space. A Response can modify S for that check without changing the base target.
 
 - **Scene:** one card containing both place and present situation.
 - **Commit:** state an intended action and accept the Response and check that follow.
@@ -83,7 +83,7 @@ The expedition's **Scene target** is 9 for Scenes 1-2, then rises by 1 every two
 - **Conquer:** durably stop the Scene’s active problem from controlling the place.
 - **Dungeon action:** one hostile action chosen through a creature’s Instinct and current fiction.
 - **Reveal:** turn a card face up; this does not claim it unless stated.
-- **Permanently Lit:** Scene actions do not spend portable Light there, darkness disadvantage is removed, and wandering monsters are suppressed.
+- **Illuminated:** Darkness disadvantage does not apply here. Searching and resting here do not advance the Torch Track.
 
 ## Writing rules
 

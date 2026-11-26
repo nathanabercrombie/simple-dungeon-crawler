@@ -1,6 +1,24 @@
 /* Core rules content plus the active Classics adventure set. */
+window.TORCH_TRACK = (() => {
+  const fading = 12;
+  const end = 18;
+  const starts = { Easy:0, Standard:2, Hard:4 };
+  const spaces = Array.from({ length:end+1 }, (_, step) => ({
+    step, dc:9 + Math.floor(step/3),
+    band:step === end ? 'Darkness' : step >= fading ? 'Fading' : 'Bright'
+  }));
+  const position = step => Math.max(0, Math.min(end, Math.round(Number(step) || 0)));
+  return {
+    fading, end, starts, spaces, position,
+    at:step => spaces[position(step)],
+    roomRule:'Searching and resting here don’t advance the Torch Track.',
+    backtrackRule:'After moving into a cleared room and advancing the track, roll a d6. On a 1, wandering enemies arrive.'
+  };
+})();
+
 window.GAME_MODULES = (() => {
   const targetFor = danger => ({ Easy:9, Standard:12, Hard:15, Extreme:18 })[danger];
+  const printedLighting = layout => layout.lighting === 'Inherent' || layout.id.endsWith(':fungus-grotto') ? 'Illuminated' : 'Unlit';
   const room = (id, index, name, danger, lighting, exits, tags, map, builtAs, definition, readAloud, feature = null) => ({
     id, index, name, danger, target:targetFor(danger), lighting, exits, tags, map,
     builtAs, definition, readAloud, feature, pack:'Classics Set'
@@ -161,7 +179,7 @@ window.GAME_MODULES = (() => {
       'Give it an abundant meal: It lets you pass without a check.',
       'Offer a credible lead on better prey (Mind S − 2): It goes to look. An empty bluff (Mind S + 2) buys passage only.'
     ), failure:'The ogre attacks if it can reach. Its first hit also hurls the target beside the cauldron.', encounter:printed('classics:monster:ogre') },
-    { name:'The Pale Fungus Grotto', kind:'opportunity', reward:'loot', supplyOnly:true, title:'Medicinal Caps', front:'Pale shelf-fungus lights the pools. Blue caps grow right beside a dry path marked with an apothecary’s sign.', feature:null, rule:'Starts conquered. Reveal one Supply card from the marked patch; no check. The fungus can permanently light this Scene but produces no usable torch.', failure:'', encounter:noEncounter },
+    { name:'The Pale Fungus Grotto', kind:'opportunity', reward:'loot', supplyOnly:true, title:'Medicinal Caps', front:'Pale shelf-fungus lights the pools. Blue caps grow right beside a dry path marked with an apothecary’s sign.', feature:null, rule:'Starts conquered and illuminated. Reveal one Supply card from the marked patch; no check.', failure:'', encounter:noEncounter },
     { name:'The Counterweighted Workshop', kind:'trap', reward:'loot', title:'Three Levers and a Hanging Block', front:'A stone block hangs a head’s breadth above the passage. At the bench, a chain pulls steadily against the polished lever. The bent lever’s little catch is still in its slot, crooked but whole. Fresh cord holds the third lever hard against its stop.', feature:null, rule:approachRule(
       'Hold the polished lever: The block rises until you let go. No check.',
       'Repair the bent catch (Agi S − 2): Locks the block up.',
@@ -248,18 +266,19 @@ window.GAME_MODULES = (() => {
   const scenes = roomLayouts.map((layout, index) => {
     const { tags:_discardedCompatibilityTags, ...physical } = layout;
     const slug = physical.id.split(':').pop();
-    return { ...physical, ...scenePlans[index], id:`classics:scene:${slug}`, teaser:sceneTeasers[slug] };
+    return { ...physical, ...scenePlans[index], id:`classics:scene:${slug}`, teaser:sceneTeasers[slug],
+      lighting:printedLighting(physical) };
   });
 
   const supplyLoot = [
     { id:'core:loot:medkit', pack:'Core Set', title:'Sealed Medkit', kind:'Supply', prose:'A waxed leather roll contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Take one Medkit.', item:'Medkit' },
-    { id:'core:loot:torch', pack:'Core Set', title:'Fresh Torch', kind:'Supply', prose:'A pitch-soaked torch remains wrapped against damp.', effect:'Take one Fresh torch. When lit, put 12 Light tokens on its Torch card.', item:'Fresh torch' },
+    { id:'core:loot:spikes-2', pack:'Core Set', title:'Chalk and Iron Spikes', kind:'Supply', prose:'A surveyor’s pouch contains white chalk and six narrow iron spikes.', effect:'Take Chalk and spikes.', item:'Chalk and spikes' },
     { id:'core:loot:rope', pack:'Core Set', title:'Coil of Rope', kind:'Supply', prose:'Twelve metres of strong hemp rope are wound around a wooden handle.', effect:'Take one Rope.', item:'Rope' },
     { id:'core:loot:medkit-2', pack:'Core Set', title:'Sealed Medkit', kind:'Supply', prose:'A waxed leather roll contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Take one Medkit.', item:'Medkit' },
     { id:'core:loot:crowbar', pack:'Core Set', title:'Iron Crowbar', kind:'Supply', prose:'A short iron bar is scarred from prying stone and heavy doors.', effect:'Take one Crowbar.', item:'Crowbar' },
     { id:'core:loot:medkit-3', pack:'Core Set', title:'Sealed Medkit', kind:'Supply', prose:'A waxed leather roll contains clean dressings, needle, thread, and bitter antiseptic.', effect:'Take one Medkit.', item:'Medkit' },
-    { id:'core:loot:torch-2', pack:'Core Set', title:'Fresh Torch', kind:'Supply', prose:'A pitch-soaked torch remains wrapped against damp.', effect:'Take one Fresh torch. When lit, put 12 Light tokens on its Torch card.', item:'Fresh torch' },
-    { id:'core:loot:torch-3', pack:'Core Set', title:'Fresh Torch', kind:'Supply', prose:'A pitch-soaked torch remains wrapped against damp.', effect:'Take one Fresh torch. When lit, put 12 Light tokens on its Torch card.', item:'Fresh torch' },
+    { id:'core:loot:rope-2', pack:'Core Set', title:'Coil of Rope', kind:'Supply', prose:'Twelve metres of strong hemp rope are wound around a wooden handle.', effect:'Take one Rope.', item:'Rope' },
+    { id:'core:loot:crowbar-2', pack:'Core Set', title:'Iron Crowbar', kind:'Supply', prose:'A short iron bar is scarred from prying stone and heavy doors.', effect:'Take one Crowbar.', item:'Crowbar' },
     { id:'core:loot:chalk-spikes', pack:'Core Set', title:'Chalk and Iron Spikes', kind:'Supply', prose:'A surveyor’s pouch contains white chalk and six narrow iron spikes.', effect:'Take Chalk and spikes.', item:'Chalk and spikes' },
     { id:'core:loot:mirror', pack:'Core Set', title:'Small Steel Mirror', kind:'Supply', prose:'A palm-sized polished mirror is wrapped in felt.', effect:'Take one Small mirror.', item:'Small mirror' }
   ];
@@ -318,7 +337,7 @@ window.GAME_MODULES = (() => {
       ...layout,
       id:`${questCard.id}:heart-scene`, index:100 + questCard.index, name,
       pack:`${questCard.name} Quest Pack`, kind:'heart', reward:'heart', title:name,
-      front, rule, failure, revelation:'', questHeart:true,
+      front, rule, failure, revelation:'', questHeart:true, lighting:printedLighting(layout),
       encounter:bossIds.length
         ? { mode:'boss', monsterIds:bossIds, printedMonsterIds }
         : { mode:'printed', monsterIds:printedMonsterIds }
@@ -362,7 +381,7 @@ window.GAME_MODULES = (() => {
   const extractionRules = {
     'classics:quest:kill-ogre':'Proof: after taking the iron tooth, choose who carries it. If that adventurer dies or leaves it behind, another adventurer must recover it. Escape with the tooth.',
     'classics:quest:rescue-prisoner':'Escort: Ada Stone has 2 HP and cannot take actions. A dungeon action may target her when the fiction permits; an adventurer in the same Scene may take that damage instead. If Ada reaches 0 HP, the Quest fails.',
-    'classics:quest:steal-idol':'Alarm: after taking the Golden Delver, wandering enemies enter a conquered dark Scene on a danger roll of 1 or 2 instead of only 1. Using the False Gold Copy keeps the normal danger roll.'
+    'classics:quest:steal-idol':'Alarm: after taking the Golden Delver, backtracking danger rolls trigger wandering enemies on 1 or 2 instead of only 1. Using the False Gold Copy keeps the normal danger roll.'
   };
   const activeQuests = quests.filter(questCard => activeQuestIds.has(questCard.id)).map(questCard => {
     const sourceIndex = quests.indexOf(questCard);
@@ -435,23 +454,22 @@ window.GAME_MODULES = (() => {
     'Keeper of dangerous beasts':'You fed creatures that could tear through a stable door and learned how hunger, fear, posture, and scent reveal what teeth cannot say.'
   };
   const knacks = [
-    { name:'Field Surgeon', cost:2, effect:'Treat one active Wound on yourself or an adjacent willing ally without a check or treatment supply. It becomes its normal Scar. Spend one exploration turn and 1 Light unless this Room is permanently lit. HP is not restored.' },
+    { name:'Field Surgeon', cost:2, effect:'With enough light to work, spend one exploration turn to treat an active Wound without a check or supply. It becomes its normal Scar. The Torch Track doesn’t advance. HP is not restored.' },
     { name:'Second Wind', cost:2, effect:'During a fight, restore yourself to full HP. This does not remove a Wound.' },
     { name:'Parley Under Steel', cost:2, effect:'Halt immediate violence from intelligent creatures long enough to exchange one short offer, demand, or warning.' },
     { name:'Gone in a Blink', cost:2, effect:'If plausible concealment or an exit is nearby, break line of sight and become hidden from ordinary senses.' },
     { name:'Weak-Point Eye', cost:2, effect:'After observing a creature or barrier, the next successful damaging attack against it deals +1 damage.' },
     { name:'Improvised Calamity', cost:2, effect:'Collapse, ignite, or release a suitable Room feature to deal 1 damage without a check to up to two creatures in one small nearby area, including allies if they occupy it. State the affected creatures before spending. The feature is spent and cannot power this Knack again.' }
   ];
-  const items = ['Medkit','Rope','Fresh torch','Medkit','Crowbar','Medkit','Fresh torch','Fresh torch','Chalk and spikes','Small mirror'];
+  const items = ['Medkit','Rope','Chalk and spikes','Medkit','Crowbar','Medkit','Rope','Crowbar','Chalk and spikes','Small mirror'];
   const itemRules = {
-    Medkit:'Single use. Treat one active Wound on yourself or an adjacent ally, converting it to its normal Scar. Spend one exploration turn and 1 Light unless this Room is permanently lit. In safety no check is needed; immediate danger requires an appropriate Scene-target check. Consume only on success; failure grants the dungeon one action. Treatment does not restore HP.',
+    Medkit:'Single use. With enough light to work, spend one exploration turn to convert one active Wound to a Scar. Doesn’t advance the Torch Track. No check in safety; in danger make a Scene check and consume only on success. Failure gives the dungeon an action. Restores no HP.',
     Rope:'Twelve metres of reusable rope. Secure a climb, crossing, descent, restraint, or handline. A sound anchored setup removes ordinary uncertainty and recurring traversal costs on that route. Placing it under pressure may require a Scene-target check; failure grants the dungeon one action. Recovering it leaves the route unsecured.',
-    'Fresh torch':'Single use. When the active light expires, light this to provide 12 Light. It occupies one hand while carried; it can be placed on a stable dry surface to free that hand but does not travel with you. Spend Light for normal exploration actions; ordinary combat checks spend no Light.',
     Crowbar:'Reusable leverage for doors, slabs, rubble, containers, and similar obstacles. Straightforward unopposed prying needs no check; uncertain force under pressure uses Strength against the Scene target. A durable opened route remains open. Failure grants the dungeon one action.',
     'Climbing tools':'Reusable hooks, spikes, hammer, and pulley. With a sound anchor and rope, establish a durable climbing route that removes ordinary uncertainty and recurring traversal costs. An uncertain setup under pressure uses Agility against the Scene target. Failure grants the dungeon one action.',
-    'Flask of oil':'Single use. Add 6 Light to a Lantern, to a maximum of 12; refilling in safety needs no check or exploration turn. Alternatively burn or lubricate one small nearby area when the fiction permits; this consumes the oil and uncertain harmful use requires a Scene-target check.',
-    Lantern:'Reusable housing with 6 Light of initial fuel. It occupies one hand while carried, or can be placed or hung at a fixed point to free that hand. Spend fuel as normal Light. A Flask of oil adds 6 Light, to a maximum of 12. The enclosed flame ignores ordinary wind and splashes. Closing the shutters conceals the light and leaves the area dark.',
-    Bandages:'Single use. As a Medkit, but only for an ordinary cut, bite, or arrow Wound; they cannot treat poison, disease, curses, burns, or crushed limbs. Spend the normal treatment turn and Light, and make the normal treatment check in immediate danger. Consume only on successful treatment.',
+    'Flask of oil':'Single use. Burn or lubricate one small nearby area when the fiction permits. Uncertain harmful use requires a Scene check. Does not reset the Torch Track.',
+    Lantern:'A hooded housing for the party’s light. It shields the flame from wind and splashes, but does not reset or extend the Torch Track.',
+    Bandages:'Single use. As a Medkit, but only for an ordinary cut, bite, or arrow Wound; they cannot treat poison, disease, curses, burns, or crushed limbs.',
     'Chalk and spikes':'Mark known routes, wedge a small mundane mechanism, or anchor a lightweight setup without a check in safety. A durable wedge can prevent that mechanism from closing again until removed. Six spikes; leave one behind for each permanent setup. Supporting a person requires suitable climbing equipment.',
     'Small mirror':'Reusable. Inspect around a corner or through an opening from cover, reflect ordinary light, or examine a surface without touching it. Reveal an ordinary visible ambush around a corner without exposing the observer. A mirror requires light and cannot reveal invisible creatures or disable traps.'
   };

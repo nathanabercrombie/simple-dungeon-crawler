@@ -98,7 +98,7 @@
       cards.push({
         id:`scene-script:${scene.id}`, category:'Scene Script', quest:questName, title:scene.name,
         kicker:questName ? `${questName} · Scene Script` : 'Scene Script',
-        teaser:scene.teaser, frontText:text(scene.readAloud, scene.front, scene.encounter?.mode === 'random' ? `Draw ${scene.encounter.count === 1 ? 'one random Monster card' : `${scene.encounter.count} random Monster cards`}.` : ''),
+        teaser:scene.teaser, frontText:text(scene.readAloud, scene.front, scene.lighting === 'Illuminated' ? window.TORCH_TRACK.roomRule : '', scene.encounter?.mode === 'random' ? `Draw ${scene.encounter.count === 1 ? 'one random Monster card' : `${scene.encounter.count} random Monster cards`}.` : ''),
         rulesText:sceneRules(scene), footer:scene.pack || 'Classics Set', imageLabel:`Illustration — ${scene.name}`, script:true
       });
     });
@@ -280,7 +280,7 @@
         <div class="card-flipper">
           <div class="game-card card-face card-front ${mapOnly ? 'card-map-layout' : ''} ${card.teaser ? 'has-room-teaser' : ''}">
             ${card.teaser ? `<div class="room-teaser">${esc(card.teaser)}</div>` : ''}
-            <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'None' ? '○' : card.lighting === 'Inherent' ? '●' : '✦'}</span>` : ''}</header>
+            <header class="card-topline"><div class="card-title-group">${deckIcon(card.category)}<h2>${esc(card.title)}</h2></div>${card.lighting ? `<span class="lighting-icon" title="${esc(card.lighting)}">${card.lighting === 'Illuminated' ? '✦' : '○'}</span>` : ''}</header>
             ${imageHtml(card)}
             ${mapOnly ? '' : `<div class="card-copy ${density}">${esc(copy)}</div>`}
             <footer class="card-footer"><span>${esc(card.footer)}</span><span class="card-number">${card.number} / ${manifest.length}</span></footer>

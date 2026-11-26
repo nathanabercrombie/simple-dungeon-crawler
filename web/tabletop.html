@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1a1d18">
   <title>Card Table · Delvekeeper</title>
-  <link rel="stylesheet" href="tabletop.css?build=20261126.1">
+  <link rel="stylesheet" href="tabletop.css?build=20261126.4">
 </head>
 <body>
   <header class="masthead">
@@ -15,13 +15,14 @@
   </header>
   <main class="table">
     <div class="table-info">
-      <p>Tap or drag from a deck. Tap a loose card before dragging to move it; drag elsewhere to pan. Use <strong>Pull cards</strong> to open a Scene sleeve.</p>
+      <p>Tap or drag from a deck. Tap a loose card before dragging it. Drag the brass torch marker or tap a track space to move it.</p>
       <span id="count"></span>
     </div>
     <div id="felt" class="felt" aria-label="Card table surface">
       <div id="world" class="world">
         <button type="button" id="deck" class="deck" data-deck="scene" title="Drag or click to draw a Scene sleeve"></button>
         <div id="character-decks" class="character-decks" role="group" aria-label="Character decks"></div>
+        <section id="torch-track" class="torch-track" aria-labelledby="torch-title"></section>
         <div id="cards" class="cards"></div>
       </div>
     </div>
@@ -44,11 +45,12 @@
         <button type="button" data-action="zoom-out" aria-label="Zoom out">−</button>
         <button type="button" data-action="zoom-in" aria-label="Zoom in">+</button>
         <button type="button" data-action="fit" title="Bring all the cards into view">Fit</button>
+        <button type="button" data-action="view-torch" title="Bring the Torch Track into view">Torch Track</button>
       </div>
       <p id="status" class="sr-only" role="status"></p>
     </footer>
   </main>
-  <script src="data.js?build=20261126.3"></script>
-  <script src="tabletop.js?build=20261126.3"></script>
+  <script src="data.js?build=20261126.4"></script>
+  <script src="tabletop.js?build=20261126.4"></script>
 </body>
 </html>

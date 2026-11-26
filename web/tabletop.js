@@ -2,6 +2,7 @@
   'use strict';
 
   const data = window.GAME_DATA;
+  const torch = window.TORCH_TRACK;
   const saveKey = 'delvekeeper.cardTable.v2';
   const oldSaveKey = 'delvekeeper.cardTable.v1';
   const scenes = new Map(data.scenes.map(scene => [scene.id, scene]));
@@ -15,6 +16,8 @@
   const height = deck.offsetHeight;
   const deckPosition = { x:32, y:34 };
   const mini = { width:94, height:130, gap:12, x:deckPosition.x+2*width+88, y:34 };
+  const track = $('#torch-track');
+  const trackPosition = { x:32, y:deckPosition.y+height+30 };
   const characterDecks = new Map();
   const characterCards = new Map();
   const nodes = new Map();
@@ -22,6 +25,19 @@
   const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
   const copy = value => JSON.parse(JSON.stringify(value));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+
+  const startLabels = new Map(Object.entries(torch.starts).map(([name,step]) => [step,name]));
+  track.style.left = `${trackPosition.x}px`;
+  track.style.top = `${trackPosition.y}px`;
+  track.innerHTML = `<header class="torch-heading"><div><span class="torch-kicker">Delvekeeper · Expedition reference</span><h2 id="torch-title">Torch Track</h2></div><p>Move <b>one space</b> after exploring, moving one room, searching or resting.<br>Searching and resting in illuminated rooms don’t advance the track.</p></header>
+    <div class="torch-bands" aria-hidden="true" style="grid-template-columns:${torch.fading}fr ${torch.end-torch.fading}fr 1fr"><span>Bright <small>· No ambush rolls</small></span><span>Fading <small>· Backtracking rolls begin</small></span><span title="Darkness">Dark</span></div>
+    <div class="torch-spaces" style="--track-spaces:${torch.spaces.length}">${torch.spaces.map(({step,dc,band}) => `<button type="button" class="torch-space ${band.toLowerCase()}" data-torch-step="${step}" title="${startLabels.has(step) ? `${startLabels.get(step)} start · ` : ''}${band} · DC ${dc}" aria-label="Space ${step}, ${band}, DC ${dc}${startLabels.has(step) ? `, ${startLabels.get(step)} start` : ''}"><span class="torch-step">${step}</span><span class="torch-socket"></span><strong>DC ${dc}</strong><small>${startLabels.get(step) || ''}</small></button>`).join('')}</div>
+    <footer class="torch-notes"><p><b>Fading &amp; Darkness · Backtracking</b><br>${esc(torch.backtrackRule)}</p><p><b>Darkness</b><br>Stay here. Checks in unlit rooms have disadvantage. Rest only in illuminated rooms.</p></footer>`;
+  const torchSpaces = [...track.querySelectorAll('[data-torch-step]')];
+  const marker = document.createElement('span');
+  marker.className = 'torch-marker';
+  marker.setAttribute('aria-hidden','true');
+  marker.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1 4-4 6-4 10 0 2 1 4 3 5-5-1-7-4-5-8 1-2 4-3 6-7Zm2 6c0 3-4 5-3 8 1 2 3 3 5 2 4-2 3-6-2-10Z" fill="currentColor"/><path d="m9 19 6 0m-5 3h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
 
   function shuffled(ids) {
     const result = [...ids];
@@ -96,6 +112,7 @@
     return {
       deck:shuffled(data.scenes.slice(1).map(scene => scene.id)),
       characterDecks:freshCharacterDecks(),
+      torchStep:torch.starts.Standard,
       cards:[piece(entrance.id,'sleeve',deckPosition.x+width+48,52)]
     };
   }
@@ -105,11 +122,13 @@
       const saved = JSON.parse(localStorage.getItem(saveKey));
       if (Array.isArray(saved?.deck) && Array.isArray(saved.cards) &&
           saved.deck.every(id => scenes.has(id)) && saved.cards.every(card => card && [card.x,card.y,card.angle].every(Number.isFinite) &&
-            faces[card.kind]?.includes(card.side) && (card.kind === 'character' ? characterCards.has(card.id) : scenes.has(card.scene) && card.id === `${card.scene}:${card.kind}`))) {
+            faces[card.kind]?.includes(card.side) && (card.kind === 'character' ? characterCards.has(card.id) || migratedSupplyId(card.id) : scenes.has(card.scene) && card.id === `${card.scene}:${card.kind}`))) {
+        for (const card of saved.cards) if (card.kind === 'character') card.id = migratedSupplyId(card.id) || card.id;
         const onFelt = new Set(saved.cards.map(card => card.id));
         saved.characterDecks = Object.fromEntries([...characterDecks].map(([id,def]) => {
           const available = def.ids.filter(cardId => !onFelt.has(cardId));
-          const pile = saved.characterDecks?.[id];
+          const stored = saved.characterDecks?.[id];
+          const pile = id === 'supply' && Array.isArray(stored) ? stored.map(cardId => migratedSupplyId(cardId) || cardId) : stored;
           return [id,Array.isArray(pile) && new Set(pile).size === available.length && pile.length === available.length && pile.every(cardId => available.includes(cardId)) ? pile : shuffled(available)];
         }));
         return saved;
@@ -123,7 +142,14 @@
     return freshTable();
   }
 
+  function migratedSupplyId(id) {
+    const match = /^core:character:supply:core:loot:(torch(?:-[23])?)$/.exec(id);
+    const replacement = match && { torch:'spikes-2', 'torch-2':'rope-2', 'torch-3':'crowbar-2' }[match[1]];
+    return replacement && `core:character:supply:core:loot:${replacement}`;
+  }
+
   let table = load();
+  table.torchStep = torch.position(table.torchStep ?? torch.starts.Standard);
   let selected = null;
   let camera = { x:0, y:0, zoom:1 };
   let gesture = null;
@@ -223,12 +249,13 @@
     if (card.kind === 'character') return characterFace(card);
     const scene = scenes.get(card.scene);
     if (card.side === 'teaser') {
-      return `<div class="face teaser-face"><span class="teaser-kicker">Classics · Scene</span><svg viewBox="0 0 80 100" width="72" height="90" aria-hidden="true"><path d="M40 2 77 50 40 98 3 50Z" fill="none" stroke="currentColor" opacity=".65"/><path d="M26 70V43a14 14 0 0 1 28 0v27M20 70h40m-27 0V43a7 7 0 0 1 14 0v27" fill="none" stroke="currentColor" stroke-width="2"/></svg><div class="teaser-copy"><p>${esc(scene.teaser)}</p><p class="teaser-cost">use 1 torch token to explore</p></div><span class="teaser-footer">${card.kind === 'sleeve' ? 'Sleeved pair' : 'Map on reverse'}</span></div>${card.kind === 'sleeve' ? '<button type="button" class="pull-tab" data-pull aria-label="Pull the cards out of the sleeve" title="Drag to pull out the prose card, or click to open">Pull cards <span aria-hidden="true">↗</span></button>' : ''}`;
+      return `<div class="face teaser-face"><span class="teaser-kicker">Classics · Scene</span><svg viewBox="0 0 80 100" width="72" height="90" aria-hidden="true"><path d="M40 2 77 50 40 98 3 50Z" fill="none" stroke="currentColor" opacity=".65"/><path d="M26 70V43a14 14 0 0 1 28 0v27M20 70h40m-27 0V43a7 7 0 0 1 14 0v27" fill="none" stroke="currentColor" stroke-width="2"/></svg><div class="teaser-copy"><p>${esc(scene.teaser)}</p><p class="teaser-cost">Advance the Torch Track after exploring</p></div><span class="teaser-footer">${card.kind === 'sleeve' ? 'Sleeved pair' : 'Map on reverse'}</span></div>${card.kind === 'sleeve' ? '<button type="button" class="pull-tab" data-pull aria-label="Pull the cards out of the sleeve" title="Drag to pull out the prose card, or click to open">Pull cards <span aria-hidden="true">↗</span></button>' : ''}`;
     }
     const heading = `<h2 class="card-title">${esc(scene.name)}</h2>`;
     const footer = `<footer class="card-footer"><span>Classics · ${String(scene.index).padStart(2,'0')}</span><span>${esc(scene.lighting)}</span></footer>`;
     if (card.side === 'map') {
-      return `<div class="face paper map-face"><span class="card-meta">Scene · Battlemap</span>${heading}${floorplan(scene)}${footer}</div>`;
+      const mapFooter = scene.lighting === 'Illuminated' ? `<footer class="card-footer room-light-note">✦ ${esc(torch.roomRule)}</footer>` : footer;
+      return `<div class="face paper map-face"><span class="card-meta">Scene · Battlemap</span>${heading}${floorplan(scene)}${mapFooter}</div>`;
     }
     const note = encounterNote(scene);
     if (card.side === 'reveal') {
@@ -247,6 +274,7 @@
   }
 
   function render() {
+    renderTorch();
     const present = new Set(table.cards.map(card => card.id));
     for (const [id,node] of nodes) {
       if (present.has(id)) continue;
@@ -284,7 +312,7 @@
           node.setAttribute('aria-label',card.side === 'back' ? `Face-down card from ${characterDecks.get(item.deck).name}` : item.title);
         } else {
           const scene = scenes.get(card.scene);
-          node.setAttribute('aria-label', card.side === 'teaser' ? `${card.kind === 'sleeve' ? 'Scene sleeve' : 'Teaser'}: ${scene.teaser}. Use 1 torch token to explore.` : `${scene.name}, ${card.side === 'map' ? 'battlemap' : card.side}`);
+          node.setAttribute('aria-label', card.side === 'teaser' ? `${card.kind === 'sleeve' ? 'Scene sleeve' : 'Teaser'}: ${scene.teaser}. Advance the Torch Track after exploring.` : `${scene.name}, ${card.side === 'map' ? 'battlemap' : card.side}`);
         }
       }
       node.dataset.selected = String(card.id === selected);
@@ -301,6 +329,33 @@
       else if (action === 'draw' || action === 'shuffle') button.disabled = count < (action === 'shuffle' ? 2 : 1);
       else button.disabled = !picked || (action === 'open' && picked.kind !== 'sleeve') || (action === 'flip' && picked.kind === 'sleeve');
     }
+  }
+
+  function renderTorch(step = table.torchStep) {
+    for (const [index,space] of torchSpaces.entries()) {
+      space.setAttribute('aria-pressed',String(index === table.torchStep));
+      space.tabIndex = index === table.torchStep ? 0 : -1;
+    }
+    const socket = torchSpaces[step].querySelector('.torch-socket');
+    if (marker.parentNode !== socket) socket.append(marker);
+  }
+
+  function moveTorch(step, focus = false) {
+    step = torch.position(step);
+    if (step !== table.torchStep) {
+      remember();
+      table.torchStep = step;
+      const space = torch.at(step);
+      message(`Torch Track: space ${step}, ${space.band}, DC ${space.dc}.`);
+      save();
+    }
+    render();
+    if (focus) torchSpaces[step].focus({ preventScroll:true });
+  }
+
+  function torchStepAt(event) {
+    const rect = track.querySelector('.torch-spaces').getBoundingClientRect();
+    return torch.position(Math.floor((event.clientX-rect.left)/rect.width*torchSpaces.length));
   }
 
   function updateCamera() {
@@ -326,6 +381,7 @@
       const h = Math.abs(Math.sin(radians))*width + Math.abs(Math.cos(radians))*height;
       return [x+(width-w)/2, y+(height-h)/2, x+(width+w)/2, y+(height+h)/2];
     })];
+    bounds.push([trackPosition.x,trackPosition.y,trackPosition.x+track.offsetWidth,trackPosition.y+track.offsetHeight]);
     const x0 = Math.min(...bounds.map(rect => rect[0]));
     const y0 = Math.min(...bounds.map(rect => rect[1]));
     const w = Math.max(...bounds.map(rect => rect[2]))-x0;
@@ -379,12 +435,17 @@
     if (gesture || pinching) return;
     const card = selectedCard();
     if (name === 'fit') return fit();
+    if (name === 'view-torch') {
+      const zoom = clamp(Math.min((felt.clientWidth-28)/track.offsetWidth,(felt.clientHeight-28)/track.offsetHeight,1.25),.26,1.25);
+      camera = { x:(felt.clientWidth-track.offsetWidth*zoom)/2-trackPosition.x*zoom, y:(felt.clientHeight-track.offsetHeight*zoom)/2-trackPosition.y*zoom, zoom };
+      return updateCamera();
+    }
     if (name === 'zoom-in' || name === 'zoom-out') return zoomAt(name === 'zoom-in' ? 1.2 : 1/1.2);
     if (name === 'draw' && pileFor(pile).length) {
       remember();
       const shift = (table.cards.length-1)%6;
       const x = (pile === 'scene' ? mini.x : mini.x+4*(mini.width+mini.gap)+20)+shift*17;
-      const y = (pile === 'scene' ? mini.y+2*(mini.height+mini.gap)+24 : mini.y+6)+shift*22;
+      const y = (pile === 'scene' ? trackPosition.y+track.offsetHeight+26 : mini.y+6)+shift*22;
       keepVisible(pull(pile,x,y));
       announceDraw(pile);
     } else if (name === 'shuffle' && pileFor(pile).length > 1) {
@@ -401,7 +462,7 @@
       message('Started a fresh table. Undo to restore the previous one.');
     } else if (name === 'undo' && undoStack.length) {
       ({ table,selected } = undoStack.pop());
-      message('Undid the last card action.');
+      message('Undid the last table action.');
     } else if (card?.kind === 'sleeve' && name === 'open') {
       remember();
       keepVisible(openSleeve(card));
@@ -446,6 +507,12 @@
       if (pinching) return;
     }
     if (gesture || !event.isPrimary || (event.button !== 0 && event.button !== 1)) return;
+    const torchSpace = event.target.closest('[data-torch-step]');
+    if (torchSpace && event.button === 0) {
+      gesture = { kind:'torch', id:event.pointerId, x:event.clientX, y:event.clientY, step:Number(torchSpace.dataset.torchStep) };
+      felt.setPointerCapture(event.pointerId);
+      return;
+    }
     const cardNode = event.target.closest('[data-card]');
     const card = table.cards.find(piece => piece.id === cardNode?.dataset.card);
     const fromDeck = event.target.closest('[data-deck]');
@@ -481,6 +548,13 @@
     if (g?.id !== event.pointerId) return;
     const dx = event.clientX-g.x;
     const dy = event.clientY-g.y;
+    if (g.kind === 'torch') {
+      if (g.moved || Math.hypot(dx,dy) >= 5) {
+        g.moved = true;
+        renderTorch(torchStepAt(event));
+      }
+      return;
+    }
     if (!g.moved) {
       if (Math.hypot(dx,dy) < 5) return;
       g.moved = true;
@@ -516,6 +590,11 @@
     if (g?.id !== event.pointerId) return;
     gesture = null;
     felt.classList.remove('panning');
+    if (g.kind === 'torch') {
+      if (event.type === 'pointerup') moveTorch(g.moved ? torchStepAt(event) : g.step);
+      else renderTorch();
+      return;
+    }
     if (event.type !== 'pointerup') {
       if (g.moved && g.before) ({ table,selected } = g.before);
     } else if (g.kind === 'pan') {
@@ -564,6 +643,8 @@
   },{ passive:false });
 
   document.addEventListener('click', event => {
+    const torchSpace = event.target.closest('[data-torch-step]');
+    if (torchSpace && event.detail === 0 && !gesture && !pinching) moveTorch(torchSpace.dataset.torchStep, true);
     const button = event.target.closest('[data-action]');
     if (button && !button.disabled) action(button.dataset.action);
     const pile = event.target.closest('[data-deck]')?.dataset.deck;
@@ -594,6 +675,14 @@
     let command = null;
     if (key === 'z' && (event.ctrlKey || event.metaKey)) command = 'undo';
     else if (event.ctrlKey || event.metaKey) return;
+    else if (event.target.matches('[data-torch-step]')) {
+      const step = { arrowleft:table.torchStep-1, arrowright:table.torchStep+1, home:0, end:torch.end }[key];
+      if (typeof step === 'number') {
+        event.preventDefault();
+        moveTorch(step,true);
+      }
+      return;
+    }
     else if (onCard && (key === ' ' || key === 'enter')) command = card.kind === 'sleeve' ? 'open' : 'flip';
     else if (key === 'f') command = 'flip';
     else if (key === 'e') command = 'open';
